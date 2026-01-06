@@ -1,0 +1,55 @@
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import themeConfigSlice from './themeConfigSlice';
+import DepartmentSlice from '../departmentSlice';
+import EmployeeSlice from '../employeeSlice';
+import RoleSlice from '../roleSlice';
+import PageSlice from '../pageSlice';
+import ReportSlice from '../reportSlice';
+import LoginSlice from '../loginSlice';
+import UplodeSlice from '../uplodeSlice';
+import ComapnySlice from '../companySlice';
+import CompanyCodeSlice from '../companCodeSlice';
+import PurposeOfVisitSlice from '../purposeOfVisitSlice';
+import VisitorSlice from '../visitorSlice';
+import ProductSlice from '../productSlice';
+import ExpoSlice from '../expoSlice';
+import ProductEnquirySlice from '../productEnquirySlice'
+import DashboardSlice from '../dashboardSlice';
+import ClientSlice from '../clientSlice';
+import CategorySlice from '../catogerySlice';
+import TaskSlice from '../taskSlice';
+import NotificationSlice from '../notificationSlice'
+
+const rootReducer = combineReducers({
+    themeConfig: themeConfigSlice,
+    DepartmentSlice,
+    EmployeeSlice,
+    RoleSlice,
+    PageSlice,
+    ReportSlice,
+    LoginSlice,
+    UplodeSlice,
+    ComapnySlice,
+    CompanyCodeSlice,
+    PurposeOfVisitSlice,
+    ProductSlice,
+    ProductEnquirySlice,
+    VisitorSlice,
+    ExpoSlice,
+    DashboardSlice,
+    ClientSlice,
+    CategorySlice,
+    TaskSlice,
+    NotificationSlice
+});
+
+const store = configureStore({
+    reducer: rootReducer,
+});
+
+export default store;
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+
+export type IRootState = ReturnType<typeof rootReducer>;
