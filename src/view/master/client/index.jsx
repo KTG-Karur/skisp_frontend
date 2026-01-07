@@ -5,8 +5,6 @@ import Table from '../../../util/Table';
 import Tippy from '@tippyjs/react';
 import { findArrObj, showMessage } from '../../../util/AllFunction';
 import _ from 'lodash';
-
-import { getClient, resetClientStatus } from '../../../redux/clientSlice';
 import { getClient, resetClientStatus } from '../../../redux/clientSlice';
 
 let isEdit = false;
@@ -65,7 +63,6 @@ const Index = () => {
             ),
         },
     ];
-    ];
 
     const handlePaginationChange = (pageIndex, newPageSize) => {
         setCurrentPage(pageIndex);
@@ -83,7 +80,6 @@ const Index = () => {
             <div className="datatables">
                 <Table
                     columns={columns}
-                    Title={'Provider List'}
                     Title={'Provider List'}
                     data={getPaginatedData()}
                     pageSize={pageSize}
