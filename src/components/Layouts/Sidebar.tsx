@@ -30,6 +30,9 @@ import IconChartBar from '../Icon/IconChartBar';
 import Navigation from './navigation';
 import IconDollarSign from '../Icon/IconDollarSign';
 import IconNotes from '../Icon/IconNotes';
+import IconServer from '../Icon/IconServer';
+import IconCustomers from '../Icon/IconUserFriends';
+import IconPayments from '../Icon/IconMoney';
 
 const getIcon = (name?: string) => {
     switch (name) {
@@ -69,6 +72,12 @@ const getIcon = (name?: string) => {
             return IconMenuAuthentication;
         case 'fe-company':
             return IconDatabase;
+        case 'fe-server':
+            return IconServer;
+        case 'fe-customers':
+            return IconCustomers;
+        case 'fe-payments':
+            return IconPayments;
         default:
             return IconMinus; // fallback
     }
