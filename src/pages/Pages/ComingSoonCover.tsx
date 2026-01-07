@@ -85,7 +85,7 @@ const ComingSoonCover = () => {
                     <div className="relative w-full px-4 pb-16 pt-6 sm:px-6 lg:max-w-[667px]">
                         <div className="mx-auto mt-5 w-full max-w-[550px] lg:mt-16">
                             <Link to="/" className="mb-8 block lg:hidden">
-                                <img src="/assets/images/Optimangle_logo.png" alt="Logo" className="mx-auto w-10" />
+                                <img src="/assets/images/skisp-new-logo copy.png" alt="Logo" className="mx-auto w-10" />
                             </Link>
                             <div className="mb-12">
                                 <h1 className="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Coming Soon</h1>

@@ -7,13 +7,14 @@ import { findArrObj, showMessage } from '../../../util/AllFunction';
 import _ from 'lodash';
 
 import { getClient, resetClientStatus } from '../../../redux/clientSlice';
+import { getClient, resetClientStatus } from '../../../redux/clientSlice';
 
 let isEdit = false;
 
 const Index = () => {
     const loginInfo = localStorage.getItem('loginInfo');
     const localData = JSON.parse(loginInfo);
-    const pageAccessData = findArrObj(localData?.pagePermission, 'label', 'Client');
+    const pageAccessData = findArrObj(localData?.pagePermission, 'label', 'Provider');
     const accessIds = (pageAccessData[0]?.access || '').split(',').map((id) => id.trim());
 
     const dispatch = useDispatch();
@@ -64,6 +65,7 @@ const Index = () => {
             ),
         },
     ];
+    ];
 
     const handlePaginationChange = (pageIndex, newPageSize) => {
         setCurrentPage(pageIndex);
@@ -81,6 +83,7 @@ const Index = () => {
             <div className="datatables">
                 <Table
                     columns={columns}
+                    Title={'Provider List'}
                     Title={'Provider List'}
                     data={getPaginatedData()}
                     pageSize={pageSize}
