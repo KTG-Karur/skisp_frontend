@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState, useRef } from 'react';
 import { setPageTitle, toggleRTL } from '../../redux/themeStore/themeConfigSlice';
-import Dropdown from '../../components/Dropdown';
 import i18next from 'i18next';
 import IconCaretDown from '../../components/Icon/IconCaretDown';
 import IconMail from '../../components/Icon/IconMail';
@@ -11,10 +10,12 @@ import IconBuilding from '../../components/Icon/IconBuilding';
 import IconUser from '../../components/Icon/IconUser';
 import IconEye from '../../components/Icon/IconEye';
 import IconEyeOff from '../../components/Icon/IconEyeOff';
+import IconUsers from '../../components/Icon/IconUsers';
+import IconCreditCard from '../../components/Icon/IconCreditCard';
+import IconServer from '../../components/Icon/IconServer';
+import IconChartBar from '../../components/Icon/IconChartBar';
 import { getLogin, resetLoginStatus } from '../../redux/loginSlice';
 import { showMessage } from '../../util/AllFunction';
-import Lottie from 'lottie-react';
-import timeManagementGif from '../../../public/assets/images/auth/Time Management[1].json';
 
 const LoginBoxed = () => {
     const dispatch = useDispatch();
@@ -38,10 +39,9 @@ const LoginBoxed = () => {
 
     const mobileFormRef = useRef(null);
     const desktopFormRef = useRef(null);
-    const lottieRef = useRef(null);
 
     useEffect(() => {
-        dispatch(setPageTitle('Task Management System Login'));
+        dispatch(setPageTitle('SKISP Admin Panel - Login'));
     }, [dispatch]);
 
     useEffect(() => {
@@ -56,7 +56,7 @@ const LoginBoxed = () => {
             }
 
             setTimeout(() => {
-                navigate('/');
+                navigate('/dashboard');
                 dispatch(resetLoginStatus());
             }, 300);
         } else if (getLoginFailed) {
@@ -70,7 +70,7 @@ const LoginBoxed = () => {
             }
             showMessage('error', error || 'Login Failed');
         }
-    }, [getLoginSuccess, getLoginFailed, loginData, error, navigate]);
+    }, [getLoginSuccess, getLoginFailed, loginData, error, navigate, dispatch]);
 
     const setLocale = (flag) => {
         setFlag(flag);
@@ -113,74 +113,86 @@ const LoginBoxed = () => {
 
     return (
         <div className="relative min-h-screen w-full overflow-hidden">
+            {/* Multicolor Gradient Background */}
             <div
                 className="fixed inset-0 -z-10"
                 style={{
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #3730a3 100%)',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #ca0002 100%)',
                     width: '100vw',
                     height: '100vh',
                     margin: 0,
                     padding: 0,
+                    backgroundSize: '400% 400%',
+                    animation: 'gradientShift 15s ease infinite',
                 }}
             ></div>
 
-            {/* Corporate Pattern Background */}
-            <div
-                className="fixed inset-0 opacity-10 -z-5"
-                style={{
-                    backgroundImage: `radial-gradient(circle at 25px 25px, rgba(255,255,255,0.2) 2%, transparent 40%), 
-                                    radial-gradient(circle at 75px 75px, rgba(255,255,255,0.1) 2%, transparent 40%)`,
-                    backgroundSize: '100px 100px',
-                    width: '100vw',
-                    height: '100vh',
-                }}
-            ></div>
+            {/* Subtle Moving Particles */}
+            <div className="fixed inset-0 -z-5 opacity-20">
+                {[...Array(15)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="absolute rounded-full"
+                        style={{
+                            width: `${Math.random() * 100 + 50}px`,
+                            height: `${Math.random() * 100 + 50}px`,
+                            left: `${Math.random() * 100}%`,
+                            top: `${Math.random() * 100}%`,
+                            background: `radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)`,
+                            animation: `float ${Math.random() * 20 + 10}s ease-in-out infinite`,
+                            animationDelay: `${Math.random() * 5}s`,
+                        }}
+                    />
+                ))}
+            </div>
 
-            {/* Geometric shapes for corporate feel */}
+            {/* Geometric Shapes with Multiple Colors */}
             <div className="fixed inset-0 overflow-hidden -z-5">
-                <div className="absolute top-20 left-10 w-32 h-32 bg-blue-600/10 rounded-full blur-xl"></div>
-                <div className="absolute bottom-20 right-10 w-40 h-40 bg-indigo-600/10 rounded-full blur-xl"></div>
-                <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-white/5 rounded-lg blur-lg rotate-45"></div>
-                <div className="absolute bottom-40 right-1/4 w-20 h-20 bg-blue-500/10 rounded-lg blur-lg -rotate-45"></div>
+                {/* Purple Circle */}
+                <div className="absolute top-20 left-10 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
+                {/* Red Circle */}
+                <div className="absolute bottom-20 right-10 w-80 h-80 bg-red-500/10 rounded-full blur-3xl"></div>
+                {/* Blue Triangle */}
+                <div className="absolute top-1/2 left-1/4 w-48 h-48 bg-blue-500/10 rounded-lg blur-2xl rotate-45"></div>
+                {/* Pink Square */}
+                <div className="absolute bottom-40 right-1/4 w-40 h-40 bg-pink-500/10 rounded-lg blur-2xl -rotate-12"></div>
+                {/* Orange Shape */}
+                <div className="absolute top-1/3 right-1/3 w-32 h-32 bg-orange-500/10 rounded-full blur-xl"></div>
             </div>
 
             {/* Main Content Container */}
             <div className="relative flex min-h-screen items-center justify-center px-4 sm:px-6 lg:px-8 py-8 w-full">
                 {/* Mobile & Tablet: Single Column Layout */}
                 <div className="block lg:hidden w-full max-w-md">
-                    {/* Mobile Header */}
+                    {/* Mobile Header with Logo */}
                     <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold text-white mb-2">Task Management</h1>
-                        <p className="text-blue-200 text-sm">ERP Platform</p>
-                    </div>
-
-                    {/* Mobile Lottie Animation - Smaller for mobile */}
-                    <div className="flex justify-center mb-6">
-                        <div className="w-64 h-52 flex items-center justify-center">
-                            <Lottie
-                                animationData={timeManagementGif}
-                                loop={true}
-                                autoplay={true}
-                                style={{ width: '100%', height: '100%' }}
-                                ref={lottieRef}
-                            />
+                        <div className="flex justify-center mb-4">
+                            <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-6 shadow-2xl">
+                                <img 
+                                    src="/assets/images/Optimangle_logo.png" 
+                                    alt="SKISP Logo" 
+                                    className="w-48 h-auto filter drop-shadow-xl"
+                                />
+                            </div>
                         </div>
+                        <h1 className="text-3xl font-bold text-white mb-2">SKISP Admin</h1>
+                        <p className="text-white/80 text-sm">Network Service Provider Management System</p>
                     </div>
 
                     {/* Mobile Features */}
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20 shadow-xl">
                         <div className="space-y-3">
                             <div className="flex items-center space-x-3">
-                                <div className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></div>
-                                <span className="text-blue-100 text-sm">Real-time Task Tracking</span>
+                                <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex-shrink-0"></div>
+                                <span className="text-white text-sm">Customer Management</span>
                             </div>
                             <div className="flex items-center space-x-3">
-                                <div className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></div>
-                                <span className="text-blue-100 text-sm">Team Collaboration Tools</span>
+                                <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex-shrink-0"></div>
+                                <span className="text-white text-sm">Network Provider Management</span>
                             </div>
                             <div className="flex items-center space-x-3">
-                                <div className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></div>
-                                <span className="text-blue-100 text-sm">Deadline Management</span>
+                                <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex-shrink-0"></div>
+                                <span className="text-white text-sm">Plan & Payment Processing</span>
                             </div>
                         </div>
                     </div>
@@ -188,16 +200,20 @@ const LoginBoxed = () => {
                     {/* Login Form for Mobile */}
                     <div
                         ref={mobileFormRef}
-                        className="relative w-full rounded-2xl border border-white/20 bg-white/95 backdrop-blur-xl p-6 shadow-2xl transition-all duration-500"
+                        className="relative w-full rounded-3xl border border-white/30 bg-white/95 backdrop-blur-xl p-6 shadow-2xl transition-all duration-500"
                         style={{
-                            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+                            boxShadow: '0 25px 70px rgba(0, 0, 0, 0.3)',
                         }}
                     >
                         <div className="mb-8 text-center">
                             <div className="flex justify-center mb-4">
-                                <img style={{ width: '200px', height: '40px' }} className="flex-none drop-shadow-2xl filter brightness-110" src="/assets/images/Optimangle_logo.png" alt="logo" />
+                                <img 
+                                    src="/assets/images/Optimangle_logo.png" 
+                                    alt="SKISP Logo" 
+                                    className="w-40 h-auto"
+                                />
                             </div>
-                            <p className="text-gray-600 text-sm">Enter your credentials to access the task management system</p>
+                            <p className="text-gray-600 text-sm">Enter your credentials to access the admin panel</p>
                         </div>
                         <form className="space-y-5" onSubmit={submitForm}>
                             {/* Username Field */}
@@ -213,8 +229,8 @@ const LoginBoxed = () => {
                                         onChange={(e) => setUsername(e.target.value)}
                                         onFocus={() => handleFocus('username')}
                                         onBlur={() => handleBlur('username')}
-                                        placeholder="Enter your username"
-                                        className="w-full rounded-xl border border-gray-300 bg-white px-12 py-3 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:shadow-lg text-base outline-none"
+                                        placeholder="Enter admin username"
+                                        className="w-full rounded-xl border border-gray-300 bg-white px-12 py-3 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-purple-600 focus:ring-2 focus:ring-purple-200 focus:shadow-lg text-base outline-none"
                                     />
                                     <span className="absolute start-4 top-1/2 -translate-y-1/2 text-gray-400">
                                         <IconUser className="w-5 h-5" />
@@ -236,7 +252,7 @@ const LoginBoxed = () => {
                                         onFocus={() => handleFocus('password')}
                                         onBlur={() => handleBlur('password')}
                                         placeholder="Enter your password"
-                                        className="w-full rounded-xl border border-gray-300 bg-white px-12 py-3 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:shadow-lg text-base outline-none"
+                                        className="w-full rounded-xl border border-gray-300 bg-white px-12 py-3 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:shadow-lg text-base outline-none"
                                     />
                                     <span className="absolute start-4 top-1/2 -translate-y-1/2 text-gray-400">
                                         <IconLockDots className="w-5 h-5" />
@@ -255,9 +271,11 @@ const LoginBoxed = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 py-3 font-semibold text-white shadow-lg transition-all duration-300 transform hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
-                                    isLoading ? 'animate-pulse' : ''
-                                }`}
+                                className="w-full rounded-xl py-3 font-semibold text-white shadow-lg transition-all duration-300 transform hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                style={{
+                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #ca0002 100%)',
+                                    backgroundSize: '200% 200%',
+                                }}
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center space-x-2">
@@ -265,7 +283,7 @@ const LoginBoxed = () => {
                                         <span>Authenticating...</span>
                                     </div>
                                 ) : (
-                                    'Access System'
+                                    'Access Admin Panel'
                                 )}
                             </button>
                         </form>
@@ -274,61 +292,96 @@ const LoginBoxed = () => {
                         <div className="mt-6 pt-4 border-t border-gray-200">
                             <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
                                 <IconLockDots className="w-4 h-4" />
-                                <span>Enterprise-grade security</span>
+                                <span>Secure Admin Access Only</span>
                             </div>
                         </div>
 
                         {/* Version Info */}
                         <div className="mt-4 text-center">
-                            <p className="text-xs text-gray-400">v3.2.1 • Production</p>
+                            <p className="text-xs text-gray-400">v1.0 • SKISP Admin Panel</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Desktop: Two Column Layout */}
-                <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-6xl items-center">
-                    {/* Left Side - Corporate Branding with Lottie Animation */}
-                    <div className="flex flex-col justify-center text-white space-y-6 p-8">
-                        <div className="space-y-4">
-                            <h2 className="text-3xl font-bold leading-tight text-center">
-                                Task Management <br />
-                                <span className="text-blue-300">ERP Platform</span>
-                            </h2>
-                            {/* Lottie Animation */}
-                            <div className="flex justify-center my-4">
-                                <div className="w-96 h-80 flex items-center justify-center">
-                                    <Lottie
-                                        animationData={timeManagementGif}
-                                        loop={true}
-                                        autoplay={true}
-                                        style={{ width: '100%', height: '100%' }}
-                                        ref={lottieRef}
-                                    />
-                                </div>
+                <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-12 w-full max-w-6xl items-center">
+                    {/* Left Side - Logo and Admin Panel Features */}
+                    <div className="flex flex-col justify-center text-white space-y-8 p-8">
+                        {/* Logo Display */}
+                        <div className="mb-8">
+                            <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-8 shadow-2xl inline-block">
+                                <img 
+                                    src="/assets/images/Optimangle_logo.png" 
+                                    alt="SKISP Logo" 
+                                    className="w-64 h-auto filter drop-shadow-2xl"
+                                />
                             </div>
+                        </div>
 
-                            <p className="text-md text-blue-100 leading-relaxed text-center">
-                                Streamline your task management with our comprehensive ERP solution for project tracking, team collaboration, and productivity optimization.
+                        <div className="space-y-6">
+                            <h1 className="text-5xl font-bold leading-tight">
+                                SKISP <br />
+                                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
+                                    Admin Panel
+                                </span>
+                            </h1>
+                            
+                            <p className="text-xl text-white/90 leading-relaxed">
+                                Complete administration system for managing network providers, customer plans, payments, and employee allocations.
                             </p>
                         </div>
 
-                        {/* Features List */}
-                        <div className="space-y-3">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                <span className="text-blue-100">Real-time Task Tracking</span>
+                        {/* Features Grid with Multicolor Icons */}
+                        <div className="grid grid-cols-2 gap-4 mt-6">
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105">
+                                <div className="flex items-center space-x-3 mb-3">
+                                    <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500">
+                                        <IconUsers className="w-5 h-5 text-white" />
+                                    </div>
+                                    <h3 className="font-semibold text-white">Customer Management</h3>
+                                </div>
+                                <p className="text-white/70 text-sm">Add & manage customers with plan allocation</p>
                             </div>
-                            <div className="flex items-center space-x-3">
-                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                <span className="text-blue-100">Team Collaboration Tools</span>
+                            
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105">
+                                <div className="flex items-center space-x-3 mb-3">
+                                    <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500">
+                                        <IconServer className="w-5 h-5 text-white" />
+                                    </div>
+                                    <h3 className="font-semibold text-white">Network Providers</h3>
+                                </div>
+                                <p className="text-white/70 text-sm">Multiple provider and plan management</p>
                             </div>
-                            <div className="flex items-center space-x-3">
-                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                <span className="text-blue-100">Deadline & Priority Management</span>
+                            
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105">
+                                <div className="flex items-center space-x-3 mb-3">
+                                    <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500">
+                                        <IconCreditCard className="w-5 h-5 text-white" />
+                                    </div>
+                                    <h3 className="font-semibold text-white">Payment Processing</h3>
+                                </div>
+                                <p className="text-white/70 text-sm">Secure payment handling and tracking</p>
                             </div>
-                            <div className="flex items-center space-x-3">
-                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                <span className="text-blue-100">Progress Analytics & Reports</span>
+                            
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105">
+                                <div className="flex items-center space-x-3 mb-3">
+                                    <div className="p-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-500">
+                                        <IconChartBar className="w-5 h-5 text-white" />
+                                    </div>
+                                    <h3 className="font-semibold text-white">Employee Management</h3>
+                                </div>
+                                <p className="text-white/70 text-sm">Staff allocation and task management</p>
+                            </div>
+                        </div>
+
+                        {/* System Status */}
+                        <div className="mt-6 p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full animate-pulse"></div>
+                                    <span className="text-white">System Status: Online</span>
+                                </div>
+                                <span className="text-white/60 text-sm">Ready for Management</span>
                             </div>
                         </div>
                     </div>
@@ -337,22 +390,27 @@ const LoginBoxed = () => {
                     <div className="flex justify-center lg:justify-end">
                         <div
                             ref={desktopFormRef}
-                            className="relative w-full max-w-md rounded-2xl border border-white/20 bg-white/95 backdrop-blur-xl p-8 shadow-2xl transition-all duration-500"
+                            className="relative w-full max-w-md rounded-3xl border border-white/30 bg-white/95 backdrop-blur-xl p-10 shadow-2xl transition-all duration-500"
                             style={{
-                                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+                                boxShadow: '0 30px 80px rgba(0, 0, 0, 0.4)',
                             }}
                         >
-                            {/* Form Header with Company Logo */}
-                            <div className="mb-8 text-center">
-                                <div className="flex justify-center mb-4">
-                                    <img style={{ width: '200px', height: '40px' }} className="flex-none drop-shadow-2xl filter brightness-110" src="/assets/images/Optimangle_logo.png" alt="logo" />
+                            {/* Form Header */}
+                            <div className="mb-10 text-center">
+                                <div className="flex justify-center mb-6">
+                                    <img 
+                                        src="/assets/images/Optimangle_logo.png" 
+                                        alt="SKISP Logo" 
+                                        className="w-48 h-auto"
+                                    />
                                 </div>
-                                <p className="text-gray-600 text-sm">Enter your credentials to access the task management system</p>
+                                <h2 className="text-3xl font-bold text-gray-800 mb-2">Admin Login</h2>
+                                <p className="text-gray-600 text-sm">Access the administration panel</p>
                             </div>
 
-                            <form className="space-y-6" onSubmit={submitForm}>
+                            <form className="space-y-7" onSubmit={submitForm}>
                                 {/* Username Field */}
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     <label htmlFor="desktop-username" className="block text-sm font-semibold text-gray-700">
                                         Username
                                     </label>
@@ -364,8 +422,8 @@ const LoginBoxed = () => {
                                             onChange={(e) => setUsername(e.target.value)}
                                             onFocus={() => handleFocus('username')}
                                             onBlur={() => handleBlur('username')}
-                                            placeholder="Enter your username"
-                                            className="w-full rounded-xl border border-gray-300 bg-white px-12 py-4 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:shadow-lg text-base outline-none"
+                                            placeholder="Enter admin username"
+                                            className="w-full rounded-xl border border-gray-300 bg-white px-12 py-4 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-purple-600 focus:ring-2 focus:ring-purple-200 focus:shadow-lg text-base outline-none"
                                         />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2 text-gray-400">
                                             <IconUser className="w-5 h-5" />
@@ -374,7 +432,7 @@ const LoginBoxed = () => {
                                 </div>
 
                                 {/* Password Field */}
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     <label htmlFor="desktop-password" className="block text-sm font-semibold text-gray-700">
                                         Password
                                     </label>
@@ -387,7 +445,7 @@ const LoginBoxed = () => {
                                             onFocus={() => handleFocus('password')}
                                             onBlur={() => handleBlur('password')}
                                             placeholder="Enter your password"
-                                            className="w-full rounded-xl border border-gray-300 bg-white px-12 py-4 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:shadow-lg text-base outline-none"
+                                            className="w-full rounded-xl border border-gray-300 bg-white px-12 py-4 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:shadow-lg text-base outline-none"
                                         />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2 text-gray-400">
                                             <IconLockDots className="w-5 h-5" />
@@ -402,36 +460,44 @@ const LoginBoxed = () => {
                                     </div>
                                 </div>
 
-                                {/* Submit Button */}
+                                {/* Submit Button with Gradient */}
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className={`w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 py-4 font-semibold text-white shadow-lg transition-all duration-300 transform hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
-                                        isLoading ? 'animate-pulse' : ''
-                                    }`}
+                                    className="w-full rounded-xl py-4 font-semibold text-white shadow-lg transition-all duration-300 transform hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden group"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #ca0002 100%)',
+                                        backgroundSize: '200% 200%',
+                                    }}
                                 >
-                                    {isLoading ? (
-                                        <div className="flex items-center justify-center space-x-2">
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                            <span>Authenticating...</span>
-                                        </div>
-                                    ) : (
-                                        'Access System'
-                                    )}
+                                    <div className="relative z-10">
+                                        {isLoading ? (
+                                            <div className="flex items-center justify-center space-x-2">
+                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                <span>Authenticating...</span>
+                                            </div>
+                                        ) : (
+                                            'Access Admin Panel'
+                                        )}
+                                    </div>
+                                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 </button>
                             </form>
 
-                            {/* Security Notice */}
-                            <div className="mt-8 pt-6 border-t border-gray-200">
-                                <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
-                                    <IconLockDots className="w-4 h-4" />
-                                    <span>Enterprise-grade security & compliance</span>
+                            {/* Admin Instructions */}
+                            <div className="mt-10 pt-6 border-t border-gray-200">
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-semibold text-gray-700 text-center">Admin Access Only</h4>
+                                    <p className="text-xs text-gray-500 text-center">
+                                        This panel is restricted to authorized personnel only. All activities are logged and monitored.
+                                    </p>
                                 </div>
                             </div>
 
                             {/* Version Info */}
-                            <div className="mt-4 text-center">
-                                <p className="text-xs text-gray-400">V.1.0 • KTGT Production</p>
+                            <div className="mt-8 text-center">
+                                <p className="text-xs text-gray-400">SKISP Admin Panel v1.0 • KTGT</p>
+                                <p className="text-xs text-gray-400 mt-1">Network Service Provider Management System</p>
                             </div>
                         </div>
                     </div>
@@ -454,6 +520,27 @@ const LoginBoxed = () => {
                     margin: 0;
                     padding: 0;
                     overflow-x: hidden;
+                }
+
+                @keyframes gradientShift {
+                    0% {
+                        background-position: 0% 50%;
+                    }
+                    50% {
+                        background-position: 100% 50%;
+                    }
+                    100% {
+                        background-position: 0% 50%;
+                    }
+                }
+
+                @keyframes float {
+                    0%, 100% {
+                        transform: translateY(0) translateX(0);
+                    }
+                    50% {
+                        transform: translateY(-20px) translateX(10px);
+                    }
                 }
 
                 .shake-animation {
@@ -486,12 +573,36 @@ const LoginBoxed = () => {
                 @media (max-width: 768px) {
                     input,
                     button {
-                        font-size: 16px; /* Prevent zoom on iOS */
+                        font-size: 16px;
                     }
 
                     button {
-                        min-height: 44px; /* Minimum touch target size */
+                        min-height: 44px;
                     }
+                }
+
+                /* Custom scrollbar */
+                ::-webkit-scrollbar {
+                    width: 10px;
+                }
+
+                ::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 5px;
+                }
+
+                ::-webkit-scrollbar-thumb {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #ca0002 100%);
+                    border-radius: 5px;
+                }
+
+                ::-webkit-scrollbar-thumb:hover {
+                    background: linear-gradient(135deg, #764ba2 0%, #f093fb 25%, #f5576c 50%, #ca0002 75%, #a00000 100%);
+                }
+
+                /* Smooth transitions */
+                * {
+                    transition: background-color 0.3s ease, border-color 0.3s ease;
                 }
             `}</style>
         </div>
