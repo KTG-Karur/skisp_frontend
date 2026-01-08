@@ -14,7 +14,6 @@ import IconCheck from '../Icon/IconCheck';
 import IconBuilding from '../Icon/IconBuilding';
 import IconUsers from '../Icon/IconUsers';
 
-// Import Redux actions for clients/providers
 import { getClient } from '../../redux/clientSlice';
 
 interface Client {
@@ -33,38 +32,44 @@ const Header = () => {
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
 
-    // Get client/provider data from Redux store
     const clientState = useSelector((state: any) => state.ClientSlice || {});
     const allClients: Client[] = clientState.clientData || [];
     const clientLoading = clientState.loading || false;
 
-    // Local state for provider selection
     const [selectedProvider, setSelectedProvider] = useState<string>('');
-    const [selectedProviderName, setSelectedProviderName] = useState<string>('All Providers');
+    const [selectedProviderName, setSelectedProviderName] = useState<string>('Tacitine');
     const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
 
-    // Login data
     const loginDataString = localStorage.getItem('loginInfo');
     const loginData = loginDataString ? JSON.parse(loginDataString) : null;
 
-    // Load providers and selected provider on component mount
     useEffect(() => {
         fetchProviders();
-
-        // Load previously selected provider from localStorage
-        const savedProviderId = localStorage.getItem('selectedProvider');
-        const savedProviderName = localStorage.getItem('selectedProviderName');
-
-        if (savedProviderId !== null) {
-            setSelectedProvider(savedProviderId);
-        }
-
-        if (savedProviderName !== null) {
-            setSelectedProviderName(savedProviderName);
-        }
     }, []);
 
-    // Fetch providers from backend
+    useEffect(() => {
+    if (allClients.length > 0) {
+        const savedProviderId = localStorage.getItem('selectedProvider');
+        const savedProviderName = localStorage.getItem('selectedProviderName');
+        
+        if (savedProviderId && savedProviderName) {
+            setSelectedProvider(savedProviderId);
+            setSelectedProviderName(savedProviderName);
+        } else {
+            const tacitineProvider = allClients.find(client => 
+                client.clientName.toLowerCase() === 'tacitine'
+            ) || allClients[0]; 
+            
+            if (tacitineProvider) {
+                setSelectedProvider(tacitineProvider.id);
+                setSelectedProviderName(tacitineProvider.clientName);
+                localStorage.setItem('selectedProvider', tacitineProvider.id);
+                localStorage.setItem('selectedProviderName', tacitineProvider.clientName);
+            }
+        }
+    }
+}, [allClients]);
+
     const fetchProviders = async () => {
         try {
             await dispatch(getClient() as any);
@@ -73,16 +78,13 @@ const Header = () => {
         }
     };
 
-    // Handle provider selection
     const handleProviderSelect = (providerId: string, providerName: string) => {
         setSelectedProvider(providerId);
         setSelectedProviderName(providerName);
 
-        // Store in localStorage
         localStorage.setItem('selectedProvider', providerId);
         localStorage.setItem('selectedProviderName', providerName);
 
-        // Close dropdown
         setProviderDropdownOpen(false);
 
         console.log(`Selected provider: ${providerName} (ID: ${providerId})`);
@@ -95,20 +97,17 @@ const Header = () => {
         navigate('/auth/boxed-signin?');
     };
 
-    // Get first letter of provider for display
     const getFirstLetter = (fullName: string) => {
         if (!fullName || fullName === 'All Providers') return 'A';
         return fullName.charAt(0).toUpperCase();
     };
 
-    // Get provider color based on first letter
     const getProviderColor = (letter: string) => {
         const colors = ['bg-primary', 'bg-success', 'bg-warning', 'bg-danger', 'bg-info', 'bg-secondary'];
         const index = letter.charCodeAt(0) % colors.length;
         return colors[index];
     };
 
-    // Active navigation highlighting
     useEffect(() => {
         const selector = document.querySelector('ul.horizontal-menu a[href="' + window.location.pathname + '"]');
         if (selector) {
@@ -134,7 +133,6 @@ const Header = () => {
         <header className={`z-40 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
             <div className="shadow-sm">
                 <div className="relative bg-[#fff4e2] flex w-full items-center px-5 py-2.5 dark:bg-black">
-                    {/* Logo and Mobile Menu - UNCHANGED */}
                     <div className="horizontal-logo flex lg:hidden justify-between items-center ltr:mr-2 rtl:ml-2">
                         <Link to="/" className="main-logo flex items-center shrink-0">
                             <img style={{ width: '100px', height: '30px' }} className="flex-none" src="/assets/images/skisp-new-logo copy.png" alt="logo" />
@@ -150,15 +148,13 @@ const Header = () => {
                         </button>
                     </div>
 
-                    {/* Search and Actions - UNCHANGED */}
-                    <div className="ltr:mr-2 rtl:ml-2 hidden sm:block">{/* Original icons commented out */}</div>
+                    <div className="ltr:mr-2 rtl:ml-2 hidden sm:block">
+                    </div>
 
-                    {/* Right side icons - MODIFIED to show Provider dropdown */}
                     <div className="sm:flex-1 ltr:sm:ml-0 ltr:ml-auto sm:rtl:mr-0 rtl:mr-auto flex items-center space-x-1.5 lg:space-x-2 rtl:space-x-reverse dark:text-[#d0d2d6]">
-                        {/* Search - UNCHANGED (commented out) */}
-                        <div className="sm:ltr:mr-auto sm:rtl:ml-auto">{/* Search form remains commented out */}</div>
+                        <div className="sm:ltr:mr-auto sm:rtl:ml-auto">
+                        </div>
 
-                        {/* PROVIDER DROPDOWN - Replaces Notifications */}
                         <div className="dropdown shrink-0">
                             <Dropdown
                                 offset={[0, 8]}
@@ -183,7 +179,6 @@ const Header = () => {
                                 }}
                             >
                                 <ul className="!py-0 text-dark dark:text-white-dark w-64 max-h-80 overflow-y-auto">
-                                    {/* Header */}
                                     <li className="sticky top-0 bg-white dark:bg-dark border-b dark:border-white/10 z-10">
                                         <div className="px-3 py-2.5">
                                             <h4 className="text-sm font-semibold">Select Provider</h4>
@@ -197,7 +192,7 @@ const Header = () => {
                                     ) : allClients.length > 0 ? (
                                         <>
                                             {/* All Providers Option */}
-                                            <li>
+                                            {/* <li>
                                                 <div
                                                     className={`px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${selectedProvider === '' ? 'bg-primary/5' : ''}`}
                                                     onClick={() => handleProviderSelect('', 'All Providers')}
@@ -210,18 +205,17 @@ const Header = () => {
                                                         {selectedProvider === '' && <IconCheck className="w-3.5 h-3.5 text-primary ml-auto" />}
                                                     </div>
                                                 </div>
-                                            </li>
+                                            </li> */}
 
                                             {/* Divider */}
-                                            {allClients.length > 0 && (
+                                            {/* {allClients.length > 0 && (
                                                 <li>
                                                     <div className="px-3 pt-1 pb-0.5">
                                                         <div className="text-xs text-gray-500 uppercase font-medium">Providers</div>
                                                     </div>
                                                 </li>
-                                            )}
+                                            )} */}
 
-                                            {/* Provider List */}
                                             {allClients.map((client: Client) => (
                                                 <li key={client.id}>
                                                     <div
@@ -254,7 +248,6 @@ const Header = () => {
                                         </li>
                                     )}
 
-                                    {/* Footer */}
                                     {allClients.length > 0 && (
                                         <li className="sticky bottom-0 bg-white dark:bg-dark border-t dark:border-white/10">
                                             <div className="px-3 py-2">
@@ -277,7 +270,6 @@ const Header = () => {
                             </Dropdown>
                         </div>
 
-                        {/* User Profile Dropdown - UNCHANGED */}
                         <div className="dropdown shrink-0 flex">
                             <Dropdown
                                 offset={[0, 8]}
@@ -318,8 +310,6 @@ const Header = () => {
                     </div>
                 </div>
 
-                {/* Horizontal Menu - COMPLETELY UNCHANGED */}
-                {/* ... (Keep all the existing menu code as is) ... */}
             </div>
         </header>
     );

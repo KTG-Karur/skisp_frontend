@@ -107,16 +107,18 @@ export const Role = lazy(() => import('../view/master/role'));
 export const CompanyInfo = lazy(() => import('../view/company-info'));
 
 //new for the VMS
-export const Products = lazy(() => import('../view/master/products'));
+export const Plan = lazy(() => import('../view/master/plan'));
 export const Staff = lazy(() => import('../view/master/employee'));
 export const Department = lazy(() => import('../view/master/department'));
 export const Category = lazy(() => import('../view/master/category'));
-export const Client = lazy(() => import('../view/master/client'));
-export const ProductEnquiry = lazy(() => import('../view/productEnquiry'));
+export const Provider = lazy(() => import('../view/master/provider'));
+export const Payment = lazy(() => import('../view/payment'));
 
 //new of asf ev
-export const Events = lazy(() => import('../view/master/event-entry'));
 export const PaymentReport = lazy(() => import('../view/report/pending'));
 export const PlanReport = lazy(() => import('../view/report/task'));
 export const PrintTask = lazy(() => import('../view/documents/payment-report-pdf'));
 export const PlanReportpdf = lazy(()=>import('../view/documents/plan-report-pdf'))
+export const Customer = lazy(() => import('../view/master/customer'));
+export const PendingReport = lazy(() => import('../view/report/pending'));
+export const TaskReport = lazy(() => import('../view/report/task'));
