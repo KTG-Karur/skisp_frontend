@@ -623,7 +623,7 @@ const Widgets = () => {
                 curve: 'smooth',
                 width: 2,
             },
-            colors: ['#4361ee'],
+            colors: ['#ef7f1b'],
             grid: {
                 padding: {
                     top: 5,
@@ -1127,7 +1127,7 @@ const Widgets = () => {
                     </div>
 
                     <div className="panel h-full p-0 border-0 overflow-hidden">
-                        <div className="p-6 bg-gradient-to-r from-[#4361ee] to-[#160f6b] min-h-[190px]">
+                        <div className="p-6 bg-gradient-to-r from-[#ef7f1b] to-[#160f6b] min-h-[190px]">
                             <div className="flex justify-between items-center mb-6">
                                 <div className="bg-black/50 rounded-full p-1 ltr:pr-3 rtl:pl-3 flex items-center text-white font-semibold">
                                     <img className="w-8 h-8 rounded-full border-2 border-white/50 block object-cover ltr:mr-1 rtl:ml-1" src="/assets/images/profile-34.jpeg" alt="avatar" />
@@ -1150,14 +1150,14 @@ const Widgets = () => {
                                     Received
                                     <IconCaretDown className="w-4 h-4 text-success rotate-180" />
                                 </span>
-                                <div className="btn w-full  py-1 text-base shadow-none border-0 bg-[#ebedf2] dark:bg-black text-[#515365] dark:text-[#bfc9d4]">$97.99</div>
+                                <div className="btn w-full  py-1 text-base shadow-none border-0 bg-[#ef7f1b] dark:bg-black text-[#515365] dark:text-[#bfc9d4]">$97.99</div>
                             </div>
                             <div className="bg-white rounded-md shadow px-4 py-2.5 dark:bg-[#060818]">
                                 <span className="flex justify-between items-center mb-4 dark:text-white">
                                     Spent
                                     <IconCaretDown className="w-4 h-4 text-danger" />
                                 </span>
-                                <div className="btn w-full  py-1 text-base shadow-none border-0 bg-[#ebedf2] dark:bg-black text-[#515365] dark:text-[#bfc9d4]">$53.00</div>
+                                <div className="btn w-full  py-1 text-base shadow-none border-0 bg-[#ef7f1b] dark:bg-black text-[#515365] dark:text-[#bfc9d4]">$53.00</div>
                             </div>
                         </div>
                         <div className="p-5">
@@ -1500,7 +1500,7 @@ const Widgets = () => {
                         <div className="flex items-center justify-between">
                             <div className="w-full rounded-full h-5 p-1 bg-dark-light overflow-hidden shadow-3xl dark:shadow-none dark:bg-dark-light/10">
                                 <div
-                                    className="bg-gradient-to-r from-[#4361ee] to-[#805dca] w-full h-full rounded-full relative before:absolute before:inset-y-0 ltr:before:right-0.5 rtl:before:left-0.5 before:bg-white before:w-2 before:h-2 before:rounded-full before:m-auto"
+                                    className="bg-gradient-to-r from-[#ef7f1b] to-[#805dca] w-full h-full rounded-full relative before:absolute before:inset-y-0 ltr:before:right-0.5 rtl:before:left-0.5 before:bg-white before:w-2 before:h-2 before:rounded-full before:m-auto"
                                     style={{ width: '65%' }}
                                 ></div>
                             </div>
@@ -1517,7 +1517,7 @@ const Widgets = () => {
 
                             <div className="relative text-xl whitespace-nowrap">
                                 $ 41,741.42
-                                <span className="table text-[#d3d3d3] bg-[#4361ee] rounded p-1 text-xs mt-1 ltr:ml-auto rtl:mr-auto">+ 2453</span>
+                                <span className="table text-[#d3d3d3] bg-[#ef7f1b] rounded p-1 text-xs mt-1 ltr:ml-auto rtl:mr-auto">+ 2453</span>
                             </div>
                         </div>
                         <div className="flex items-center justify-between z-10">
@@ -1529,7 +1529,7 @@ const Widgets = () => {
                                     <IconCreditCard />
                                 </button>
                             </div>
-                            <button type="button" className="shadow-[0_0_2px_0_#bfc9d4] rounded p-1 text-white-light hover:bg-[#4361ee] z-10">
+                            <button type="button" className="shadow-[0_0_2px_0_#bfc9d4] rounded p-1 text-white-light hover:bg-[#ef7f1b] z-10">
                                 Upgrade
                             </button>
                         </div>

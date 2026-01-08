@@ -626,7 +626,7 @@ const Basic = () => {
     }, [sortStatus]);
 
     const randomColor = () => {
-        const color = ['#4361ee', '#805dca', '#00ab55', '#e7515a', '#e2a03f', '#2196f3'];
+        const color = ['#ef7f1b', '#805dca', '#00ab55', '#e7515a', '#e2a03f', '#2196f3'];
         const random = Math.floor(Math.random() * color.length);
         return color[random];
     };
@@ -728,7 +728,7 @@ const Basic = () => {
                                 accessor: 'age',
                                 title: 'Progress',
                                 render: () => (
-                                    <div className="w-4/5 min-w-[100px] h-2.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex">
+                                    <div className="w-4/5 min-w-[100px] h-2.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex">
                                         <div
                                             className={`h-2.5 rounded-full rounded-bl-full text-center text-white text-xs bg-${randomStatusColor()}`}
                                             style={{ width: `${getRandomNumber(15, 100)}%` }}

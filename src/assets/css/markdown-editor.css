@@ -9,7 +9,7 @@
 }
 
 .markdown-editor .editor-toolbar,
-.markdown-editor .EasyMDEContainer .CodeMirror{
+.markdown-editor .EasyMDEContainer .CodeMirror {
     border-color: #ccc;
     color: #0e1726;
 }
@@ -19,8 +19,9 @@
     color: #888ea8 !important;
 }
 
-.dark .markdown-editor .editor-toolbar button.active, .editor-toolbar button:hover {
+.dark .markdown-editor .editor-toolbar button.active,
+.editor-toolbar button:hover {
     background-color: transparent !important;
     border-color: transparent !important;
-    color: #4361ee;
+    color: #ef7f1b;
 }

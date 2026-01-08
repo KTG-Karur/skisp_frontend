@@ -725,7 +725,7 @@ const Crypto = () => {
             markers: {
                 size: 0,
             },
-            colors: ['#4361ee'],
+            colors: ['#ef7f1b'],
             grid: {
                 padding: {
                     top: 0,
@@ -803,7 +803,7 @@ const Crypto = () => {
                 <div
                     className={`${
                         isShowCryptoMenu ? '!block h-full xl:h-auto' : ''
-                    } panel absolute xl:relative p-0 flex-none w-80 border-0 overflow-y-auto z-10 xl:block divide-y divide-[#ebedf2] dark:divide-[#191e3a] hidden`}
+                    } panel absolute xl:relative p-0 flex-none w-80 border-0 overflow-y-auto z-10 xl:block divide-y divide-[#ef7f1b] dark:divide-[#191e3a] hidden`}
                 >
                     {coins.map((item) => {
                         return (
@@ -844,7 +844,7 @@ const Crypto = () => {
                 ></div>
 
                 <div className="panel p-0 flex-1">
-                    <div className="md:flex items-center flex-wrap p-4 border-b border-[#ebedf2] dark:border-[#191e3a]">
+                    <div className="md:flex items-center flex-wrap p-4 border-b border-[#ef7f1b] dark:border-[#191e3a]">
                         <div className="flex-1 flex items-start ltr:pr-4 rtl:pl-4">
                             <button onClick={() => setIsShowCryptoMenu(!isShowCryptoMenu)} type="button" className="xl:hidden hover:text-primary block ltr:mr-5 rtl:ml-5">
                                 <IconMenu />
@@ -862,7 +862,7 @@ const Crypto = () => {
                                 </div>
                             </div>
                         </div>
-                        <ul className="ltr:md:ml-auto rtl:md:mr-auto grid grid-cols-2 sm:grid-cols-4 font-semibold sm:divide-x rtl:divide-x-reverse divide-[#ebedf2] dark:divide-[#253b5c] text-white-dark mt-5 sm:mt-0">
+                        <ul className="ltr:md:ml-auto rtl:md:mr-auto grid grid-cols-2 sm:grid-cols-4 font-semibold sm:divide-x rtl:divide-x-reverse divide-[#ef7f1b] dark:divide-[#253b5c] text-white-dark mt-5 sm:mt-0">
                             <li className="px-4 py-1">
                                 Market Cap
                                 <span className="text-lg mt-1.5 block text-black dark:text-white-light">${currentCoin.marketcap}B</span>
@@ -881,7 +881,7 @@ const Crypto = () => {
                             </li>
                         </ul>
                     </div>
-                    <div className="p-4 mb-5 border-b border-[#ebedf2] dark:border-[#253b5c] grid grid-rows-1 sm:grid-cols-4 gap-4">
+                    <div className="p-4 mb-5 border-b border-[#ef7f1b] dark:border-[#253b5c] grid grid-rows-1 sm:grid-cols-4 gap-4">
                         <div>
                             <div className="font-semibold mb-1.5">Action</div>
                             <select className="form-select text-white-dark">

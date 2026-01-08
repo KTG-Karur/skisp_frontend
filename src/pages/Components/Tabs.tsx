@@ -116,7 +116,7 @@ const Tabs = () => {
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -201,7 +201,7 @@ import { Fragment } from 'react';
                     <img
                         src="/assets/images/profile-34.jpeg"
                         alt="img"
-                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                     />
                 </div>
                 <div className="flex-auto">
@@ -298,7 +298,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -383,7 +383,7 @@ import { Fragment } from 'react';
                     <img
                         src="/assets/images/profile-34.jpeg"
                         alt="img"
-                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                     />
                 </div>
                 <div className="flex-auto">
@@ -486,7 +486,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -574,7 +574,7 @@ import { Fragment } from 'react';
                     <img
                         src="/assets/images/profile-34.jpeg"
                         alt="img"
-                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                     />
                 </div>
                 <div className="flex-auto">
@@ -677,7 +677,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -768,7 +768,7 @@ import { Fragment } from 'react';
                     <img
                         src="/assets/images/profile-34.jpeg"
                         alt="img"
-                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                     />
                 </div>
                 <div className="flex-auto">
@@ -880,7 +880,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -981,7 +981,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -1086,7 +1086,7 @@ import { Fragment } from 'react';
                                     <Tab.Panel>
                                         <div className="flex items-start">
                                             <div className="h-20 w-20 flex-none ltr:mr-4 rtl:ml-4">
-                                                <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark" />
+                                                <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark" />
                                             </div>
                                             <div className="flex-auto">
                                                 <h5 className="mb-4 text-xl font-medium">Media heading</h5>
@@ -1169,7 +1169,7 @@ import { Fragment } from 'react';
                     <img
                         src="/assets/images/profile-34.jpeg"
                         alt="img"
-                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                     />
                 </div>
                 <div className="flex-auto">
@@ -1278,7 +1278,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -1384,7 +1384,7 @@ import { Fragment } from 'react';
                     <img
                         src="/assets/images/profile-34.jpeg"
                         alt="img"
-                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                     />
                 </div>
                 <div className="flex-auto">
@@ -1492,7 +1492,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -1579,7 +1579,7 @@ import { Fragment } from 'react';
                     <img
                         src="/assets/images/profile-34.jpeg"
                         alt="img"
-                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                     />
                 </div>
                 <div className="flex-auto">
@@ -1677,7 +1677,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -1764,7 +1764,7 @@ import { Fragment } from 'react';
                     <img
                         src="/assets/images/profile-34.jpeg"
                         alt="img"
-                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                     />
                 </div>
                 <div className="flex-auto">
@@ -1891,7 +1891,7 @@ import { Fragment } from 'react';
                                     <Tab.Panel>
                                         <div className="flex items-start">
                                             <div className="h-20 w-20 flex-none ltr:mr-4 rtl:ml-4">
-                                                <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark" />
+                                                <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark" />
                                             </div>
                                             <div className="flex-auto">
                                                 <h5 className="mb-4 text-xl font-medium">Media heading</h5>
@@ -1992,7 +1992,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -2110,7 +2110,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -2199,7 +2199,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -2304,7 +2304,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -2393,7 +2393,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -2492,7 +2492,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -2581,7 +2581,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -2677,7 +2677,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -2766,7 +2766,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -2862,7 +2862,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -2951,7 +2951,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -3047,7 +3047,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -3136,7 +3136,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -3246,7 +3246,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -3355,7 +3355,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -3466,7 +3466,7 @@ import { Fragment } from 'react';
                                     </Tab.Panel>
                                     <Tab.Panel className="flex items-start">
                                         <div className="h-20 w-20 flex-none ltr:mr-4 rtl:ml-4">
-                                            <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark" />
+                                            <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark" />
                                         </div>
                                         <div className="flex-auto">
                                             <h5 className="mb-4 text-xl font-medium">Media heading</h5>
@@ -3568,7 +3568,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -3682,7 +3682,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -3773,7 +3773,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -3871,7 +3871,7 @@ import { Fragment } from 'react';
                                                     <img
                                                         src="/assets/images/profile-34.jpeg"
                                                         alt="img"
-                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                        className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                     />
                                                 </div>
                                                 <div className="flex-auto">
@@ -3962,7 +3962,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -4070,7 +4070,7 @@ import { Fragment } from 'react';
                                     <Tab.Panel>
                                         <div className="flex items-start">
                                             <div className="h-20 w-20 flex-none ltr:mr-4 rtl:ml-4">
-                                                <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark" />
+                                                <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark" />
                                             </div>
                                             <div className="flex-auto">
                                                 <h5 className="mb-4 text-xl font-medium">Media heading</h5>
@@ -4166,7 +4166,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">
@@ -4284,7 +4284,7 @@ import { Fragment } from 'react';
                                     <Tab.Panel>
                                         <div className="flex items-start">
                                             <div className="h-20 w-20 flex-none ltr:mr-4 rtl:ml-4">
-                                                <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark" />
+                                                <img src="/assets/images/profile-34.jpeg" alt="img" className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark" />
                                             </div>
                                             <div className="flex-auto">
                                                 <h5 className="mb-4 text-xl font-medium">Media heading</h5>
@@ -4380,7 +4380,7 @@ import { Fragment } from 'react';
                         <img
                             src="/assets/images/profile-34.jpeg"
                             alt="img"
-                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                         />
                     </div>
                     <div className="flex-auto">

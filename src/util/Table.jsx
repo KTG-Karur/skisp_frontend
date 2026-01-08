@@ -23,7 +23,7 @@ const GlobalFilter = ({ preGlobalFilteredRows, globalFilter, setGlobalFilter, se
                 <input
                     type="text"
                     placeholder="Search..."
-                    className="form-input py-2 pr-10 pl-3 border border-gray-300 rounded-md focus:ring-primary focus:border-primary w-full"
+                    className="form-input  border border-gray-300 rounded-md focus:ring-primary focus:border-primary w-full"
                     value={value || ''}
                     onChange={(e) => {
                         setValue(e.target.value);
@@ -161,7 +161,7 @@ const Table = ({ ...props }) => {
     const rows = dataTable.page; // Use page instead of rows for paginated data
 
     return (
-        <div className="w-full m-5">
+        <div className="w-full ">
             <div className="p-4 bg-white shadow rounded-lg">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4">
                     {Title && <h2 className="text-xl font-semibold">{Title}</h2>}

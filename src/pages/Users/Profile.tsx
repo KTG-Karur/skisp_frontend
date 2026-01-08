@@ -115,7 +115,7 @@ const Profile = () => {
                                         <tr>
                                             <td>Figma Design</td>
                                             <td>
-                                                <div className="h-1.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex w-full">
+                                                <div className="h-1.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex w-full">
                                                     <div className="bg-danger rounded-full w-[29.56%]"></div>
                                                 </div>
                                             </td>
@@ -125,7 +125,7 @@ const Profile = () => {
                                         <tr>
                                             <td>Vue Migration</td>
                                             <td>
-                                                <div className="h-1.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex w-full">
+                                                <div className="h-1.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex w-full">
                                                     <div className="bg-info rounded-full w-1/2"></div>
                                                 </div>
                                             </td>
@@ -135,7 +135,7 @@ const Profile = () => {
                                         <tr>
                                             <td>Flutter App</td>
                                             <td>
-                                                <div className="h-1.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex w-full">
+                                                <div className="h-1.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex w-full">
                                                     <div className="bg-warning rounded-full  w-[39%]"></div>
                                                 </div>
                                             </td>
@@ -145,7 +145,7 @@ const Profile = () => {
                                         <tr>
                                             <td>API Integration</td>
                                             <td>
-                                                <div className="h-1.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex w-full">
+                                                <div className="h-1.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex w-full">
                                                     <div className="bg-success rounded-full  w-[78.03%]"></div>
                                                 </div>
                                             </td>
@@ -156,7 +156,7 @@ const Profile = () => {
                                         <tr>
                                             <td>Blog Update</td>
                                             <td>
-                                                <div className="h-1.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex w-full">
+                                                <div className="h-1.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex w-full">
                                                     <div className="bg-secondary  rounded-full  w-full"></div>
                                                 </div>
                                             </td>
@@ -166,7 +166,7 @@ const Profile = () => {
                                         <tr>
                                             <td>Landing Page</td>
                                             <td>
-                                                <div className="h-1.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex w-full">
+                                                <div className="h-1.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex w-full">
                                                     <div className="bg-danger rounded-full  w-[19.15%]"></div>
                                                 </div>
                                             </td>
@@ -176,7 +176,7 @@ const Profile = () => {
                                         <tr>
                                             <td>Shopify Dev</td>
                                             <td>
-                                                <div className="h-1.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex w-full">
+                                                <div className="h-1.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex w-full">
                                                     <div className="bg-primary rounded-full w-[60.55%]"></div>
                                                 </div>
                                             </td>
@@ -195,7 +195,7 @@ const Profile = () => {
                             <h5 className="font-semibold text-lg dark:text-white-light">Summary</h5>
                         </div>
                         <div className="space-y-4">
-                            <div className="border border-[#ebedf2] rounded dark:bg-[#1b2e4b] dark:border-0">
+                            <div className="border border-[#ef7f1b] rounded dark:bg-[#1b2e4b] dark:border-0">
                                 <div className="flex items-center justify-between p-4 py-2">
                                     <div className="grid place-content-center w-9 h-9 rounded-md bg-secondary-light dark:bg-secondary text-secondary dark:text-secondary-light">
                                         <IconShoppingBag />
@@ -209,7 +209,7 @@ const Profile = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="border border-[#ebedf2] rounded dark:bg-[#1b2e4b] dark:border-0">
+                            <div className="border border-[#ef7f1b] rounded dark:bg-[#1b2e4b] dark:border-0">
                                 <div className="flex items-center justify-between p-4 py-2">
                                     <div className="grid place-content-center w-9 h-9 rounded-md bg-info-light dark:bg-info text-info dark:text-info-light">
                                         <IconTag />
@@ -223,7 +223,7 @@ const Profile = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="border border-[#ebedf2] rounded dark:bg-[#1b2e4b] dark:border-0">
+                            <div className="border border-[#ef7f1b] rounded dark:bg-[#1b2e4b] dark:border-0">
                                 <div className="flex items-center justify-between p-4 py-2">
                                     <div className="grid place-content-center w-9 h-9 rounded-md bg-warning-light dark:bg-warning text-warning dark:text-warning-light">
                                         <IconCreditCard />
@@ -266,7 +266,7 @@ const Profile = () => {
                             <h5 className="font-semibold text-lg dark:text-white-light">Payment History</h5>
                         </div>
                         <div>
-                            <div className="border-b border-[#ebedf2] dark:border-[#1b2e4b]">
+                            <div className="border-b border-[#ef7f1b] dark:border-[#1b2e4b]">
                                 <div className="flex items-center justify-between py-2">
                                     <h6 className="text-[#515365] font-semibold dark:text-white-dark">
                                         March
@@ -294,7 +294,7 @@ const Profile = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="border-b border-[#ebedf2] dark:border-[#1b2e4b]">
+                            <div className="border-b border-[#ef7f1b] dark:border-[#1b2e4b]">
                                 <div className="flex items-center justify-between py-2">
                                     <h6 className="text-[#515365] font-semibold dark:text-white-dark">
                                         February
@@ -347,7 +347,7 @@ const Profile = () => {
                             <h5 className="font-semibold text-lg dark:text-white-light">Card Details</h5>
                         </div>
                         <div>
-                            <div className="border-b border-[#ebedf2] dark:border-[#1b2e4b]">
+                            <div className="border-b border-[#ef7f1b] dark:border-[#1b2e4b]">
                                 <div className="flex items-center justify-between py-2">
                                     <div className="flex-none">
                                         <img src="/assets/images/card-americanexpress.svg" alt="img" />
@@ -361,7 +361,7 @@ const Profile = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="border-b border-[#ebedf2] dark:border-[#1b2e4b]">
+                            <div className="border-b border-[#ef7f1b] dark:border-[#1b2e4b]">
                                 <div className="flex items-center justify-between py-2">
                                     <div className="flex-none">
                                         <img src="/assets/images/card-mastercard.svg" alt="img" />

@@ -2132,7 +2132,7 @@ const [modal16, setModal16] = useState(false);
                                                                                         <img
                                                                                             src="/assets/images/profile-34.jpeg"
                                                                                             alt="img"
-                                                                                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ebedf2] dark:ring-white-dark"
+                                                                                            className="m-0 h-20 w-20 rounded-full object-cover ring-2 ring-[#ef7f1b] dark:ring-white-dark"
                                                                                         />
                                                                                     </div>
                                                                                     <div className="flex-auto">
@@ -2656,7 +2656,7 @@ import { Navigation, Pagination } from 'swiper/modules';
                                                                 <img
                                                                     src="/assets/images/profile-34.jpeg"
                                                                     alt="img"
-                                                                    className="w-20 h-20 m-0 rounded-full ring-2 ring-[#ebedf2] dark:ring-white-dark object-cover"
+                                                                    className="w-20 h-20 m-0 rounded-full ring-2 ring-[#ef7f1b] dark:ring-white-dark object-cover"
                                                                 />
                                                             </div>
                                                             <div className="flex-auto">

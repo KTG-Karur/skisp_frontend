@@ -40,7 +40,7 @@ const Charts = () => {
                 type: 'line',
                 toolbar: false,
             },
-            colors: ['#4361EE'],
+            colors: ['#ef7f1b'],
             tooltip: {
                 marker: false,
                 y: {
@@ -304,7 +304,7 @@ const Charts = () => {
                 show: true,
                 width: 1,
             },
-            colors: ['#4361ee'],
+            colors: ['#ef7f1b'],
             xaxis: {
                 categories: ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'],
                 axisBorder: {
@@ -367,7 +367,7 @@ const Charts = () => {
             dataLabels: {
                 enabled: false,
             },
-            colors: ['#2196f3', '#00ab55', '#4361ee'],
+            colors: ['#2196f3', '#00ab55', '#ef7f1b'],
             stroke: {
                 width: [0, 2, 2],
                 curve: 'smooth',
@@ -442,7 +442,7 @@ const Charts = () => {
                     show: false,
                 },
             },
-            colors: ['#4361ee'],
+            colors: ['#ef7f1b'],
             xaxis: {
                 categories: ['January', 'February', 'March', 'April', 'May', 'June'],
             },
@@ -475,7 +475,7 @@ const Charts = () => {
                 },
             },
             labels: ['Team A', 'Team B', 'Team C', 'Team D', 'Team E'],
-            colors: ['#4361ee', '#805dca', '#00ab55', '#e7515a', '#e2a03f'],
+            colors: ['#ef7f1b', '#805dca', '#00ab55', '#e7515a', '#e2a03f'],
             responsive: [
                 {
                     breakpoint: 480,
@@ -513,7 +513,7 @@ const Charts = () => {
                 show: false,
             },
             labels: ['Team A', 'Team B', 'Team C'],
-            colors: ['#4361ee', '#805dca', '#e2a03f'],
+            colors: ['#ef7f1b', '#805dca', '#e2a03f'],
             responsive: [
                 {
                     breakpoint: 480,
@@ -544,7 +544,7 @@ const Charts = () => {
                     show: false,
                 },
             },
-            colors: ['#4361ee', '#805dca', '#00ab55', '#e7515a', '#e2a03f', '#2196f3', '#3b3f5c'],
+            colors: ['#ef7f1b', '#805dca', '#00ab55', '#e7515a', '#e2a03f', '#2196f3', '#3b3f5c'],
             stroke: {
                 show: false,
             },
@@ -591,7 +591,7 @@ const Charts = () => {
                     show: false,
                 },
             },
-            colors: ['#4361ee', '#805dca', '#e2a03f'],
+            colors: ['#ef7f1b', '#805dca', '#e2a03f'],
             grid: {
                 borderColor: isDark ? '#191e3a' : '#e0e6ed',
             },
@@ -667,7 +667,7 @@ const Charts = () => {
                     show: false,
                 },
             },
-            colors: ['#4361ee', '#00ab55'],
+            colors: ['#ef7f1b', '#00ab55'],
             dataLabels: {
                 enabled: false,
             },
@@ -763,7 +763,7 @@ const lineChart: any = {
             type: 'line',
             toolbar: false,
         },
-        colors: ['#4361EE'],
+        colors: ['#ef7f1b'],
         tooltip: {
             marker: false,
             y: {
@@ -1104,7 +1104,7 @@ const barChart: any = {
             show: true,
             width: 1,
         },
-        colors: ['#4361ee'],
+        colors: ['#ef7f1b'],
         xaxis: {
             categories: ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'],
             axisBorder: {
@@ -1184,7 +1184,7 @@ const mixedChart: any = {
         dataLabels: {
             enabled: false,
         },
-        colors: ['#2196f3', '#00ab55', '#4361ee'],
+        colors: ['#2196f3', '#00ab55', '#ef7f1b'],
         stroke: {
             width: [0, 2, 2],
             curve: 'smooth',
@@ -1276,7 +1276,7 @@ const radarChart: any = {
                 show: false,
             },
         },
-        colors: ['#4361ee'],
+        colors: ['#ef7f1b'],
         xaxis: {
             categories: ['January', 'February', 'March', 'April', 'May', 'June'],
         },
@@ -1331,7 +1331,7 @@ const pieChart: any = {
             },
         },
         labels: ['Team A', 'Team B', 'Team C', 'Team D', 'Team E'],
-        colors: ['#4361ee', '#805dca', '#00ab55', '#e7515a', '#e2a03f'],
+        colors: ['#ef7f1b', '#805dca', '#00ab55', '#e7515a', '#e2a03f'],
         responsive: [
             {
                 breakpoint: 480,
@@ -1391,7 +1391,7 @@ const donutChart: any = {
             show: false,
         },
         labels: ['Team A', 'Team B', 'Team C'],
-        colors: ['#4361ee', '#805dca', '#e2a03f'],
+        colors: ['#ef7f1b', '#805dca', '#e2a03f'],
         responsive: [
             {
                 breakpoint: 480,
@@ -1444,7 +1444,7 @@ const polarAreaChart: any = {
                 show: false,
             },
         },
-        colors: ['#4361ee', '#805dca', '#00ab55', '#e7515a', '#e2a03f', '#2196f3', '#3b3f5c'],
+        colors: ['#ef7f1b', '#805dca', '#00ab55', '#e7515a', '#e2a03f', '#2196f3', '#3b3f5c'],
         stroke: {
             show: false,
         },
@@ -1513,7 +1513,7 @@ const radialBarChart: any = {
                 show: false,
             },
         },
-        colors: ['#4361ee', '#805dca', '#e2a03f'],
+        colors: ['#ef7f1b', '#805dca', '#e2a03f'],
         grid: {
             borderColor: isDark ? '#191e3a' : '#e0e6ed',
         },
@@ -1595,7 +1595,7 @@ const bubbleChart: any = {
                 show: false,
             },
         },
-        colors: ['#4361ee', '#00ab55'],
+        colors: ['#ef7f1b', '#00ab55'],
         dataLabels: {
             enabled: false,
         },

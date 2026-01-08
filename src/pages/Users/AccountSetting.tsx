@@ -38,7 +38,7 @@ const AccountSetting = () => {
                     <h5 className="font-semibold text-lg dark:text-white-light">Settings</h5>
                 </div>
                 <div>
-                    <ul className="sm:flex font-semibold border-b border-[#ebedf2] dark:border-[#191e3a] mb-5 whitespace-nowrap overflow-y-auto">
+                    <ul className="sm:flex font-semibold border-b border-[#ef7f1b] dark:border-[#191e3a] mb-5 whitespace-nowrap overflow-y-auto">
                         <li className="inline-block">
                             <button
                                 onClick={() => toggleTabs('home')}
@@ -79,7 +79,7 @@ const AccountSetting = () => {
                 </div>
                 {tabs === 'home' ? (
                     <div>
-                        <form className="border border-[#ebedf2] dark:border-[#191e3a] rounded-md p-4 mb-5 bg-white dark:bg-black">
+                        <form className="border border-[#ef7f1b] dark:border-[#191e3a] rounded-md p-4 mb-5 bg-white dark:bg-black">
                             <h6 className="text-lg font-bold mb-5">General Information</h6>
                             <div className="flex flex-col sm:flex-row">
                                 <div className="ltr:sm:mr-4 rtl:sm:ml-4 w-full sm:w-2/12 mb-5">
@@ -141,7 +141,7 @@ const AccountSetting = () => {
                                 </div>
                             </div>
                         </form>
-                        <form className="border border-[#ebedf2] dark:border-[#191e3a] rounded-md p-4 bg-white dark:bg-black">
+                        <form className="border border-[#ef7f1b] dark:border-[#191e3a] rounded-md p-4 bg-white dark:bg-black">
                             <h6 className="text-lg font-bold mb-5">Social</h6>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="flex">
@@ -186,7 +186,7 @@ const AccountSetting = () => {
                                     </p>
                                 </div>
                                 <div className="mb-5">
-                                    <div className="border-b border-[#ebedf2] dark:border-[#1b2e4b]">
+                                    <div className="border-b border-[#ef7f1b] dark:border-[#1b2e4b]">
                                         <div className="flex items-start justify-between py-3">
                                             <h6 className="text-[#515365] font-bold dark:text-white-dark text-[15px]">
                                                 Address #1
@@ -197,7 +197,7 @@ const AccountSetting = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="border-b border-[#ebedf2] dark:border-[#1b2e4b]">
+                                    <div className="border-b border-[#ef7f1b] dark:border-[#1b2e4b]">
                                         <div className="flex items-start justify-between py-3">
                                             <h6 className="text-[#515365] font-bold dark:text-white-dark text-[15px]">
                                                 Address #2
@@ -231,7 +231,7 @@ const AccountSetting = () => {
                                     </p>
                                 </div>
                                 <div className="mb-5">
-                                    <div className="border-b border-[#ebedf2] dark:border-[#1b2e4b]">
+                                    <div className="border-b border-[#ef7f1b] dark:border-[#1b2e4b]">
                                         <div className="flex items-start justify-between py-3">
                                             <div className="flex-none ltr:mr-4 rtl:ml-4">
                                                 <img src="/assets/images/card-americanexpress.svg" alt="img" />
@@ -245,7 +245,7 @@ const AccountSetting = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="border-b border-[#ebedf2] dark:border-[#1b2e4b]">
+                                    <div className="border-b border-[#ef7f1b] dark:border-[#1b2e4b]">
                                         <div className="flex items-start justify-between py-3">
                                             <div className="flex-none ltr:mr-4 rtl:ml-4">
                                                 <img src="/assets/images/card-mastercard.svg" alt="img" />
@@ -415,7 +415,7 @@ const AccountSetting = () => {
                                 </p>
                                 <label className="w-12 h-6 relative">
                                     <input type="checkbox" className="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" id="custom_switch_checkbox1" />
-                                    <span className="bg-[#ebedf2] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
+                                    <span className="bg-[#ef7f1b] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
                                 </label>
                             </div>
                             <div className="panel space-y-5">
@@ -425,7 +425,7 @@ const AccountSetting = () => {
                                 </p>
                                 <label className="w-12 h-6 relative">
                                     <input type="checkbox" className="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" id="custom_switch_checkbox2" />
-                                    <span className="bg-[#ebedf2] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
+                                    <span className="bg-[#ef7f1b] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
                                 </label>
                             </div>
                             <div className="panel space-y-5">
@@ -435,7 +435,7 @@ const AccountSetting = () => {
                                 </p>
                                 <label className="w-12 h-6 relative">
                                     <input type="checkbox" className="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" id="custom_switch_checkbox3" />
-                                    <span className="bg-[#ebedf2] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
+                                    <span className="bg-[#ef7f1b] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
                                 </label>
                             </div>
                             <div className="panel space-y-5">
@@ -445,7 +445,7 @@ const AccountSetting = () => {
                                 </p>
                                 <label className="w-12 h-6 relative">
                                     <input type="checkbox" className="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" id="custom_switch_checkbox4" />
-                                    <span className="bg-[#ebedf2] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
+                                    <span className="bg-[#ef7f1b] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
                                 </label>
                             </div>
                             <div className="panel space-y-5">
@@ -455,7 +455,7 @@ const AccountSetting = () => {
                                 </p>
                                 <label className="w-12 h-6 relative">
                                     <input type="checkbox" className="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" id="custom_switch_checkbox5" />
-                                    <span className="bg-[#ebedf2] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
+                                    <span className="bg-[#ef7f1b] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
                                 </label>
                             </div>
                             <div className="panel space-y-5">
@@ -465,7 +465,7 @@ const AccountSetting = () => {
                                 </p>
                                 <label className="w-12 h-6 relative">
                                     <input type="checkbox" className="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" id="custom_switch_checkbox6" />
-                                    <span className="bg-[#ebedf2] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
+                                    <span className="bg-[#ef7f1b] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white  dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
                                 </label>
                             </div>
                         </div>
@@ -486,7 +486,7 @@ const AccountSetting = () => {
                                 <p>You will not be able to receive messages, notifications for up to 24 hours.</p>
                                 <label className="w-12 h-6 relative">
                                     <input type="checkbox" className="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" id="custom_switch_checkbox7" />
-                                    <span className="bg-[#ebedf2] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
+                                    <span className="bg-[#ef7f1b] dark:bg-dark block h-full rounded-full before:absolute before:left-1 before:bg-white dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 before:rounded-full peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300"></span>
                                 </label>
                             </div>
                             <div className="panel space-y-5">

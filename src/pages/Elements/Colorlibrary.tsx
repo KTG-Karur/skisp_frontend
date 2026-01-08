@@ -24,9 +24,7 @@ const Colorlibrary = () => {
                 {/* main */}
                 <div>
                     <div className="w-fit mb-5">
-                        <h5 className="font-semibold text-base text-success bg-success/20 rounded px-3 py-1">
-                            Main Colors
-                        </h5>
+                        <h5 className="font-semibold text-base text-success bg-success/20 rounded px-3 py-1">Main Colors</h5>
                     </div>
                     <div className="mb-5">
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-7 font-semibold dark:text-white-dark mb-7">
@@ -34,7 +32,7 @@ const Colorlibrary = () => {
                                 <div className="w-20 h-[84px] -m-2.5 ltr:mr-4 rtl:ml-4 ltr:rounded-l-md rtl:rounded-r-md transition-all duration-700 group-hover:scale-110 bg-primary"></div>
                                 <div>
                                     <h5 className="text-sm sm:text-base">Primary</h5>
-                                    <span className="text-white-dark">#4361ee</span>
+                                    <span className="text-white-dark">#ef7f1b</span>
                                 </div>
                             </div>
                             <div className="panel p-2.5 rounded-md flex items-center group">
@@ -165,9 +163,7 @@ const Colorlibrary = () => {
                 {/* more */}
                 <div>
                     <div className="w-fit mb-5">
-                        <h5 className="font-semibold text-sm sm:text-base text-success bg-success/20 rounded px-3 py-1">
-                            More Colors
-                        </h5>
+                        <h5 className="font-semibold text-sm sm:text-base text-success bg-success/20 rounded px-3 py-1">More Colors</h5>
                     </div>
                     <div>
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-7 font-semibold dark:text-white-dark">

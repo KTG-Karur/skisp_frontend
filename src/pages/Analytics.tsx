@@ -241,7 +241,7 @@ const Analytics = () => {
                 curve: 'smooth',
                 width: 2,
             },
-            colors: ['#4361ee'],
+            colors: ['#ef7f1b'],
             grid: {
                 padding: {
                     top: 5,
@@ -450,7 +450,7 @@ const Analytics = () => {
                         <div className="flex items-center justify-between">
                             <div className="w-full rounded-full h-5 p-1 bg-dark-light overflow-hidden shadow-3xl dark:shadow-none dark:bg-dark-light/10">
                                 <div
-                                    className="bg-gradient-to-r from-[#4361ee] to-[#805dca] w-full h-full rounded-full relative before:absolute before:inset-y-0 ltr:before:right-0.5 rtl:before:left-0.5 before:bg-white before:w-2 before:h-2 before:rounded-full before:m-auto"
+                                    className="bg-gradient-to-r from-[#ef7f1b] to-[#805dca] w-full h-full rounded-full relative before:absolute before:inset-y-0 ltr:before:right-0.5 rtl:before:left-0.5 before:bg-white before:w-2 before:h-2 before:rounded-full before:m-auto"
                                     style={{ width: '65%' }}
                                 ></div>
                             </div>
@@ -467,7 +467,7 @@ const Analytics = () => {
 
                             <div className="relative text-xl whitespace-nowrap">
                                 $ 41,741.42
-                                <span className="table text-[#d3d3d3] bg-[#4361ee] rounded p-1 text-xs mt-1 ltr:ml-auto rtl:mr-auto">+ 2453</span>
+                                <span className="table text-[#d3d3d3] bg-[#ef7f1b] rounded p-1 text-xs mt-1 ltr:ml-auto rtl:mr-auto">+ 2453</span>
                             </div>
                         </div>
                         <div className="flex items-center justify-between z-10">
@@ -479,7 +479,7 @@ const Analytics = () => {
                                     <IconCreditCard />
                                 </button>
                             </div>
-                            <button type="button" className="shadow-[0_0_2px_0_#bfc9d4] rounded p-1 text-white-light hover:bg-[#4361ee] z-10">
+                            <button type="button" className="shadow-[0_0_2px_0_#bfc9d4] rounded p-1 text-white-light hover:bg-[#ef7f1b] z-10">
                                 Upgrade
                             </button>
                         </div>

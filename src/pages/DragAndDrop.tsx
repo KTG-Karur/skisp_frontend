@@ -285,7 +285,7 @@ const DragAndDrop = () => {
                                                             <div className="text-white-dark text-xs">{item.name}</div>
                                                         </div>
                                                         <div className="text-white-dark">
-                                                            <span className="handle px-2 ltr:mr-1 rtl:ml-1 bg-[#ebedf2] dark:bg-black rounded cursor-move">+</span>
+                                                            <span className="handle px-2 ltr:mr-1 rtl:ml-1 bg-[#ef7f1b] dark:bg-black rounded cursor-move">+</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -312,7 +312,7 @@ const DragAndDrop = () => {
                                                             <div className="text-white-dark text-xs">{item.name}</div>
                                                         </div>
                                                         <div className="text-white-dark">
-                                                            <span className="handle px-2 ltr:mr-1 rtl:ml-1 bg-[#ebedf2] dark:bg-black rounded cursor-move">+</span>
+                                                            <span className="handle px-2 ltr:mr-1 rtl:ml-1 bg-[#ef7f1b] dark:bg-black rounded cursor-move">+</span>
                                                         </div>
                                                     </div>
                                                 </div>

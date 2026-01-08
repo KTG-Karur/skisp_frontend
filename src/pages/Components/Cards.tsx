@@ -429,7 +429,7 @@ const Cards = () => {
                             </div>
                             <div className="text-right">
                                 <span className="text-primary font-semibold">60%</span>
-                                <div className="bg-[#ebedf2] dark:bg-black rounded-full w-full h-1.5 mt-1.5">
+                                <div className="bg-[#ef7f1b] dark:bg-black rounded-full w-full h-1.5 mt-1.5">
                                     <div className="rounded-full bg-primary h-full" style={{ width: '60%' }}></div>
                                 </div>
                             </div>
@@ -464,7 +464,7 @@ const Cards = () => {
     </div>
     <div className="text-right">
         <span className="text-primary font-semibold">60%</span>
-        <div className="bg-[#ebedf2] dark:bg-black rounded-full w-full h-1.5 mt-1.5">
+        <div className="bg-[#ef7f1b] dark:bg-black rounded-full w-full h-1.5 mt-1.5">
             <div className="rounded-full bg-primary h-full" style={{ width: '60%' }}></div>
         </div>
     </div>
