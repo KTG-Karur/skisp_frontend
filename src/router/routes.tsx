@@ -29,8 +29,9 @@ import {
     LoginBoxed,
     Payment,
     PrintTask,
-    PendingReport,
-    TaskReport,
+    PaymentReport,
+    PlanReport,
+    PlanReportpdf,
 } from './Route_Menu';
 
 const loading = () => <div className=""></div>;
@@ -246,12 +247,12 @@ const routes = [
         element: <Plan/>,
     },
     {
-        path: '/reports/pending-report',
-        element: <PendingReport/>,
+        path: '/reports/payment-report',
+        element: <PaymentReport/>,
     },
     {
-        path: '/reports/task-report',
-        element: <TaskReport/>,
+        path: '/reports/plan-report',
+        element: <PlanReport/>,
     },
     //old
     {
@@ -287,6 +288,10 @@ const routes = [
     {
         path: '/documents/print-task',
         element: <PrintTask />,
+    },
+    {
+        path: '/documents/PlanReportpdf',
+        element: <PlanReportpdf/>
     },
     // pages
 
