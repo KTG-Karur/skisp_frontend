@@ -5,7 +5,7 @@ import Table from '../../../util/Table';
 import Tippy from '@tippyjs/react';
 import { findArrObj, showMessage } from '../../../util/AllFunction';
 import _ from 'lodash';
-import { getClient, resetClientStatus } from '../../../redux/clientSlice';
+import { getProvider, resetProviderStatus } from '../../../redux/providerSlice';
 
 let isEdit = false;
 
@@ -17,24 +17,19 @@ const Index = () => {
 
     const dispatch = useDispatch();
 
-    const clientState = useSelector((state) => state.ClientSlice || {});
-    const {
-        clientData = [],
-        loading = false,
-        error = null,
-        getClientSuccess = false,
-    } = clientState;
+    const providerState = useSelector((state) => state.ProviderSlice || {});
+    const { providerData = [], loading = false, error = null, getProviderSuccess = false } = providerState;
 
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
 
     useEffect(() => {
         dispatch(setPageTitle('Provider Management'));
-        fetchClients();
+        fetchProviders();
     }, []);
 
-    const fetchClients = () => {
-        dispatch(getClient({})); 
+    const fetchProviders = () => {
+        dispatch(getProvider({}));
     };
 
     const columns = [
@@ -46,7 +41,7 @@ const Index = () => {
         },
         {
             Header: 'Provider Name',
-            accessor: 'clientName',
+            accessor: 'providerName',
             sort: true,
         },
         {
@@ -72,11 +67,11 @@ const Index = () => {
     const getPaginatedData = () => {
         const startIndex = currentPage * pageSize;
         const endIndex = startIndex + pageSize;
-        return clientData.slice(startIndex, endIndex);
+        return providerData.slice(startIndex, endIndex);
     };
 
     return (
-        <div >
+        <div>
             <div className="datatables">
                 <Table
                     columns={columns}
@@ -84,8 +79,8 @@ const Index = () => {
                     data={getPaginatedData()}
                     pageSize={pageSize}
                     pageIndex={currentPage}
-                    totalCount={clientData.length}
-                    totalPages={Math.ceil(clientData.length / pageSize)}
+                    totalCount={providerData.length}
+                    totalPages={Math.ceil(providerData.length / pageSize)}
                     onPaginationChange={handlePaginationChange}
                     pagination={true}
                     isSearchable={true}

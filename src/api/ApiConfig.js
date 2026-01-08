@@ -1,4 +1,4 @@
-export const baseURL = 'http://localhost:5099';
+export const baseURL = 'http://localhost:5043';
 // export const baseURL = 'https://erpapi.optimangle.com'; // live
 
 const getBaseUrl = (url) => {

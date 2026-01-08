@@ -14,11 +14,11 @@ import IconCheck from '../Icon/IconCheck';
 import IconBuilding from '../Icon/IconBuilding';
 import IconUsers from '../Icon/IconUsers';
 
-import { getClient } from '../../redux/clientSlice';
+import { getProvider } from '../../redux/providerSlice';
 
-interface Client {
+interface Provider {
     id: string;
-    clientName: string;
+    providerName: string;
     status: string;
     [key: string]: any;
 }
@@ -32,9 +32,9 @@ const Header = () => {
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
 
-    const clientState = useSelector((state: any) => state.ClientSlice || {});
-    const allClients: Client[] = clientState.clientData || [];
-    const clientLoading = clientState.loading || false;
+    const providerState = useSelector((state: any) => state.ProviderSlice || {});
+    const allProviders: Provider[] = providerState.providerData || [];
+    const providerLoading = providerState.loading || false;
 
     const [selectedProvider, setSelectedProvider] = useState<string>('');
     const [selectedProviderName, setSelectedProviderName] = useState<string>('Tacitine');
@@ -48,31 +48,29 @@ const Header = () => {
     }, []);
 
     useEffect(() => {
-    if (allClients.length > 0) {
-        const savedProviderId = localStorage.getItem('selectedProvider');
-        const savedProviderName = localStorage.getItem('selectedProviderName');
-        
-        if (savedProviderId && savedProviderName) {
-            setSelectedProvider(savedProviderId);
-            setSelectedProviderName(savedProviderName);
-        } else {
-            const tacitineProvider = allClients.find(client => 
-                client.clientName.toLowerCase() === 'tacitine'
-            ) || allClients[0]; 
-            
-            if (tacitineProvider) {
-                setSelectedProvider(tacitineProvider.id);
-                setSelectedProviderName(tacitineProvider.clientName);
-                localStorage.setItem('selectedProvider', tacitineProvider.id);
-                localStorage.setItem('selectedProviderName', tacitineProvider.clientName);
+        if (allProviders.length > 0) {
+            const savedProviderId = localStorage.getItem('selectedProvider');
+            const savedProviderName = localStorage.getItem('selectedProviderName');
+
+            if (savedProviderId && savedProviderName) {
+                setSelectedProvider(savedProviderId);
+                setSelectedProviderName(savedProviderName);
+            } else {
+                const tacitineProvider = allProviders.find((provider) => provider.providerName.toLowerCase() === 'tacitine') || allProviders[0];
+
+                if (tacitineProvider) {
+                    setSelectedProvider(tacitineProvider.id);
+                    setSelectedProviderName(tacitineProvider.providerName);
+                    localStorage.setItem('selectedProvider', tacitineProvider.id);
+                    localStorage.setItem('selectedProviderName', tacitineProvider.providerName);
+                }
             }
         }
-    }
-}, [allClients]);
+    }, [allProviders]);
 
     const fetchProviders = async () => {
         try {
-            await dispatch(getClient() as any);
+            await dispatch(getProvider() as any);
         } catch (error) {
             console.error('Error fetching providers:', error);
         }
@@ -148,12 +146,10 @@ const Header = () => {
                         </button>
                     </div>
 
-                    <div className="ltr:mr-2 rtl:ml-2 hidden sm:block">
-                    </div>
+                    <div className="ltr:mr-2 rtl:ml-2 hidden sm:block"></div>
 
                     <div className="sm:flex-1 ltr:sm:ml-0 ltr:ml-auto sm:rtl:mr-0 rtl:mr-auto flex items-center space-x-1.5 lg:space-x-2 rtl:space-x-reverse dark:text-[#d0d2d6]">
-                        <div className="sm:ltr:mr-auto sm:rtl:ml-auto">
-                        </div>
+                        <div className="sm:ltr:mr-auto sm:rtl:ml-auto"></div>
 
                         <div className="dropdown shrink-0">
                             <Dropdown
@@ -185,11 +181,11 @@ const Header = () => {
                                         </div>
                                     </li>
 
-                                    {clientLoading ? (
+                                    {providerLoading ? (
                                         <li className="px-4 py-5 text-center">
                                             <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent mx-auto"></div>
                                         </li>
-                                    ) : allClients.length > 0 ? (
+                                    ) : allProviders.length > 0 ? (
                                         <>
                                             {/* All Providers Option */}
                                             {/* <li>
@@ -208,7 +204,7 @@ const Header = () => {
                                             </li> */}
 
                                             {/* Divider */}
-                                            {/* {allClients.length > 0 && (
+                                            {/* {allProviders.length > 0 && (
                                                 <li>
                                                     <div className="px-3 pt-1 pb-0.5">
                                                         <div className="text-xs text-gray-500 uppercase font-medium">Providers</div>
@@ -216,24 +212,24 @@ const Header = () => {
                                                 </li>
                                             )} */}
 
-                                            {allClients.map((client: Client) => (
-                                                <li key={client.id}>
+                                            {allProviders.map((provider: Provider) => (
+                                                <li key={provider.id}>
                                                     <div
                                                         className={`px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
-                                                            selectedProvider === client.id ? 'bg-primary/5' : ''
+                                                            selectedProvider === provider.id ? 'bg-primary/5' : ''
                                                         }`}
-                                                        onClick={() => handleProviderSelect(client.id, client.clientName)}
+                                                        onClick={() => handleProviderSelect(provider.id, provider.providerName)}
                                                     >
                                                         <div className="flex items-center gap-2.5">
                                                             <div
                                                                 className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 ${getProviderColor(
-                                                                    getFirstLetter(client.clientName)
+                                                                    getFirstLetter(provider.providerName)
                                                                 )}`}
                                                             >
-                                                                {getFirstLetter(client.clientName)}
+                                                                {getFirstLetter(provider.providerName)}
                                                             </div>
-                                                            <span className="text-sm truncate flex-1">{client.clientName}</span>
-                                                            {selectedProvider === client.id && <IconCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                                                            <span className="text-sm truncate flex-1">{provider.providerName}</span>
+                                                            {selectedProvider === provider.id && <IconCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
                                                         </div>
                                                     </div>
                                                 </li>
@@ -248,7 +244,7 @@ const Header = () => {
                                         </li>
                                     )}
 
-                                    {allClients.length > 0 && (
+                                    {allProviders.length > 0 && (
                                         <li className="sticky bottom-0 bg-white dark:bg-dark border-t dark:border-white/10">
                                             <div className="px-3 py-2">
                                                 <div className="flex items-center justify-between">
@@ -309,7 +305,6 @@ const Header = () => {
                         </div>
                     </div>
                 </div>
-
             </div>
         </header>
     );

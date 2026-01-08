@@ -13,9 +13,9 @@ import PurposeOfVisitSlice from '../purposeOfVisitSlice';
 import VisitorSlice from '../visitorSlice';
 import ProductSlice from '../productSlice';
 import ExpoSlice from '../expoSlice';
-import ProductEnquirySlice from '../productEnquirySlice'
+import ProductEnquirySlice from '../productEnquirySlice';
 import DashboardSlice from '../dashboardSlice';
-import ClientSlice from '../clientSlice';
+import ProviderSlice from '../providerSlice';
 import CategorySlice from '../catogerySlice';
 import TaskSlice from '../taskSlice';
 import NotificationSlice from '../notificationSlice'
@@ -38,7 +38,7 @@ const rootReducer = combineReducers({
     VisitorSlice,
     ExpoSlice,
     DashboardSlice,
-    ClientSlice,
+    ProviderSlice,
     CategorySlice,
     TaskSlice,
     NotificationSlice,
