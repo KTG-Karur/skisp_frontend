@@ -15,7 +15,7 @@ function ModelViewBox(props) {
         isEdit,
         modelHead = false,
         backgroundColor = 'bg-gray-50',
-        headerBg = 'bg-gradient-to-r from-blue-600 to-indigo-700',
+        headerBg = 'bg-gradient-to-r from-[#ee7f1b] to-[#f39c4a]',
         closeIconColor = 'text-white',
         showBackdropBlur = true,
         customHeader = false,
@@ -183,9 +183,9 @@ function ModelViewBox(props) {
                                                 disabled={isLoading}
                                                 className="
                                                     px-6 py-2.5 text-sm font-medium text-white 
-                                                    bg-gradient-to-r from-blue-600 to-indigo-700 
-                                                    rounded-lg hover:from-blue-700 hover:to-indigo-800 
-                                                    focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                                    bg-gradient-to-r from-[#ee7f1b] to-[#f39c4a]
+                                                    rounded-lg hover:from-[#d96e15] hover:to-[#e58a35]
+                                                    focus:outline-none focus:ring-2 focus:ring-[#ee7f1b]
                                                     focus:ring-offset-2 transition-all duration-200 
                                                     transform hover:scale-105 shadow-lg hover:shadow-xl
                                                     disabled:opacity-50 disabled:cursor-not-allowed
