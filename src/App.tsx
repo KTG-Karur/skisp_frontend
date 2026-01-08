@@ -12,7 +12,7 @@ function App({ children }: PropsWithChildren) {
         dispatch(toggleMenu(localStorage.getItem('menu') || "collapsible-vertical"));
         dispatch(toggleLayout("full"));//localStorage.getItem('layout') || 
         dispatch(toggleRTL(localStorage.getItem('rtlClass') || themeConfig.rtlClass));
-        dispatch(toggleAnimation(localStorage.getItem('animation') || "animate__fadeIn"));
+        dispatch(toggleAnimation(localStorage.getItem('animation') || "animate__zoomIn"));
         dispatch(toggleNavbar(localStorage.getItem('navbar') || themeConfig.navbar));
         dispatch(toggleLocale(localStorage.getItem('i18nextLng') || themeConfig.locale));
         dispatch(toggleSemidark(localStorage.getItem('semidark') || themeConfig.semidark));
