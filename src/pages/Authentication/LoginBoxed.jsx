@@ -18,7 +18,7 @@ import IconChartBar from '../../components/Icon/IconChartBar';
 import { getLogin, resetLoginStatus } from '../../redux/loginSlice';
 import { showMessage } from '../../util/AllFunction';
 import Lottie from 'lottie-react';
-import timeManagementGif from '../../../public/assets/images/auth/data center.json';
+import timeManagementGif from '../../../public/assets/images/auth/Iot_Transparent.json';
 
 const LoginBoxed = () => {
     const dispatch = useDispatch();

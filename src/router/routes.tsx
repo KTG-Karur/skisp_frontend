@@ -10,12 +10,12 @@ import {
     Role,
     CompanyInfo,
     //new asf - ev
-    Events,
+    Customer,
     //new VMS
-    Products,
+    Plan,
     Staff,
     Department,
-    Client,
+    Provider,
     Category,
     //old
     ContactUsBoxed,
@@ -27,7 +27,7 @@ import {
     ERROR503,
     Maintenence,
     LoginBoxed,
-    ProductEnquiry,
+    Payment,
     PrintTask,
     PendingReport,
     TaskReport,
@@ -207,7 +207,7 @@ const LoadComponent = ({ component: Component }: LoadComponentProps) => (
 //                         },
 //                         {
 //                             path: 'products',
-//                             element: <LoadComponent component={Products} />,
+//                             element: <LoadComponent component={Plan} />,
 //                         },
 //                         {
 //                             path: 'customer',
@@ -230,20 +230,20 @@ const routes = [
     },
     //new asf ev  
     {
-        path: '/master/client',
-        element: <Client/>,
+        path: '/master/provider',
+        element: <Provider/>,
     },
     {
         path: '/master/category',
         element: <Category/>,
     },
     {
-        path: '/master/events',
-        element: <Events/>,
+        path: '/master/customer',
+        element: <Customer/>,
     },
     {
-        path: '/master/products',
-        element: <Products/>,
+        path: '/master/plan',
+        element: <Plan/>,
     },
     {
         path: '/reports/pending-report',
@@ -263,8 +263,8 @@ const routes = [
         element: <Department/>,
     },
      {
-        path: '/join/product-enquiry',
-        element: <ProductEnquiry />,
+        path: '/join/payment',
+        element: <Payment />,
     },
     //old
     {
@@ -278,7 +278,7 @@ const routes = [
      //new VMS public
     {
         path: '/master/products',
-        element: <Products/>,
+        element: <Plan/>,
     },
     {
         path: '/settings/company-info',
