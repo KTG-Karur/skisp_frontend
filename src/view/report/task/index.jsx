@@ -14,7 +14,7 @@ import moment from 'moment';
 import { findArrObj } from '../../../util/AllFunction';
 import { getReport, resetReportStatus } from '../../../redux/reportSlice';
 import { getEmployee, resetEmployeeStatus } from '../../../redux/employeeSlice';
-import { getClient, resetClientStatus } from '../../../redux/clientSlice';
+import { getProvider, resetProviderStatus } from '../../../redux/providerSlice';
 import { baseURL } from '../../../api/ApiConfig';
 import _ from 'lodash';
 
@@ -32,7 +32,7 @@ const Index = () => {
     const brandColorPrimary = '#1a73e8'; // ISP Blue
     const brandColorSecondary = '#00c853'; // ISP Green
 
-    const { getEmployeeSuccess, getEmployeeFailed, employeeData, clientData, getClientSuccess, getClientFailed, error, loading, getReportSuccess, getReportFailed, reportData } = useSelector(
+    const { getEmployeeSuccess, getEmployeeFailed, employeeData, providerData, getProviderSuccess, getProviderFailed, error, loading, getReportSuccess, getReportFailed, reportData } = useSelector(
         (state) => ({
             getReportSuccess: state.ReportSlice.getReportSuccess,
             getReportFailed: state.ReportSlice.getReportFailed,
@@ -42,9 +42,9 @@ const Index = () => {
             getEmployeeSuccess: state.EmployeeSlice.getEmployeeSuccess,
             getEmployeeFailed: state.EmployeeSlice.getEmployeeFailed,
             employeeData: state.EmployeeSlice.employeeData,
-            clientData: state.ClientSlice.clientData,
-            getClientSuccess: state.ClientSlice.getClientSuccess,
-            getClientFailed: state.ClientSlice.getClientFailed,
+            providerData: state.ProviderSlice.providerData,
+            getProviderSuccess: state.ProviderSlice.getProviderSuccess,
+            getProviderFailed: state.ProviderSlice.getProviderFailed,
         })
     );
 
@@ -359,7 +359,7 @@ const Index = () => {
 
         // You can load additional data here if needed
         dispatch(getEmployee());
-        dispatch(getClient());
+        dispatch(getProvider());
     }, [reportData]);
 
     useEffect(() => {
@@ -396,7 +396,7 @@ const Index = () => {
             backendFilters.paymentStatus = filters.selectedPaymentStatus.value;
         }
 
-        // For customer filter, we'll handle it client-side
+        // For customer filter, we'll handle it provider-side
         return backendFilters;
     };
 
