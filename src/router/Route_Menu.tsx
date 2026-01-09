@@ -115,11 +115,9 @@ export const Provider = lazy(() => import('../view/master/provider'));
 export const Payment = lazy(() => import('../view/payment'));
 
 //new of asf ev
-export const PaymentReport = lazy(() => import('../view/report/pending'));
-export const PlanReport = lazy(() => import('../view/report/task'));
+export const PaymentReport = lazy(() => import('../view/report/payment-report'));
+export const PlanReport = lazy(() => import('../view/report/plan-report'));
 export const PrintTask = lazy(() => import('../view/documents/payment-report-pdf'));
 export const PlanReportpdf = lazy(()=>import('../view/documents/plan-report-pdf'))
 export const Customer = lazy(() => import('../view/master/customer'));
-export const PendingReport = lazy(() => import('../view/report/pending'));
-export const TaskReport = lazy(() => import('../view/report/task'));
 export const CustomerInvoice = lazy(() => import('../view/documents/customer-invoice'));

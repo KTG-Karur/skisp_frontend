@@ -248,7 +248,7 @@ const routes = [
         element: <Plan/>,
     },
     {
-        path: '/reports/payment-report',
+        path: '/report/payment-report',
         element: <PaymentReport/>,
     },
     {

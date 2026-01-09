@@ -28,9 +28,22 @@ const Index = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // ISP Brand colors
-    const brandColorPrimary = '#1a73e8'; // ISP Blue
-    const brandColorSecondary = '#00c853'; // ISP Green
+    // Color scheme based on #FFF4E2 (warm creamy off-white)
+    const baseColor = '#FFF4E2';
+    const primaryColor = '#D4A76A'; // Warm gold/brown - main accent
+    const secondaryColor = '#7C6F5A'; // Warm taupe - secondary text
+    const accentColor = '#FF9A3D'; // Warm orange - for highlights
+    const successColor = '#28A745'; // Green - for success states
+    const warningColor = '#FFC107'; // Amber - for warnings
+    const dangerColor = '#DC3545'; // Red - for errors/danger
+    const infoColor = '#6C757D'; // Gray - for info
+    const darkColor = '#495057'; // Dark gray for text
+    
+    // Complementary colors derived from base
+    const lightBg = '#FFF9F0'; // Lighter warm white
+    const cardBg = '#FFFDF8'; // Slightly off-white for cards
+    const borderColor = '#E8DFD0'; // Warm light border
+    const hoverBg = '#F5F0E6'; // Warm hover background
 
     const { getEmployeeSuccess, getEmployeeFailed, employeeData, providerData, getProviderSuccess, getProviderFailed, error, loading, getReportSuccess, getReportFailed, reportData } = useSelector(
         (state) => ({
@@ -161,25 +174,25 @@ const Index = () => {
     const getPlanColor = (planPrice) => {
         switch (planPrice) {
             case 599:
-                return '#10b981'; // Green for basic
+                return successColor; // Green for basic
             case 799:
-                return '#3b82f6'; // Blue for standard
+                return primaryColor; // Primary for standard
             case 1199:
-                return '#8b5cf6'; // Purple for premium
+                return accentColor; // Accent for premium
             case 2999:
-                return '#ff6d00'; // Orange for ultimate
+                return warningColor; // Warning for ultimate
             case 4999:
-                return '#6200ea'; // Purple for business
+                return darkColor; // Dark for business
             default:
-                return brandColorPrimary;
+                return primaryColor;
         }
     };
 
     const getUsageColor = (percentage) => {
-        if (percentage >= 90) return '#ef4444'; // Red
-        if (percentage >= 70) return '#f59e0b'; // Yellow
-        if (percentage >= 40) return brandColorSecondary; // Green
-        return brandColorPrimary; // Blue
+        if (percentage >= 90) return dangerColor; // Red
+        if (percentage >= 70) return warningColor; // Yellow
+        if (percentage >= 40) return successColor; // Green
+        return primaryColor; // Primary
     };
 
     const planColumns = [
@@ -189,7 +202,7 @@ const Index = () => {
             sort: true,
             width: 60,
             Cell: ({ row }) => (
-                <div className="text-center font-medium" style={{ color: brandColorPrimary }}>
+                <div className="text-center font-medium" style={{ color: primaryColor }}>
                     {row.index + 1}
                 </div>
             ),
@@ -200,8 +213,8 @@ const Index = () => {
             sort: true,
             Cell: ({ value, row }) => (
                 <div>
-                    <div className="font-medium text-gray-900">{value}</div>
-                    <div className="text-xs text-gray-500">{row.original.contactNumber}</div>
+                    <div className="font-medium" style={{ color: darkColor }}>{value}</div>
+                    <div className="text-xs" style={{ color: secondaryColor }}>{row.original.contactNumber}</div>
                 </div>
             ),
         },
@@ -209,7 +222,7 @@ const Index = () => {
             Header: 'Subscription ID',
             accessor: 'subscriptionId',
             sort: true,
-            Cell: ({ value }) => <div className="font-medium text-gray-900">{value}</div>,
+            Cell: ({ value }) => <div className="font-medium" style={{ color: darkColor }}>{value}</div>,
         },
         {
             Header: 'Plan',
@@ -219,8 +232,8 @@ const Index = () => {
                 <div className="flex items-center">
                     <div className="w-2 h-8 rounded-full mr-2" style={{ backgroundColor: getPlanColor(row.original.planPrice) }}></div>
                     <div>
-                        <div className="font-medium text-gray-900">{value}</div>
-                        <div className="text-xs text-gray-500">₹{row.original.planPrice}/month</div>
+                        <div className="font-medium" style={{ color: darkColor }}>{value}</div>
+                        <div className="text-xs" style={{ color: secondaryColor }}>₹{row.original.planPrice}/month</div>
                     </div>
                 </div>
             ),
@@ -231,7 +244,7 @@ const Index = () => {
             sort: true,
             Cell: ({ value }) => (
                 <div>
-                    <div className="font-medium text-gray-900">{value}</div>
+                    <div className="font-medium" style={{ color: darkColor }}>{value}</div>
                 </div>
             ),
         },
@@ -239,14 +252,14 @@ const Index = () => {
             Header: 'Activation Date',
             accessor: 'activationDate',
             sort: true,
-            Cell: ({ value }) => <div className="font-medium text-gray-900">{moment(value).format('DD/MM/YYYY')}</div>,
+            Cell: ({ value }) => <div className="font-medium" style={{ color: darkColor }}>{moment(value).format('DD/MM/YYYY')}</div>,
         },
         {
             Header: 'Renewal Date',
             accessor: 'renewalDate',
             sort: true,
             Cell: ({ value, row }) => {
-                if (!value) return <div className="text-gray-400">-</div>;
+                if (!value) return <div style={{ color: secondaryColor }}>-</div>;
 
                 const renewalDate = moment(value);
                 const today = moment();
@@ -301,7 +314,7 @@ const Index = () => {
                             }}
                         ></div>
                     </div>
-                    <span className="text-xs font-medium">{value}%</span>
+                    <span className="text-xs font-medium" style={{ color: darkColor }}>{value}%</span>
                 </div>
             ),
         },
@@ -315,9 +328,9 @@ const Index = () => {
                     <div className="flex items-center justify-center space-x-2">
                         <button
                             onClick={() => handleViewDetails(plan)}
-                            className="flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
+                            className="flex items-center justify-center w-8 h-8 transition-colors p-1 rounded hover:opacity-20"
                             title="View Plan Details"
-                            style={{ color: brandColorPrimary }}
+                            style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
                         >
                             <IconEye className="w-4 h-4" />
                         </button>
@@ -502,9 +515,9 @@ const Index = () => {
         
         return (
             <div className="py-1">
-                <div className="font-medium text-gray-900">{option.label}</div>
+                <div className="font-medium" style={{ color: darkColor }}>{option.label}</div>
                 {option.phone && option.phone !== 'N/A' && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs" style={{ color: secondaryColor }}>
                         Phone: {option.phone}
                     </div>
                 )}
@@ -634,30 +647,37 @@ const Index = () => {
     const customStyles = {
         control: (provided) => ({
             ...provided,
-            border: '1px solid #e5e7eb',
+            border: `1px solid ${borderColor}`,
             borderRadius: '0.5rem',
             minHeight: '42px',
-            backgroundColor: 'white',
+            backgroundColor: cardBg,
             '&:hover': {
-                borderColor: '#d1d5db',
+                borderColor: primaryColor,
             },
         }),
         option: (provided, state) => ({
             ...provided,
-            backgroundColor: state.isSelected ? brandColorPrimary : state.isFocused ? `${brandColorPrimary}15` : 'white',
-            color: state.isSelected ? 'white' : '#374151',
+            backgroundColor: state.isSelected ? primaryColor : state.isFocused ? `${primaryColor}15` : cardBg,
+            color: state.isSelected ? 'white' : darkColor,
             '&:hover': {
-                backgroundColor: `${brandColorPrimary}15`,
+                backgroundColor: `${primaryColor}15`,
             },
+        }),
+        menu: (provided) => ({
+            ...provided,
+            backgroundColor: cardBg,
+            border: `1px solid ${borderColor}`,
+            borderRadius: '0.5rem',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         }),
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 sm:p-6">
+        <div className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: baseColor }}>
             {/* Animated Background Elements */}
             <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-10 left-10 w-24 h-24 rounded-full opacity-5 animate-pulse" style={{ backgroundColor: brandColorPrimary }}></div>
-                <div className="absolute top-40 right-20 w-20 h-20 rounded-full opacity-10 animate-bounce" style={{ backgroundColor: brandColorSecondary }}></div>
+                <div className="absolute top-10 left-10 w-24 h-24 rounded-full opacity-5 animate-pulse" style={{ backgroundColor: primaryColor }}></div>
+                <div className="absolute top-40 right-20 w-20 h-20 rounded-full opacity-10 animate-bounce" style={{ backgroundColor: accentColor }}></div>
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto">
@@ -665,16 +685,16 @@ const Index = () => {
                 <div className="mb-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            <h1 className="text-3xl font-bold mb-2" style={{ color: darkColor }}>
                                 Plan Management Report
                             </h1>
-                            <p className="text-gray-600">Track and analyze internet plan subscriptions and payments</p>
+                            <p style={{ color: secondaryColor }}>Track and analyze internet plan subscriptions and payments</p>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <div className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
+                            <div className="px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
                                 Total Plans: {filteredData.length}
                             </div>
-                            <div className="px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
+                            <div className="px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: `${successColor}15`, color: successColor }}>
                                 Paid: {filteredData.filter(p => p.paymentStatus === 'paid').length}
                             </div>
                         </div>
@@ -683,17 +703,18 @@ const Index = () => {
 
                 {/* Search Panel */}
                 {showSearch && (
-                    <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border border-gray-100">
+                    <div className="p-6 mb-6 border rounded-2xl" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-blue-100">
-                                    <IconSearch className="w-5 h-5" style={{ color: brandColorPrimary }} />
+                            <h2 className="text-xl font-bold flex items-center gap-3" style={{ color: darkColor }}>
+                                <div className="p-2 rounded-lg" style={{ backgroundColor: `${primaryColor}15` }}>
+                                    <IconSearch className="w-5 h-5" style={{ color: primaryColor }} />
                                 </div>
                                 Search & Filter Plans
                             </h2>
                             <button
                                 onClick={() => setShowSearch(false)}
-                                className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+                                className="transition-colors p-2 hover:opacity-20 rounded-lg"
+                                style={{ color: secondaryColor, backgroundColor: `${primaryColor}15` }}
                             >
                                 ▲ Hide Panel
                             </button>
@@ -702,8 +723,8 @@ const Index = () => {
                         <form onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                                 {/* Plan Filter */}
-                                <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <div className="p-3 rounded-lg border" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+                                    <label className="block text-sm font-medium mb-1" style={{ color: darkColor }}>
                                         Internet Plan
                                     </label>
                                     <Select
@@ -720,8 +741,8 @@ const Index = () => {
                                 </div>
 
                                 {/* Payment Status Filter */}
-                                <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                                <div className="p-3 rounded-lg border" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+                                    <label className="block text-sm font-medium mb-1" style={{ color: darkColor }}>Payment Status</label>
                                     <Select
                                         options={optionListState.paymentStatusList}
                                         value={filters.selectedPaymentStatus}
@@ -736,8 +757,8 @@ const Index = () => {
                                 </div>
 
                                 {/* Customer Filter - Search only by name and phone */}
-                                <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+                                <div className="p-3 rounded-lg border" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+                                    <label className="block text-sm font-medium mb-1" style={{ color: darkColor }}>Customer</label>
                                     <Select
                                         options={optionListState.customerList}
                                         value={filters.selectedCustomer}
@@ -758,11 +779,12 @@ const Index = () => {
                                     <button
                                         type="button"
                                         onClick={toggleDateFilter}
-                                        className={`flex items-center space-x-2 px-4 py-3 rounded-lg border transition-all duration-200 font-medium ${showDateFilter ? 'text-white shadow-lg transform scale-105' : 'text-gray-700 hover:bg-gray-50'
+                                        className={`flex items-center space-x-2 px-4 py-3 rounded-lg border transition-all duration-200 font-medium ${showDateFilter ? 'text-white shadow-lg transform scale-105' : 'hover:opacity-90'
                                             }`}
                                         style={{
-                                            backgroundColor: showDateFilter ? brandColorPrimary : '#f9fafb',
-                                            borderColor: showDateFilter ? brandColorPrimary : '#e5e7eb',
+                                            backgroundColor: showDateFilter ? primaryColor : cardBg,
+                                            borderColor: showDateFilter ? primaryColor : borderColor,
+                                            color: showDateFilter ? 'white' : darkColor,
                                         }}
                                     >
                                         <IconCalendar className="w-4 h-4" />
@@ -771,12 +793,14 @@ const Index = () => {
 
                                     {/* Search Input */}
                                     <div className="flex-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                                        <label className="block text-sm font-medium mb-1" style={{ color: darkColor }}>Search</label>
                                         <input
                                             type="text"
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-transparent shadow-sm"
+                                            className="w-full rounded-lg px-4 py-2.5 focus:outline-none transition-colors"
                                             style={{
-                                                '--tw-ring-color': brandColorPrimary,
+                                                border: `1px solid ${borderColor}`,
+                                                backgroundColor: 'white',
+                                                '--tw-ring-color': primaryColor,
                                             }}
                                             placeholder="Search by customer name, ID, contact, or address..."
                                             value={filters.searchQuery}
@@ -788,25 +812,29 @@ const Index = () => {
                                 {/* Date Range Filters (when toggled) */}
                                 {showDateFilter && (
                                     <>
-                                        <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                                        <div className="p-3 rounded-lg border" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+                                            <label className="block text-sm font-medium mb-1" style={{ color: darkColor }}>From Date</label>
                                             <input
                                                 type="date"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
                                                 style={{
-                                                    '--tw-ring-color': brandColorPrimary,
+                                                    border: `1px solid ${borderColor}`,
+                                                    backgroundColor: 'white',
+                                                    '--tw-ring-color': primaryColor,
                                                 }}
                                                 value={filters.startDate}
                                                 onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
                                             />
                                         </div>
-                                        <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                                        <div className="p-3 rounded-lg border" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+                                            <label className="block text-sm font-medium mb-1" style={{ color: darkColor }}>To Date</label>
                                             <input
                                                 type="date"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
                                                 style={{
-                                                    '--tw-ring-color': brandColorPrimary,
+                                                    border: `1px solid ${borderColor}`,
+                                                    backgroundColor: 'white',
+                                                    '--tw-ring-color': primaryColor,
                                                 }}
                                                 value={filters.toDate}
                                                 onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
@@ -816,15 +844,20 @@ const Index = () => {
                                 )}
                             </div>
 
-                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-gray-200">
-                                <div className="text-sm text-gray-500">
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6" style={{ borderTop: `1px solid ${borderColor}` }}>
+                                <div className="text-sm" style={{ color: secondaryColor }}>
                                     Found {filteredData.length} plan subscriptions
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                     <button
                                         type="button"
                                         onClick={handleClear}
-                                        className="flex items-center gap-2 px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium hover:shadow-sm"
+                                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg transition-all duration-200 font-medium hover:opacity-90"
+                                        style={{ 
+                                            backgroundColor: cardBg,
+                                            color: darkColor,
+                                            border: `1px solid ${borderColor}`
+                                        }}
                                     >
                                         <IconRefresh className="w-4 h-4" />
                                         <span>Clear All</span>
@@ -832,7 +865,7 @@ const Index = () => {
                                     <button
                                         type="submit"
                                         className="px-6 py-2.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center justify-center min-w-[140px]"
-                                        style={{ backgroundColor: brandColorPrimary }}
+                                        style={{ backgroundColor: primaryColor }}
                                         disabled={searchLoading || (showDateFilter && (!filters.startDate || !filters.toDate))}
                                     >
                                         {searchLoading ? (
@@ -858,7 +891,7 @@ const Index = () => {
                         <button
                             onClick={() => setShowSearch(true)}
                             className="px-5 py-2.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-lg flex items-center gap-2 group"
-                            style={{ backgroundColor: brandColorPrimary }}
+                            style={{ backgroundColor: primaryColor }}
                         >
                             <IconSearch className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                             <span>Show Search Panel</span>
@@ -868,28 +901,28 @@ const Index = () => {
 
                 {/* Results Section */}
                 {loading ? (
-                    <div className="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+                    <div className="p-12 text-center border rounded-2xl" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                         <div className="flex flex-col items-center justify-center">
-                            <div className="animate-spin rounded-full h-20 w-20 border-b-2 mb-6" style={{ borderColor: brandColorPrimary }}></div>
-                            <h3 className="text-2xl font-semibold text-gray-800 mb-3">Loading Plan Data</h3>
-                            <p className="text-gray-500 max-w-md">Fetching ISP plan subscription information from the server...</p>
+                            <div className="animate-spin rounded-full h-20 w-20 border-b-2 mb-6" style={{ borderColor: primaryColor }}></div>
+                            <h3 className="text-2xl font-semibold mb-3" style={{ color: darkColor }}>Loading Plan Data</h3>
+                            <p style={{ color: secondaryColor }}>Fetching ISP plan subscription information from the server...</p>
                         </div>
                     </div>
                 ) : searchLoading ? (
-                    <div className="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+                    <div className="p-12 text-center border rounded-2xl" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                         <div className="flex flex-col items-center justify-center">
-                            <div className="animate-spin rounded-full h-20 w-20 border-b-2 mb-6" style={{ borderColor: brandColorPrimary }}></div>
-                            <h3 className="text-2xl font-semibold text-gray-800 mb-3">Searching Plans</h3>
-                            <p className="text-gray-500 max-w-md">Filtering plan subscriptions based on your criteria...</p>
+                            <div className="animate-spin rounded-full h-20 w-20 border-b-2 mb-6" style={{ borderColor: primaryColor }}></div>
+                            <h3 className="text-2xl font-semibold mb-3" style={{ color: darkColor }}>Searching Plans</h3>
+                            <p style={{ color: secondaryColor }}>Filtering plan subscriptions based on your criteria...</p>
                         </div>
                     </div>
                 ) : appliedFilters && filteredData.length > 0 ? (
-                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-                        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                    <div className="rounded-2xl overflow-hidden border" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+                        <div className="p-6 border-b" style={{ borderColor: borderColor, background: `linear-gradient(135deg, ${lightBg} 0%, ${cardBg} 100%)` }}>
                             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-800 mb-1">Plan Report Results</h3>
-                                    <p className="text-gray-600">
+                                    <h3 className="text-xl font-bold mb-1" style={{ color: darkColor }}>Plan Report Results</h3>
+                                    <p style={{ color: secondaryColor }}>
                                         Showing {filteredData.length} plan subscriptions
                                         {showDateFilter && filters.startDate && filters.toDate
                                             ? ` from ${moment(filters.startDate).format('DD MMM YYYY')} to ${moment(filters.toDate).format('DD MMM YYYY')}`
@@ -901,14 +934,16 @@ const Index = () => {
                                     <div className="flex gap-3">
                                         <button
                                             onClick={onDownload}
-                                            className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2 text-sm"
+                                            className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2 text-sm"
+                                            style={{ backgroundColor: successColor }}
                                         >
                                             <IconPrinter className="w-3 h-3" />
                                             <span>Excel</span>
                                         </button>
                                         <button
                                             onClick={onDownloadPDF}
-                                            className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2 text-sm"
+                                            className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2 text-sm"
+                                            style={{ backgroundColor: dangerColor }}
                                         >
                                             <IconPrinter className="w-3 h-3" />
                                             <span>PDF</span>
@@ -937,30 +972,30 @@ const Index = () => {
                         </div>
                     </div>
                 ) : appliedFilters && filteredData.length === 0 ? (
-                    <div className="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+                    <div className="p-12 text-center border rounded-2xl" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                         <div className="flex flex-col items-center justify-center">
-                            <div className="w-28 h-28 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${brandColorSecondary}15` }}>
-                                <IconSearch className="w-14 h-14" style={{ color: brandColorSecondary }} />
+                            <div className="w-28 h-28 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${successColor}15` }}>
+                                <IconSearch className="w-14 h-14" style={{ color: successColor }} />
                             </div>
-                            <h3 className="text-2xl font-semibold text-gray-800 mb-3">No Plans Found</h3>
-                            <p className="text-gray-600 text-lg max-w-md mb-6">No plan subscriptions match your current search criteria. Try adjusting your filters or search terms.</p>
+                            <h3 className="text-2xl font-semibold mb-3" style={{ color: darkColor }}>No Plans Found</h3>
+                            <p className="text-lg max-w-md mb-6" style={{ color: secondaryColor }}>No plan subscriptions match your current search criteria. Try adjusting your filters or search terms.</p>
                             <button
                                 onClick={handleClear}
                                 className="px-7 py-3 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-semibold shadow-lg"
-                                style={{ backgroundColor: brandColorPrimary }}
+                                style={{ backgroundColor: primaryColor }}
                             >
                                 Clear Filters & Show All
                             </button>
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+                    <div className="p-12 text-center border rounded-2xl" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                         <div className="flex flex-col items-center justify-center">
-                            <div className="w-28 h-28 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${brandColorPrimary}15` }}>
-                                <IconSearch className="w-14 h-14" style={{ color: brandColorPrimary }} />
+                            <div className="w-28 h-28 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${primaryColor}15` }}>
+                                <IconSearch className="w-14 h-14" style={{ color: primaryColor }} />
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-800 mb-3">ISP Plan Report Dashboard</h3>
-                            <p className="text-gray-600 text-lg max-w-md mb-6">
+                            <h3 className="text-2xl font-bold mb-3" style={{ color: darkColor }}>Plan Report</h3>
+                            <p className="text-lg max-w-md mb-6" style={{ color: secondaryColor }}>
                                 {plans.length > 0
                                     ? `Ready to search through ${plans.length} plan subscriptions. Use the search filters above to generate detailed reports.`
                                     : 'No plan data available. Start by adding some plan subscriptions.'}
@@ -968,7 +1003,7 @@ const Index = () => {
                             <button
                                 onClick={() => setShowSearch(true)}
                                 className="px-8 py-3 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-semibold text-lg shadow-xl"
-                                style={{ backgroundColor: brandColorSecondary }}
+                                style={{ backgroundColor: successColor }}
                             >
                                 Start Searching Plans
                             </button>
@@ -996,8 +1031,8 @@ const Index = () => {
                             }}>
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-800">{selectedPlan.customerName}</h3>
-                                        <p className="text-gray-600">{selectedPlan.planName} • ₹{selectedPlan.planPrice}/month</p>
+                                        <h3 className="text-xl font-bold" style={{ color: darkColor }}>{selectedPlan.customerName}</h3>
+                                        <p style={{ color: secondaryColor }}>{selectedPlan.planName} • ₹{selectedPlan.planPrice}/month</p>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedPlan.paymentStatus)}`}>
@@ -1011,59 +1046,59 @@ const Index = () => {
                                 {/* Left Column - Customer & Plan Details */}
                                 <div className="space-y-6">
                                     {/* Customer Information */}
-                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                        <h4 className="font-semibold text-gray-800 mb-3">Customer Information</h4>
+                                    <div className="p-4 rounded-lg border" style={{ backgroundColor: hoverBg, borderColor: borderColor }}>
+                                        <h4 className="font-semibold mb-3" style={{ color: darkColor }}>Customer Information</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                                             <div>
-                                                <span className="font-medium text-gray-600">Customer ID:</span>
-                                                <p className="text-gray-800">{selectedPlan.customerId}</p>
+                                                <span className="font-medium" style={{ color: secondaryColor }}>Customer ID:</span>
+                                                <p style={{ color: darkColor }}>{selectedPlan.customerId}</p>
                                             </div>
                                             <div>
-                                                <span className="font-medium text-gray-600">Contact:</span>
-                                                <p className="text-gray-800">{selectedPlan.contactNumber}</p>
+                                                <span className="font-medium" style={{ color: secondaryColor }}>Contact:</span>
+                                                <p style={{ color: darkColor }}>{selectedPlan.contactNumber}</p>
                                             </div>
                                             <div>
-                                                <span className="font-medium text-gray-600">Email:</span>
-                                                <p className="text-gray-800">{selectedPlan.email}</p>
+                                                <span className="font-medium" style={{ color: secondaryColor }}>Email:</span>
+                                                <p style={{ color: darkColor }}>{selectedPlan.email}</p>
                                             </div>
                                             <div>
-                                                <span className="font-medium text-gray-600">Area:</span>
-                                                <p className="text-gray-800">{selectedPlan.area}</p>
+                                                <span className="font-medium" style={{ color: secondaryColor }}>Area:</span>
+                                                <p style={{ color: darkColor }}>{selectedPlan.area}</p>
                                             </div>
                                             <div className="md:col-span-2">
-                                                <span className="font-medium text-gray-600">Address:</span>
-                                                <p className="text-gray-800">{selectedPlan.address}</p>
+                                                <span className="font-medium" style={{ color: secondaryColor }}>Address:</span>
+                                                <p style={{ color: darkColor }}>{selectedPlan.address}</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Plan Specifications */}
-                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                        <h4 className="font-semibold text-gray-800 mb-3">Plan Specifications</h4>
+                                    <div className="p-4 rounded-lg border" style={{ backgroundColor: hoverBg, borderColor: borderColor }}>
+                                        <h4 className="font-semibold mb-3" style={{ color: darkColor }}>Plan Specifications</h4>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="text-center p-3 bg-white rounded-lg border">
+                                            <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'white', borderColor: borderColor }}>
                                                 <div className="text-2xl font-bold mb-1" style={{ color: getPlanColor(selectedPlan.planPrice) }}>
                                                     {selectedPlan.speed}
                                                 </div>
-                                                <div className="text-sm text-gray-600">Speed</div>
+                                                <div className="text-sm" style={{ color: secondaryColor }}>Speed</div>
                                             </div>
-                                            <div className="text-center p-3 bg-white rounded-lg border">
+                                            <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'white', borderColor: borderColor }}>
                                                 <div className="text-2xl font-bold mb-1 whitespace-nowrap" style={{ color: getPlanColor(selectedPlan.planPrice) }}>
                                                     {selectedPlan.dataLimit}
                                                 </div>
-                                                <div className="text-sm text-gray-600">Data Limit</div>
+                                                <div className="text-sm" style={{ color: secondaryColor }}>Data Limit</div>
                                             </div>
-                                            <div className="text-center p-3 bg-white rounded-lg border">
+                                            <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'white', borderColor: borderColor }}>
                                                 <div className="text-2xl font-bold mb-1" style={{ color: getPlanColor(selectedPlan.planPrice) }}>
                                                     {selectedPlan.maxUsers}
                                                 </div>
-                                                <div className="text-sm text-gray-600">Max Users</div>
+                                                <div className="text-sm" style={{ color: secondaryColor }}>Max Users</div>
                                             </div>
-                                            <div className="text-center p-3 bg-white rounded-lg border">
+                                            <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'white', borderColor: borderColor }}>
                                                 <div className="text-2xl font-bold mb-1" style={{ color: getPlanColor(selectedPlan.planPrice) }}>
                                                     ₹{selectedPlan.planPrice}
                                                 </div>
-                                                <div className="text-sm text-gray-600">Monthly</div>
+                                                <div className="text-sm" style={{ color: secondaryColor }}>Monthly</div>
                                             </div>
                                         </div>
                                     </div>
@@ -1072,28 +1107,28 @@ const Index = () => {
                                 {/* Right Column - Payment Details */}
                                 <div className="space-y-6">
                                     {/* Payment Details */}
-                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                        <h4 className="font-semibold text-gray-800 mb-3">Payment Details</h4>
+                                    <div className="p-4 rounded-lg border" style={{ backgroundColor: hoverBg, borderColor: borderColor }}>
+                                        <h4 className="font-semibold mb-3" style={{ color: darkColor }}>Payment Details</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                                             <div>
-                                                <span className="font-medium text-gray-600">Total Paid:</span>
-                                                <p className="text-green-600 font-medium">₹{selectedPlan.totalPaid}</p>
+                                                <span className="font-medium" style={{ color: secondaryColor }}>Total Paid:</span>
+                                                <p className="font-medium" style={{ color: successColor }}>₹{selectedPlan.totalPaid}</p>
                                             </div>
                                             <div>
-                                                <span className="font-medium text-gray-600">Last Payment:</span>
-                                                <p className="text-gray-800">
+                                                <span className="font-medium" style={{ color: secondaryColor }}>Last Payment:</span>
+                                                <p style={{ color: darkColor }}>
                                                     {selectedPlan.lastPaymentDate
                                                         ? moment(selectedPlan.lastPaymentDate).format('DD/MM/YYYY')
                                                         : 'No payments yet'}
                                                 </p>
                                             </div>
                                             <div>
-                                                <span className="font-medium text-gray-600">Sales Agent:</span>
-                                                <p className="text-gray-800">{selectedPlan.salesAgent}</p>
+                                                <span className="font-medium" style={{ color: secondaryColor }}>Sales Agent:</span>
+                                                <p style={{ color: darkColor }}>{selectedPlan.salesAgent}</p>
                                             </div>
                                             <div className="md:col-span-2">
                                                 <div className="flex justify-between items-center mb-1">
-                                                    <span className="font-medium text-gray-600">Bandwidth Usage:</span>
+                                                    <span className="font-medium" style={{ color: secondaryColor }}>Bandwidth Usage:</span>
                                                     <span className="font-medium" style={{ color: getUsageColor(selectedPlan.usagePercentage) }}>
                                                         {selectedPlan.usagePercentage}%
                                                     </span>
@@ -1107,7 +1142,7 @@ const Index = () => {
                                                         }}
                                                     ></div>
                                                 </div>
-                                                <div className="text-xs text-gray-500 mt-1">
+                                                <div className="text-xs mt-1" style={{ color: secondaryColor }}>
                                                     {selectedPlan.bandwidthUsage} GB used of {selectedPlan.bandwidthLimit} GB limit
                                                 </div>
                                             </div>
@@ -1119,8 +1154,8 @@ const Index = () => {
                             {/* Remarks Section */}
                             {selectedPlan.remarks && (
                                 <div className="mt-6">
-                                    <h4 className="font-semibold text-gray-800 mb-2">Remarks</h4>
-                                    <p className="text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <h4 className="font-semibold mb-2" style={{ color: darkColor }}>Remarks</h4>
+                                    <p className="p-3 rounded-lg border" style={{ backgroundColor: hoverBg, borderColor: borderColor, color: secondaryColor }}>
                                         {selectedPlan.remarks}
                                     </p>
                                 </div>

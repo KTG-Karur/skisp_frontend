@@ -35,13 +35,22 @@ const PaymentReport = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Brand colors for internet provider
-    const brandColorPrimary = '#2563eb'; // Blue - represents connectivity
-    const brandColorSecondary = '#10b981'; // Green - represents success
-    const brandColorDanger = '#ef4444'; // Red - represents overdue/danger
-    const brandColorWarning = '#f59e0b'; // Yellow - represents warning
-    const brandColorInfo = '#8b5cf6'; // Purple - represents info
-    const brandColorDark = '#1f2937'; // Dark gray
+    // Color scheme based on #FFF4E2 (warm creamy off-white)
+    const baseColor = '#FFF4E2';
+    const primaryColor = '#D4A76A'; // Warm gold/brown - main accent
+    const secondaryColor = '#7C6F5A'; // Warm taupe - secondary text
+    const accentColor = '#FF9A3D'; // Warm orange - for highlights
+    const successColor = '#28A745'; // Green - for success states
+    const warningColor = '#FFC107'; // Amber - for warnings
+    const dangerColor = '#DC3545'; // Red - for errors/danger
+    const infoColor = '#6C757D'; // Gray - for info
+    const darkColor = '#495057'; // Dark gray for text
+    
+    // Complementary colors derived from base
+    const lightBg = '#FFF9F0'; // Lighter warm white
+    const cardBg = '#FFFDF8'; // Slightly off-white for cards
+    const borderColor = '#E8DFD0'; // Warm light border
+    const hoverBg = '#F5F0E6'; // Warm hover background
 
     const { error, loading, getPaymentReportSuccess, getPaymentReportFailed, paymentReportData } = useSelector(
         (state) => ({
@@ -359,7 +368,7 @@ const PaymentReport = () => {
     // Initialize with sample data on component mount
     useEffect(() => {
         if (initialLoad) {
-            const transformedPayments = transformApiData([]);
+            const transformedPayments = transformApiData(sampleInternetPayments); // Fixed: Pass sample data
             setAllPayments(transformedPayments);
             setFilteredData(transformedPayments);
             setInitialLoad(false);
@@ -393,7 +402,7 @@ const PaymentReport = () => {
         try {
             // Simulate API call delay
             setTimeout(() => {
-                const transformedPayments = transformApiData([]);
+                const transformedPayments = transformApiData(sampleInternetPayments); // Fixed: Pass sample data
                 setAllPayments(transformedPayments);
                 setFilteredData(transformedPayments);
                 setAppliedFilters({ ...filters });
@@ -615,7 +624,7 @@ const PaymentReport = () => {
             sort: true,
             width: 60,
             Cell: ({ row }) => (
-                <div className="text-center font-medium" style={{ color: brandColorPrimary }}>
+                <div className="text-center font-medium" style={{ color: primaryColor }}>
                     {row.index + 1}
                 </div>
             ),
@@ -642,7 +651,7 @@ const PaymentReport = () => {
             Cell: ({ row }) => (
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                        <IconWifi className="w-4 h-4" style={{ color: brandColorPrimary }} />
+                        <IconWifi className="w-4 h-4" style={{ color: primaryColor }} />
                         <span className="font-semibold text-gray-900 text-sm">{row.original.planName}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
@@ -656,7 +665,7 @@ const PaymentReport = () => {
             accessor: 'invoiceNumber',
             sort: true,
             Cell: ({ value }) => (
-                <div className="text-sm font-medium" style={{ color: brandColorPrimary }}>
+                <div className="text-sm font-medium" style={{ color: primaryColor }}>
                     {value}
                 </div>
             ),
@@ -669,7 +678,7 @@ const PaymentReport = () => {
                 <div className="space-y-1">
                     <div className="font-semibold text-gray-900 text-sm">{formatCurrency(value)}</div>
                     {row.original.pendingAmount > 0 && (
-                        <div className="text-xs" style={{ color: brandColorWarning }}>
+                        <div className="text-xs" style={{ color: warningColor }}>
                             Pending: {formatCurrency(row.original.pendingAmount)}
                         </div>
                     )}
@@ -736,9 +745,9 @@ const PaymentReport = () => {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleViewDetails(payment)}
-                        className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-blue-50 transition-colors"
+                        className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-opacity-20 transition-colors"
                         title="View Payment Details"
-                        style={{ color: brandColorPrimary }}
+                        style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
                     >
                         <IconEye className="w-4 h-4" />
                     </motion.button>
@@ -881,55 +890,60 @@ const PaymentReport = () => {
     const customStyles = {
         control: (provided, state) => ({
             ...provided,
-            border: '1px solid #e5e7eb',
+            border: `1px solid ${borderColor}`,
             borderRadius: '0.5rem',
             minHeight: '42px',
-            backgroundColor: state.isDisabled ? '#f3f4f6' : 'white',
+            backgroundColor: state.isDisabled ? hoverBg : 'white',
             fontSize: '14px',
             '&:hover': {
-                borderColor: '#d1d5db',
+                borderColor: primaryColor,
             },
             cursor: state.isDisabled ? 'not-allowed' : 'default',
+            boxShadow: state.isFocused ? `0 0 0 2px ${primaryColor}20` : 'none',
         }),
         option: (provided, state) => ({
             ...provided,
-            backgroundColor: state.isSelected ? brandColorPrimary : state.isFocused ? `${brandColorPrimary}15` : 'white',
-            color: state.isSelected ? 'white' : '#374151',
+            backgroundColor: state.isSelected ? primaryColor : state.isFocused ? `${primaryColor}15` : 'white',
+            color: state.isSelected ? 'white' : darkColor,
             fontSize: '14px',
             '&:hover': {
-                backgroundColor: `${brandColorPrimary}15`,
+                backgroundColor: `${primaryColor}15`,
             },
         }),
         menu: (provided) => ({
             ...provided,
             zIndex: 9999,
+            backgroundColor: cardBg,
+            border: `1px solid ${borderColor}`,
+            borderRadius: '0.5rem',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         }),
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4 sm:p-6">
+        <div className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: baseColor }}>
             {/* Animated Background Elements */}
             <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-10 left-10 w-20 h-20 rounded-full opacity-5 animate-pulse" style={{ backgroundColor: brandColorPrimary }}></div>
-                <div className="absolute top-40 right-20 w-16 h-16 rounded-full opacity-10 animate-bounce" style={{ backgroundColor: brandColorSecondary }}></div>
-                <div className="absolute bottom-20 left-1/4 w-24 h-24 rounded-full opacity-5 animate-ping" style={{ backgroundColor: brandColorInfo }}></div>
+                <div className="absolute top-10 left-10 w-20 h-20 rounded-full opacity-5 animate-pulse" style={{ backgroundColor: primaryColor }}></div>
+                <div className="absolute top-40 right-20 w-16 h-16 rounded-full opacity-10 animate-bounce" style={{ backgroundColor: accentColor }}></div>
+                <div className="absolute bottom-20 left-1/4 w-24 h-24 rounded-full opacity-5 animate-ping" style={{ backgroundColor: secondaryColor }}></div>
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto">
                 {/* Mobile Header */}
                 {isMobile && (
-                    <div className="flex items-center justify-between mb-6 bg-white rounded-xl shadow-lg p-4 border border-blue-100">
+                    <div className="flex items-center justify-between mb-6 p-4 border rounded-xl" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <IconWifi className="w-5 h-5" style={{ color: brandColorPrimary }} />
-                                <h1 className="text-xl font-bold" style={{ color: brandColorPrimary }}>
+                                <IconWifi className="w-5 h-5" style={{ color: primaryColor }} />
+                                <h1 className="text-xl font-bold" style={{ color: darkColor }}>
                                     ConnectNet Payments
                                 </h1>
                             </div>
-                            <p className="text-xs text-gray-600">Internet Service Provider Billing System</p>
+                            <p className="text-xs" style={{ color: secondaryColor }}>Internet Service Provider Billing System</p>
                         </div>
-                        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg hover:bg-gray-100">
-                            {mobileMenuOpen ? <IconX className="w-5 h-5" /> : <IconMenu className="w-5 h-5" />}
+                        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg hover:bg-opacity-20" style={{ backgroundColor: `${primaryColor}15` }}>
+                            {mobileMenuOpen ? <IconX className="w-5 h-5" style={{ color: primaryColor }} /> : <IconMenu className="w-5 h-5" style={{ color: primaryColor }} />}
                         </button>
                     </div>
                 )}
@@ -938,34 +952,47 @@ const PaymentReport = () => {
                 {!isMobile && (
                     <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-3 rounded-xl shadow-lg" style={{ backgroundColor: brandColorPrimary }}>
+                            <div className="p-3 rounded-xl shadow-lg" style={{ backgroundColor: primaryColor }}>
                                 <IconWifi className="w-8 h-8 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold" style={{ color: brandColorDark }}>
+                                <h1 className="text-3xl font-bold" style={{ color: darkColor }}>
                                     Payment Report
                                 </h1>
+                                <p className="text-sm mt-1" style={{ color: secondaryColor }}>Monitor and manage internet service payments</p>
                             </div>
                         </div>
                         <div className="flex gap-3 mt-4">
                             <button
                                 onClick={() => handleReportTypeChange('all')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all ${reportType === 'all' ? 'text-white shadow-lg' : 'text-gray-700 hover:bg-gray-50'}`}
-                                style={{ backgroundColor: reportType === 'all' ? brandColorPrimary : 'white', border: reportType === 'all' ? 'none' : '1px solid #e5e7eb' }}
+                                className={`px-4 py-2 rounded-lg font-medium transition-all ${reportType === 'all' ? 'text-white shadow-lg' : 'hover:opacity-90'}`}
+                                style={{ 
+                                    backgroundColor: reportType === 'all' ? primaryColor : cardBg,
+                                    color: reportType === 'all' ? 'white' : darkColor,
+                                    border: reportType === 'all' ? 'none' : `1px solid ${borderColor}`
+                                }}
                             >
                                 All Payments
                             </button>
                             <button
                                 onClick={() => handleReportTypeChange('pending')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all ${reportType === 'pending' ? 'text-white shadow-lg' : 'text-gray-700 hover:bg-gray-50'}`}
-                                style={{ backgroundColor: reportType === 'pending' ? brandColorWarning : 'white', border: reportType === 'pending' ? 'none' : '1px solid #e5e7eb' }}
+                                className={`px-4 py-2 rounded-lg font-medium transition-all ${reportType === 'pending' ? 'text-white shadow-lg' : 'hover:opacity-90'}`}
+                                style={{ 
+                                    backgroundColor: reportType === 'pending' ? warningColor : cardBg,
+                                    color: reportType === 'pending' ? 'white' : darkColor,
+                                    border: reportType === 'pending' ? 'none' : `1px solid ${borderColor}`
+                                }}
                             >
                                 Pending
                             </button>
                             <button
                                 onClick={() => handleReportTypeChange('paid')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all ${reportType === 'paid' ? 'text-white shadow-lg' : 'text-gray-700 hover:bg-gray-50'}`}
-                                style={{ backgroundColor: reportType === 'paid' ? brandColorPrimary : 'white', border: reportType === 'paid' ? 'none' : '1px solid #e5e7eb' }}
+                                className={`px-4 py-2 rounded-lg font-medium transition-all ${reportType === 'paid' ? 'text-white shadow-lg' : 'hover:opacity-90'}`}
+                                style={{ 
+                                    backgroundColor: reportType === 'paid' ? successColor : cardBg,
+                                    color: reportType === 'paid' ? 'white' : darkColor,
+                                    border: reportType === 'paid' ? 'none' : `1px solid ${borderColor}`
+                                }}
                             >
                                 Paid
                             </button>
@@ -977,21 +1004,28 @@ const PaymentReport = () => {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap gap-3 mb-6">
                     <button
                         onClick={onDownloadExcel}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-sm"
+                        style={{ backgroundColor: successColor }}
                     >
                         <IconDownload className="w-4 h-4" />
                         Export Excel
                     </button>
                     <button
                         onClick={onDownloadPDF}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 font-medium shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-sm"
+                        style={{ backgroundColor: dangerColor }}
                     >
                         <IconPrinter className="w-4 h-4" />
                         Export PDF
                     </button>
                     <button
                         onClick={() => setShowSearch(!showSearch)}
-                        className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:opacity-90 transition-all duration-200 font-medium"
+                        style={{ 
+                            backgroundColor: cardBg,
+                            color: darkColor,
+                            border: `1px solid ${borderColor}`
+                        }}
                     >
                         <IconFilter className="w-4 h-4" />
                         {showSearch ? 'Hide Filters' : 'Show Filters'}
@@ -1005,11 +1039,12 @@ const PaymentReport = () => {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 border border-blue-100 overflow-hidden"
+                            className="p-4 sm:p-6 mb-6 border rounded-xl overflow-hidden"
+                            style={{ backgroundColor: cardBg, borderColor: borderColor }}
                         >
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                    <IconSearch className="w-5 h-5" style={{ color: brandColorPrimary }} />
+                                <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: darkColor }}>
+                                    <IconSearch className="w-5 h-5" style={{ color: primaryColor }} />
                                     Search & Filter Payments
                                 </h2>
                             </div>
@@ -1018,15 +1053,17 @@ const PaymentReport = () => {
                                 <div className={`grid gap-4 mb-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
                                     {/* Date Range Filters */}
                                     <div className={`${isMobile ? 'col-span-1' : 'md:col-span-1'}`}>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                                            <IconCalendar className="w-4 h-4" />
+                                        <label className="block text-sm font-medium mb-1 flex items-center gap-1" style={{ color: darkColor }}>
+                                            <IconCalendar className="w-4 h-4" style={{ color: primaryColor }} />
                                             From Date
                                         </label>
                                         <input
                                             type="date"
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
                                             style={{
-                                                '--tw-ring-color': brandColorPrimary,
+                                                border: `1px solid ${borderColor}`,
+                                                backgroundColor: 'white',
+                                                '--tw-ring-color': primaryColor,
                                             }}
                                             value={filters.startDate}
                                             onChange={(e) => {
@@ -1035,12 +1072,14 @@ const PaymentReport = () => {
                                         />
                                     </div>
                                     <div className={`${isMobile ? 'col-span-1' : 'md:col-span-1'}`}>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                                        <label className="block text-sm font-medium mb-1" style={{ color: darkColor }}>To Date</label>
                                         <input
                                             type="date"
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
                                             style={{
-                                                '--tw-ring-color': brandColorPrimary,
+                                                border: `1px solid ${borderColor}`,
+                                                backgroundColor: 'white',
+                                                '--tw-ring-color': primaryColor,
                                             }}
                                             value={filters.toDate}
                                             onChange={(e) => {
@@ -1051,7 +1090,7 @@ const PaymentReport = () => {
 
                                     {/* Plan Filter */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Internet Plan</label>
+                                        <label className="block text-sm font-medium mb-1" style={{ color: darkColor }}>Internet Plan</label>
                                         <Select
                                             options={optionListState.planList}
                                             value={filters.selectedPlan}
@@ -1071,7 +1110,7 @@ const PaymentReport = () => {
 
                                     {/* Billing Cycle Filter */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Billing Cycle</label>
+                                        <label className="block text-sm font-medium mb-1" style={{ color: darkColor }}>Billing Cycle</label>
                                         <Select
                                             options={optionListState.billingCycles}
                                             value={optionListState.billingCycles.find(opt => opt.value === filters.billingCycle)}
@@ -1091,15 +1130,17 @@ const PaymentReport = () => {
 
                                     {/* Search Input */}
                                     <div className={isMobile ? 'col-span-1' : 'md:col-span-2'}>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                                            <IconSearch className="w-4 h-4" />
+                                        <label className="block text-sm font-medium mb-1 flex items-center gap-1" style={{ color: darkColor }}>
+                                            <IconSearch className="w-4 h-4" style={{ color: primaryColor }} />
                                             Search Customers/Invoices
                                         </label>
                                         <input
                                             type="text"
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
                                             style={{
-                                                '--tw-ring-color': brandColorPrimary,
+                                                border: `1px solid ${borderColor}`,
+                                                backgroundColor: 'white',
+                                                '--tw-ring-color': primaryColor,
                                             }}
                                             placeholder="Search by customer name, ID, email, phone, or invoice..."
                                             value={filters.searchQuery}
@@ -1108,14 +1149,19 @@ const PaymentReport = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
+                                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4" style={{ borderTop: `1px solid ${borderColor}` }}>
                                     <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                                         <motion.button
                                             type="button"
                                             onClick={handleClear}
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
-                                            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium text-sm sm:text-base"
+                                            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm sm:text-base"
+                                            style={{ 
+                                                backgroundColor: cardBg,
+                                                color: darkColor,
+                                                border: `1px solid ${borderColor}`
+                                            }}
                                             disabled={searchLoading}
                                         >
                                             <IconRefresh className="w-4 h-4" />
@@ -1126,7 +1172,7 @@ const PaymentReport = () => {
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             className="px-4 sm:px-6 py-2.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2"
-                                            style={{ backgroundColor: brandColorPrimary }}
+                                            style={{ backgroundColor: primaryColor }}
                                             disabled={searchLoading || isSearching}
                                         >
                                             {searchLoading || isSearching ? (
@@ -1148,38 +1194,38 @@ const PaymentReport = () => {
                     )}
                 </AnimatePresence>
 
-                {/* Results Section */}
+                {/* Results Section - Show sample data initially */}
                 {loading ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center border border-blue-100">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8 sm:p-12 text-center border rounded-xl" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                         <div className="flex flex-col items-center justify-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-2 mb-6" style={{ borderColor: brandColorPrimary }}></div>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-2">Loading Payment Data</h3>
-                            <p className="text-gray-500">Please wait while we fetch billing information</p>
+                            <div className="animate-spin rounded-full h-16 w-16 border-b-2 mb-6" style={{ borderColor: primaryColor }}></div>
+                            <h3 className="text-xl font-semibold mb-2" style={{ color: darkColor }}>Loading Payment Data</h3>
+                            <p style={{ color: secondaryColor }}>Please wait while we fetch billing information</p>
                         </div>
                     </motion.div>
                 ) : searchLoading ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center border border-blue-100">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8 sm:p-12 text-center border rounded-xl" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                         <div className="flex flex-col items-center justify-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-2 mb-6" style={{ borderColor: brandColorPrimary }}></div>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-2">Searching Payments</h3>
-                            <p className="text-gray-500">Fetching data based on your criteria</p>
+                            <div className="animate-spin rounded-full h-16 w-16 border-b-2 mb-6" style={{ borderColor: primaryColor }}></div>
+                            <h3 className="text-xl font-semibold mb-2" style={{ color: darkColor }}>Searching Payments</h3>
+                            <p style={{ color: secondaryColor }}>Fetching data based on your criteria</p>
                         </div>
                     </motion.div>
-                ) : appliedFilters && filteredData.length > 0 ? (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl shadow-lg overflow-hidden border border-blue-100">
-                        <div className="p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+                ) : (filteredData.length > 0) ? (
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl overflow-hidden border" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+                        <div className="p-4 sm:p-6 border-b" style={{ borderColor: borderColor, background: `linear-gradient(135deg, ${lightBg} 0%, ${cardBg} 100%)` }}>
                             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                                 <div>
-                                    <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-1">
+                                    <h3 className="text-lg sm:text-xl font-bold mb-1" style={{ color: darkColor }}>
                                         {reportType === 'all' ? 'All Payments' : `${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Payments`}
                                     </h3>
-                                    <p className="text-sm text-gray-600">
+                                    <p style={{ color: secondaryColor }}>
                                         Showing {filteredData.length} payments totaling {formatCurrency(calculateMetrics.totalAmount)}
                                         {reportType !== 'all' && ` from ${moment(filters.startDate).format('DD MMM YY')} to ${moment(filters.toDate).format('DD MMM YY')}`}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <div className="text-sm text-gray-600">
+                                    <div style={{ color: secondaryColor }}>
                                         <span className="hidden sm:inline">Last updated: </span>
                                         <span className="font-medium">{moment().format('HH:mm')}</span>
                                     </div>
@@ -1196,13 +1242,16 @@ const PaymentReport = () => {
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: index * 0.05 }}
-                                            className="bg-white border border-blue-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                                            className="p-4 border rounded-xl shadow-sm hover:shadow-md transition-all"
+                                            style={{ backgroundColor: 'white', borderColor: borderColor }}
                                         >
                                             <div className="space-y-3">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-2 mb-2">
-                                                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-700">{payment.invoiceNumber}</span>
+                                                            <span className="text-xs font-medium px-2 py-1 rounded-full" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                                                                {payment.invoiceNumber}
+                                                            </span>
                                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
                                                                 {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                                                             </span>
@@ -1214,7 +1263,7 @@ const PaymentReport = () => {
                                                     <div className="text-right">
                                                         <div className="font-bold text-gray-900 text-sm">{formatCurrency(payment.amount)}</div>
                                                         {payment.pendingAmount > 0 && (
-                                                            <div className="text-xs" style={{ color: brandColorWarning }}>
+                                                            <div className="text-xs" style={{ color: warningColor }}>
                                                                 Pending: {formatCurrency(payment.pendingAmount)}
                                                             </div>
                                                         )}
@@ -1238,8 +1287,8 @@ const PaymentReport = () => {
                                                     onClick={() => handleViewDetails(payment)}
                                                     className="w-full mt-2 px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-center gap-1 font-medium"
                                                     style={{
-                                                        backgroundColor: `${brandColorPrimary}15`,
-                                                        color: brandColorPrimary,
+                                                        backgroundColor: `${primaryColor}15`,
+                                                        color: primaryColor,
                                                     }}
                                                 >
                                                     <IconEye className="w-3.5 h-3.5" />
@@ -1274,17 +1323,27 @@ const PaymentReport = () => {
                                     <button
                                         onClick={() => handlePaginationChange(currentPage - 1, pageSize)}
                                         disabled={currentPage === 0}
-                                        className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                        className="px-3 py-1.5 text-sm rounded-lg border disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                                        style={{ 
+                                            borderColor: borderColor,
+                                            backgroundColor: cardBg,
+                                            color: darkColor
+                                        }}
                                     >
                                         Previous
                                     </button>
-                                    <span className="text-sm text-gray-600">
+                                    <span className="text-sm" style={{ color: secondaryColor }}>
                                         Page {currentPage + 1} of {Math.ceil(getTotalCount() / pageSize)}
                                     </span>
                                     <button
                                         onClick={() => handlePaginationChange(currentPage + 1, pageSize)}
                                         disabled={currentPage >= Math.ceil(getTotalCount() / pageSize) - 1}
-                                        className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                        className="px-3 py-1.5 text-sm rounded-lg border disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                                        style={{ 
+                                            borderColor: borderColor,
+                                            backgroundColor: cardBg,
+                                            color: darkColor
+                                        }}
                                     >
                                         Next
                                     </button>
@@ -1292,42 +1351,28 @@ const PaymentReport = () => {
                             )}
                         </div>
                     </motion.div>
-                ) : appliedFilters && filteredData.length === 0 ? (
-                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center border border-blue-100">
-                        <div className="flex flex-col items-center justify-center">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${brandColorPrimary}15` }}>
-                                <IconWifi className="w-10 h-10 sm:w-12 sm:h-12" style={{ color: brandColorPrimary }} />
-                            </div>
-                            <h3 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-3">No Payments Found</h3>
-                            <p className="text-gray-600 text-sm sm:text-base max-w-md mb-6">No payments match your current search criteria. Try adjusting your filters.</p>
-                            <button
-                                onClick={handleClear}
-                                className="px-6 py-3 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-semibold shadow-lg"
-                                style={{ backgroundColor: brandColorPrimary }}
-                            >
-                                Clear Filters
-                            </button>
-                        </div>
-                    </motion.div>
                 ) : (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center border border-blue-100">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8 sm:p-12 text-center border rounded-xl" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                         <div className="flex flex-col items-center justify-center">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${brandColorPrimary}15` }}>
-                                <IconWifi className="w-10 h-10 sm:w-12 sm:h-12" style={{ color: brandColorPrimary }} />
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${primaryColor}15` }}>
+                                <IconWifi className="w-10 h-10 sm:w-12 sm:h-12" style={{ color: primaryColor }} />
                             </div>
-                            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3">ConnectNet Payment Dashboard</h3>
-                            <p className="text-gray-600 text-sm sm:text-base max-w-md mb-6">Use the search filters above to analyze customer payments and billing information.</p>
+                            <h3 className="text-xl sm:text-2xl font-bold mb-3" style={{ color: darkColor }}>ConnectNet Payment Dashboard</h3>
+                            <p className="text-sm sm:text-base max-w-md mb-6" style={{ color: secondaryColor }}>
+                                Use the search filters above to analyze customer payments and billing information.
+                            </p>
                             <div className="flex flex-wrap gap-3 justify-center">
                                 <button
                                     onClick={() => setShowSearch(true)}
                                     className="px-6 py-3 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-semibold shadow-lg"
-                                    style={{ backgroundColor: brandColorPrimary }}
+                                    style={{ backgroundColor: primaryColor }}
                                 >
                                     Start Searching
                                 </button>
                                 <button
                                     onClick={onDownloadExcel}
-                                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-semibold shadow-lg"
+                                    className="px-6 py-3 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-semibold shadow-lg"
+                                    style={{ backgroundColor: successColor }}
                                 >
                                     Export Sample Data
                                 </button>
@@ -1350,51 +1395,51 @@ const PaymentReport = () => {
             >
                 {selectedPayment && (
                     <div className="p-4">
-                        <div className="mb-6 p-4 rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-white">
+                        <div className="mb-6 p-4 rounded-lg border" style={{ borderColor: borderColor, background: `linear-gradient(135deg, ${lightBg} 0%, ${cardBg} 100%)` }}>
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 rounded-lg bg-white shadow-sm">
-                                    <IconWifi className="w-6 h-6" style={{ color: brandColorPrimary }} />
+                                <div className="p-2 rounded-lg shadow-sm" style={{ backgroundColor: 'white' }}>
+                                    <IconWifi className="w-6 h-6" style={{ color: primaryColor }} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg text-gray-800">ConnectNet Internet Service</h3>
-                                    <p className="text-sm text-gray-600">Customer Billing Information</p>
+                                    <h3 className="font-bold text-lg" style={{ color: darkColor }}>ConnectNet Internet Service</h3>
+                                    <p className="text-sm" style={{ color: secondaryColor }}>Customer Billing Information</p>
                                 </div>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">Customer Information</h4>
+                                        <h4 className="font-semibold mb-2 text-sm" style={{ color: darkColor }}>Customer Information</h4>
                                         <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Customer Name:</span>
-                                                <span className="font-medium">{selectedPayment.clientName}</span>
+                                                <span style={{ color: secondaryColor }}>Customer Name:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.clientName}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Customer ID:</span>
-                                                <span className="font-medium">{selectedPayment.customerId}</span>
+                                                <span style={{ color: secondaryColor }}>Customer ID:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.customerId}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Email:</span>
-                                                <span className="font-medium">{selectedPayment.clientEmail}</span>
+                                                <span style={{ color: secondaryColor }}>Email:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.clientEmail}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Phone:</span>
-                                                <span className="font-medium">{selectedPayment.clientPhone}</span>
+                                                <span style={{ color: secondaryColor }}>Phone:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.clientPhone}</span>
                                             </div>
                                         </div>
                                     </div>
                                     
                                     <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">Service Information</h4>
+                                        <h4 className="font-semibold mb-2 text-sm" style={{ color: darkColor }}>Service Information</h4>
                                         <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Internet Plan:</span>
-                                                <span className="font-medium">{selectedPayment.planName}</span>
+                                                <span style={{ color: secondaryColor }}>Internet Plan:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.planName}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Billing Cycle:</span>
-                                                <span className="font-medium">{selectedPayment.billingCycle}</span>
+                                                <span style={{ color: secondaryColor }}>Billing Cycle:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.billingCycle}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1402,57 +1447,57 @@ const PaymentReport = () => {
                                 
                                 <div className="space-y-4">
                                     <div>
-                                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">Payment Information</h4>
+                                        <h4 className="font-semibold mb-2 text-sm" style={{ color: darkColor }}>Payment Information</h4>
                                         <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Invoice Number:</span>
-                                                <span className="font-medium">{selectedPayment.invoiceNumber}</span>
+                                                <span style={{ color: secondaryColor }}>Invoice Number:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.invoiceNumber}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Payment ID:</span>
-                                                <span className="font-medium">{selectedPayment.paymentId}</span>
+                                                <span style={{ color: secondaryColor }}>Payment ID:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.paymentId}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Status:</span>
+                                                <span style={{ color: secondaryColor }}>Status:</span>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedPayment.status)}`}>
                                                     {selectedPayment.status.charAt(0).toUpperCase() + selectedPayment.status.slice(1)}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Payment Method:</span>
-                                                <span className="font-medium">{selectedPayment.paymentMethod}</span>
+                                                <span style={{ color: secondaryColor }}>Payment Method:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.paymentMethod}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Transaction ID:</span>
-                                                <span className="font-medium">{selectedPayment.transactionId}</span>
+                                                <span style={{ color: secondaryColor }}>Transaction ID:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>{selectedPayment.transactionId}</span>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <h4 className="font-semibold text-gray-700 mb-3 text-sm">Financial Summary</h4>
+                                    <div className="p-4 rounded-lg" style={{ backgroundColor: hoverBg }}>
+                                        <h4 className="font-semibold mb-3 text-sm" style={{ color: darkColor }}>Financial Summary</h4>
                                         <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Total Amount:</span>
-                                                <span className="font-bold" style={{ color: brandColorPrimary }}>
+                                                <span style={{ color: secondaryColor }}>Total Amount:</span>
+                                                <span className="font-bold" style={{ color: primaryColor }}>
                                                     {formatCurrency(selectedPayment.amount)}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Paid Amount:</span>
-                                                <span className="font-bold" style={{ color: brandColorPrimary }}>
+                                                <span style={{ color: secondaryColor }}>Paid Amount:</span>
+                                                <span className="font-bold" style={{ color: primaryColor }}>
                                                     {formatCurrency(selectedPayment.paidAmount)}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Pending Amount:</span>
-                                                <span className="font-bold" style={{ color: brandColorWarning }}>
+                                                <span style={{ color: secondaryColor }}>Pending Amount:</span>
+                                                <span className="font-bold" style={{ color: warningColor }}>
                                                     {formatCurrency(selectedPayment.pendingAmount)}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Due Date:</span>
-                                                <span className="font-medium">
+                                                <span style={{ color: secondaryColor }}>Due Date:</span>
+                                                <span className="font-medium" style={{ color: darkColor }}>
                                                     {moment(selectedPayment.dueDate).format('DD/MM/YYYY')}
                                                 </span>
                                             </div>
@@ -1461,9 +1506,9 @@ const PaymentReport = () => {
                                 </div>
                             </div>
                             
-                            <div className="mt-4 pt-4 border-t border-blue-200">
-                                <h4 className="font-semibold text-gray-700 mb-2 text-sm">Description</h4>
-                                <p className="text-sm text-gray-600">{selectedPayment.description}</p>
+                            <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${borderColor}` }}>
+                                <h4 className="font-semibold mb-2 text-sm" style={{ color: darkColor }}>Description</h4>
+                                <p className="text-sm" style={{ color: secondaryColor }}>{selectedPayment.description}</p>
                             </div>
                         </div>
                     </div>
