@@ -11,6 +11,7 @@ import IconCalendar from '../../../components/Icon/IconCalendar';
 import IconWifi from '../../../components/Icon/IconWifi';
 import IconPhone from '../../../components/Icon/IconPhone';
 import IconMail from '../../../components/Icon/IconMail';
+import IconSearch from '../../../components/Icon/IconSearch';
 import Table from '../../../util/Table';
 import Tippy from '@tippyjs/react';
 import ModelViewBox from '../../../util/ModelViewBox';
@@ -932,42 +933,58 @@ const Index = () => {
 
     return (
         <div>
+          {/* Search and Filter Bar */}
+<div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
+    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex items-center space-x-4 w-full md:w-auto">
+            {/* Search Box */}
+            <div className="relative flex-1 md:flex-none">
+                {/* Search Icon */}
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300 pointer-events-none">
+                    <IconSearch className="w-5 h-5" />
+                </span>
 
-            {/* Search and Filter Bar */}
-            <div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center space-x-4 w-full md:w-auto">
-                        <div className="relative flex-1 md:flex-none">
-                            <input
-                                type="text"
-                                placeholder="Search customers by name, email, or ID..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="form-input pl-12 pr-4 py-3 w-full md:w-80 rounded-xl border-0 bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary dark:focus:ring-primary-light focus:bg-white dark:focus:bg-gray-700"
-                            />
-                            <div className="absolute left-4 top-3.5 text-gray-400">🔍</div>
-                        </div>
-
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="form-select py-3 rounded-xl border-0 bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary dark:focus:ring-primary-light focus:bg-white dark:focus:bg-gray-700"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="active">Active Only</option>
-                            <option value="inactive">Deleted Only</option>
-                        </select>
-                    </div>
-
-                    <button
-                        onClick={createModel}
-                        className="btn btn-primary shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center space-x-2 px-6 py-3 rounded-xl"
-                    >
-                        <IconUserPlus className="w-5 h-5" />
-                        <span className="font-medium">Add New Customer</span>
-                    </button>
-                </div>
+                <input
+                    type="text"
+                    placeholder="Search customers by name, email, or ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="form-input pl-12 pr-4 py-3 w-full md:w-80 rounded-xl border-0 
+                               bg-gray-50 dark:bg-gray-700/50 
+                               text-gray-800 dark:text-gray-200 
+                               focus:ring-2 focus:ring-primary dark:focus:ring-primary-light 
+                               focus:bg-white dark:focus:bg-gray-700"
+                />
             </div>
+
+            {/* Status Filter */}
+            <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="form-select py-3 rounded-xl border-0 
+                           bg-gray-50 dark:bg-gray-700/50 
+                           text-gray-800 dark:text-gray-200 
+                           focus:ring-2 focus:ring-primary dark:focus:ring-primary-light 
+                           focus:bg-white dark:focus:bg-gray-700"
+            >
+                <option value="all">All Status</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Deleted Only</option>
+            </select>
+        </div>
+
+        {/* Add Button */}
+        <button
+            onClick={createModel}
+            className="btn btn-primary shadow-lg hover:shadow-xl transform hover:-translate-y-1 
+                       transition-all duration-300 flex items-center space-x-2 px-6 py-3 rounded-xl"
+        >
+            <IconUserPlus className="w-5 h-5" />
+            <span className="font-medium">Add New Customer</span>
+        </button>
+    </div>
+</div>
+
 
             {/* Main Table */}
             <div className="datatables">

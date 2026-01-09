@@ -12,6 +12,7 @@ import IconShield from '../../components/Icon/IconShield';
 import IconZap from '../../components/Icon/IconShield';
 import IconUsers from '../../components/Icon/IconUsers';
 import IconClock from '../../components/Icon/IconClock';
+import IconSearch from '../../components/Icon/IconSearch';
 import Table from '../../util/Table';
 import Tippy from '@tippyjs/react';
 import { showMessage } from '../../util/AllFunction';
@@ -571,34 +572,45 @@ const Index = () => {
     return (
         <div>
             {/* Search and Filter Bar */}
-            <div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center space-x-4 w-full md:w-auto">
-                        <div className="relative flex-1 md:flex-none">
-                            <input
-                                type="text"
-                                placeholder="Search customers..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="form-input pl-12 pr-4 py-3 w-full md:w-80 rounded-xl border-0 bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary dark:focus:ring-primary-light focus:bg-white dark:focus:bg-gray-700"
-                            />
-                            <div className="absolute left-4 top-3.5 text-gray-400">🔍</div>
-                        </div>
+         <div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
+    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex items-center space-x-4 w-full md:w-auto">
+            <div className="relative flex-1 md:flex-none">
+                {/* Search Icon */}
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300 pointer-events-none">
+                    <IconSearch className="w-5 h-5" />
+                </span>
 
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="form-select py-3 rounded-xl border-0 bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary dark:focus:ring-primary-light focus:bg-white dark:focus:bg-gray-700"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="active">Active Only</option>
-                            <option value="expired">Expired Only</option>
-                        </select>
-                    </div>
-
-                 
-                </div>
+                <input
+                    type="text"
+                    placeholder="Search customers..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="form-input pl-12 pr-4 py-3 w-full md:w-80 rounded-xl 
+                               border-0 bg-gray-50 dark:bg-gray-700/50 
+                               text-gray-800 dark:text-gray-200 
+                               focus:ring-2 focus:ring-primary dark:focus:ring-primary-light 
+                               focus:bg-white dark:focus:bg-gray-700"
+                />
             </div>
+
+            <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="form-select py-3 rounded-xl border-0 
+                           bg-gray-50 dark:bg-gray-700/50 
+                           text-gray-800 dark:text-gray-200 
+                           focus:ring-2 focus:ring-primary dark:focus:ring-primary-light 
+                           focus:bg-white dark:focus:bg-gray-700"
+            >
+                <option value="all">All Status</option>
+                <option value="active">Active Only</option>
+                <option value="expired">Expired Only</option>
+            </select>
+        </div>
+    </div>
+</div>
+
 
             {/* Main Table */}
             <div className="datatables">
