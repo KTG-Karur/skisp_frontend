@@ -9,6 +9,7 @@ import {
     Employee,
     Role,
     CompanyInfo,
+    CustomerInvoice,
     //new asf - ev
     Customer,
     //new VMS
@@ -251,6 +252,10 @@ const routes = [
         element: <PaymentReport/>,
     },
     {
+        path: '/invoice/customer-invoice',
+        element: <CustomerInvoice/>,
+    },
+    {
         path: '/reports/plan-report',
         element: <PlanReport/>,
     },
@@ -354,6 +359,10 @@ const dontCkeckRouts = [
     {
         path: '/documents/print-task',
         element: <PrintTask />,
+    },
+    {
+        path: '/invoice/customer-invoice',
+        element: <CustomerInvoice/>,
     },
     {
         path: '/pages/contact-us-boxed',

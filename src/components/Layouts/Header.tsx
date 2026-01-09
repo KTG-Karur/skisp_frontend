@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { IRootState } from '../../redux/themeStore';
-import { toggleRTL, toggleTheme, toggleSidebar } from '../../redux/themeStore/themeConfigSlice';
+import { toggleSidebar } from '../../redux/themeStore/themeConfigSlice';
 import { useTranslation } from 'react-i18next';
-import i18next from 'i18next';
 import Dropdown from '../Dropdown';
 import IconMenu from '../Icon/IconMenu';
-import IconCaretDown from '../Icon/IconCaretDown';
-import IconUser from '../Icon/IconUser';
-import IconLogout from '../Icon/IconLogout';
 import IconCheck from '../Icon/IconCheck';
 import IconBuilding from '../Icon/IconBuilding';
 import IconUsers from '../Icon/IconUsers';
+import IconRefresh from '../Icon/IconRefresh';
+import IconLoader from '../Icon/IconLoader';
 
 import { getProvider } from '../../redux/providerSlice';
+import { syncBandWidth, syncSmartBytes, resetSyncStatus } from '../../redux/syncSlice';
+import { showMessage } from '../../util/AllFunction';
 
 interface Provider {
     id: string;
@@ -36,9 +36,17 @@ const Header = () => {
     const allProviders: Provider[] = providerState.providerData || [];
     const providerLoading = providerState.loading || false;
 
+    const syncState = useSelector((state: any) => state.sync || {});
+    const bandwidthSync = syncState.bandwidth || {};
+    const smartbytesSync = syncState.smartbytes || {};
+    const overallSyncInProgress = syncState.overallSyncInProgress || false;
+    const lastSyncComplete = syncState.lastSyncComplete || false;
+
     const [selectedProvider, setSelectedProvider] = useState<string>('');
     const [selectedProviderName, setSelectedProviderName] = useState<string>('Tacitine');
     const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [shownMessages, setShownMessages] = useState<Set<string>>(new Set());
 
     const loginDataString = localStorage.getItem('loginInfo');
     const loginData = loginDataString ? JSON.parse(loginDataString) : null;
@@ -68,6 +76,55 @@ const Header = () => {
         }
     }, [allProviders]);
 
+    useEffect(() => {
+        if (bandwidthSync.success && bandwidthSync.message) {
+            const messageKey = `bandwidth-${bandwidthSync.message}`;
+            if (!shownMessages.has(messageKey)) {
+                showMessage('success', bandwidthSync.message);
+                setShownMessages(prev => new Set(prev).add(messageKey));
+            }
+        }
+    }, [bandwidthSync.success, bandwidthSync.message]);
+
+    useEffect(() => {
+        if (smartbytesSync.success && smartbytesSync.message) {
+            const messageKey = `smartbytes-${smartbytesSync.message}`;
+            if (!shownMessages.has(messageKey)) {
+                showMessage('success', smartbytesSync.message);
+                setShownMessages(prev => new Set(prev).add(messageKey));
+            }
+        }
+    }, [smartbytesSync.success, smartbytesSync.message]);
+
+    useEffect(() => {
+        if (bandwidthSync.error && !bandwidthSync.loading) {
+            const messageKey = `bandwidth-error-${bandwidthSync.error}`;
+            if (!shownMessages.has(messageKey)) {
+                showMessage('error', bandwidthSync.error);
+                setShownMessages(prev => new Set(prev).add(messageKey));
+            }
+        }
+        
+        if (smartbytesSync.error && !smartbytesSync.loading) {
+            const messageKey = `smartbytes-error-${smartbytesSync.error}`;
+            if (!shownMessages.has(messageKey)) {
+                showMessage('error', smartbytesSync.error);
+                setShownMessages(prev => new Set(prev).add(messageKey));
+            }
+        }
+    }, [bandwidthSync.error, smartbytesSync.error, bandwidthSync.loading, smartbytesSync.loading]);
+
+    useEffect(() => {
+        if (lastSyncComplete && !overallSyncInProgress) {
+            setIsSyncing(false);
+            
+            setTimeout(() => {
+                setShownMessages(new Set());
+                dispatch(resetSyncStatus());
+            }, 1000);
+        }
+    }, [lastSyncComplete, overallSyncInProgress]);
+
     const fetchProviders = async () => {
         try {
             await dispatch(getProvider() as any);
@@ -86,6 +143,45 @@ const Header = () => {
         setProviderDropdownOpen(false);
 
         console.log(`Selected provider: ${providerName} (ID: ${providerId})`);
+    };
+
+    const handleSync = async (e: React.MouseEvent, providerId: string, providerName: string) => {
+        e.stopPropagation(); 
+        
+        if (providerName.toLowerCase() !== 'tacitine') {
+            showMessage('warning', 'Sync is only available for Tacitine provider');
+            return;
+        }
+
+        if (isSyncing || overallSyncInProgress) {
+            showMessage('warning', 'Sync already in progress');
+            return;
+        }
+
+        setIsSyncing(true);
+        setShownMessages(new Set());
+        
+        try {
+            dispatch(resetSyncStatus());
+            
+            showMessage('info', 'Starting sync process for Tacitine...', null);
+            
+            await dispatch(syncBandWidth() as any);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await dispatch(syncSmartBytes() as any);
+            
+            setTimeout(() => {
+                fetchProviders();
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Sync failed:', error);
+            setIsSyncing(false);
+            showMessage('error', 'An unexpected error occurred during sync');
+            dispatch(resetSyncStatus());
+        }
     };
 
     const handleLogout = () => {
@@ -178,6 +274,12 @@ const Header = () => {
                                     <li className="sticky top-0 bg-white dark:bg-dark border-b dark:border-white/10 z-10">
                                         <div className="px-3 py-2.5">
                                             <h4 className="text-sm font-semibold">Select Provider</h4>
+                                            {isSyncing && (
+                                                <div className="mt-1 text-xs text-primary flex items-center gap-1">
+                                                    <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary border-t-transparent"></div>
+                                                    Syncing Tacitine...
+                                                </div>
+                                            )}
                                         </div>
                                     </li>
 
@@ -215,7 +317,7 @@ const Header = () => {
                                             {allProviders.map((provider: Provider) => (
                                                 <li key={provider.id}>
                                                     <div
-                                                        className={`px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                                                        className={`px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer group ${
                                                             selectedProvider === provider.id ? 'bg-primary/5' : ''
                                                         }`}
                                                         onClick={() => handleProviderSelect(provider.id, provider.providerName)}
@@ -229,7 +331,31 @@ const Header = () => {
                                                                 {getFirstLetter(provider.providerName)}
                                                             </div>
                                                             <span className="text-sm truncate flex-1">{provider.providerName}</span>
-                                                            {selectedProvider === provider.id && <IconCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                                                            
+                                                            {/* Sync button only for Tacitine */}
+                                                            {provider.providerName.toLowerCase() === 'tacitine' && (
+                                                                <button
+                                                                    type="button"
+                                                                    className={`flex-shrink-0 p-1 rounded-full transition-colors ${
+                                                                        isSyncing 
+                                                                            ? 'opacity-50 cursor-not-allowed bg-primary/20' 
+                                                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                                                                    }`}
+                                                                    onClick={(e) => handleSync(e, provider.id, provider.providerName)}
+                                                                    disabled={isSyncing}
+                                                                    title={isSyncing ? "Syncing in progress..." : "Sync Tacitine data"}
+                                                                >
+                                                                    {isSyncing ? (
+                                                                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary border-t-transparent"></div>
+                                                                    ) : (
+                                                                        <IconRefresh className="w-3.5 h-3.5 text-gray-500 hover:text-primary" />
+                                                                    )}
+                                                                </button>
+                                                            )}
+                                                            
+                                                            {selectedProvider === provider.id && (
+                                                                <IconCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </li>
@@ -251,6 +377,11 @@ const Header = () => {
                                                     <span className="text-xs text-gray-500 truncate">
                                                         <span className="font-medium">{selectedProviderName}</span>
                                                     </span>
+                                                    {isSyncing && (
+                                                        <span className="text-xs text-primary px-2 py-1 rounded bg-primary/10">
+                                                            Syncing...
+                                                        </span>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         className="text-xs text-gray-500 hover:text-primary px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -292,11 +423,34 @@ const Header = () => {
                                         <div className="px-4 py-2 border-t border-white-light dark:border-white-light/10">
                                             <div className="text-xs text-gray-500">Current Provider:</div>
                                             <div className="font-medium text-sm">{selectedProviderName}</div>
+                                            {selectedProviderName.toLowerCase() === 'tacitine' && (
+                                                <button
+                                                    type="button"
+                                                    className={`mt-2 w-full text-xs px-3 py-1 rounded flex items-center justify-center gap-1 ${
+                                                        isSyncing 
+                                                            ? 'bg-primary/20 text-primary cursor-not-allowed' 
+                                                            : 'bg-primary/10 text-primary hover:bg-primary/20'
+                                                    }`}
+                                                    onClick={() => handleSync({ stopPropagation: () => {} } as any, selectedProvider, selectedProviderName)}
+                                                    disabled={isSyncing}
+                                                >
+                                                    {isSyncing ? (
+                                                        <>
+                                                            <div className="animate-spin rounded-full h-3 w-3 border border-primary border-t-transparent"></div>
+                                                            Syncing...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <IconRefresh className="w-3 h-3" />
+                                                            Sync Tacitine Data
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
                                         </div>
                                     </li>
                                     <li className="border-t border-white-light dark:border-white-light/10">
                                         <button className="text-danger !py-3" onClick={handleLogout}>
-                                            <IconLogout className="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 rotate-90 shrink-0" />
                                             Sign Out
                                         </button>
                                     </li>
