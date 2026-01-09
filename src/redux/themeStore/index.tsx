@@ -21,6 +21,7 @@ import TaskSlice from '../taskSlice';
 import NotificationSlice from '../notificationSlice';
 import paymentReportSlice from '../paymentReportSlice';
 import syncSlice from '../syncSlice';
+import PlanSlice from '../planSlice';
 
 const rootReducer = combineReducers({
     themeConfig: themeConfigSlice,
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
     TaskSlice,
     NotificationSlice,
     syncSlice,
+    PlanSlice,
     PaymentReportSlice: paymentReportSlice,
 });
 
