@@ -1,12 +1,22 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getBandWidthSyncApi, getSmartBytesSyncApi } from '../api/SyncApi';
 
-export const syncBandWidth = createAsyncThunk('bandwidth/sync', async (request) => {
-    return await getBandWidthSyncApi(request);
+export const syncBandWidth = createAsyncThunk('bandwidth/sync', async (_, { rejectWithValue }) => {
+    try {
+        const response = await getBandWidthSyncApi();
+        return response;
+    } catch (error) {
+        return rejectWithValue(error.message || 'Bandwidth sync failed');
+    }
 });
 
-export const syncSmartBytes = createAsyncThunk('smartbytes/sync', async (request) => {
-    return await getSmartBytesSyncApi(request);
+export const syncSmartBytes = createAsyncThunk('smartbytes/sync', async (_, { rejectWithValue }) => {
+    try {
+        const response = await getSmartBytesSyncApi();
+        return response;
+    } catch (error) {
+        return rejectWithValue(error.message || 'SmartBytes sync failed');
+    }
 });
 
 const syncSlice = createSlice({
@@ -16,16 +26,16 @@ const syncSlice = createSlice({
             loading: false,
             success: false,
             error: null,
-            message: ''
+            message: '',
         },
         smartbytes: {
             loading: false,
             success: false,
             error: null,
-            message: ''
+            message: '',
         },
         overallSyncInProgress: false,
-        lastSyncComplete: false
+        lastSyncComplete: false,
     },
     reducers: {
         resetSyncStatus: (state) => {
@@ -42,7 +52,7 @@ const syncSlice = createSlice({
         },
         setOverallSyncInProgress: (state, action) => {
             state.overallSyncInProgress = action.payload;
-        }
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -53,38 +63,49 @@ const syncSlice = createSlice({
                 state.bandwidth.error = null;
                 state.bandwidth.message = '';
                 state.overallSyncInProgress = true;
+                state.lastSyncComplete = false;
             })
             .addCase(syncBandWidth.fulfilled, (state, action) => {
                 state.bandwidth.loading = false;
                 state.bandwidth.success = true;
                 state.bandwidth.error = null;
-                state.bandwidth.message = action.payload?.data?.message || 
-                                         action.payload?.message || 
-                                         'Bandwidth plans synced successfully';
+                state.bandwidth.message = action.payload?.message || action.payload?.data?.message || 'Bandwidth plans synced successfully';
+
+                // Check if smartbytes is also done
+                if (!state.smartbytes.loading) {
+                    state.overallSyncInProgress = false;
+                    state.lastSyncComplete = true;
+                }
             })
             .addCase(syncBandWidth.rejected, (state, action) => {
                 state.bandwidth.loading = false;
                 state.bandwidth.success = false;
-                state.bandwidth.error = action.error.message || 'Bandwidth sync failed';
+                state.bandwidth.error = action.payload || action.error.message || 'Bandwidth sync failed';
                 state.bandwidth.message = 'Bandwidth sync failed';
+
+                // If smartbytes is also not loading, mark overall as done
+                if (!state.smartbytes.loading) {
+                    state.overallSyncInProgress = false;
+                }
             })
-            
-            // SmartBytes Sync
+
+            // SmartBytes Sync - FIXED: changed smartbytesSync to syncSmartBytes
             .addCase(syncSmartBytes.pending, (state) => {
                 state.smartbytes.loading = true;
                 state.smartbytes.success = false;
                 state.smartbytes.error = null;
                 state.smartbytes.message = '';
                 state.overallSyncInProgress = true;
+                state.lastSyncComplete = false;
             })
             .addCase(syncSmartBytes.fulfilled, (state, action) => {
                 state.smartbytes.loading = false;
                 state.smartbytes.success = true;
                 state.smartbytes.error = null;
-                state.smartbytes.message = action.payload?.data?.message || 
-                                          action.payload?.message || 
-                                          'Smartbytes plans synced successfully';
-                if (state.bandwidth.success || state.bandwidth.loading === false) {
+                state.smartbytes.message = action.payload?.message || action.payload?.data?.message || 'Smartbytes plans synced successfully';
+
+                // Check if bandwidth is also done
+                if (!state.bandwidth.loading) {
                     state.overallSyncInProgress = false;
                     state.lastSyncComplete = true;
                 }
@@ -92,9 +113,13 @@ const syncSlice = createSlice({
             .addCase(syncSmartBytes.rejected, (state, action) => {
                 state.smartbytes.loading = false;
                 state.smartbytes.success = false;
-                state.smartbytes.error = action.error.message || 'SmartBytes sync failed';
+                state.smartbytes.error = action.payload || action.error.message || 'SmartBytes sync failed';
                 state.smartbytes.message = 'SmartBytes sync failed';
-                state.overallSyncInProgress = false;
+
+                // If bandwidth is also not loading, mark overall as done
+                if (!state.bandwidth.loading) {
+                    state.overallSyncInProgress = false;
+                }
             });
     },
 });

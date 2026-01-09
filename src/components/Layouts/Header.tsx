@@ -10,7 +10,7 @@ import IconCheck from '../Icon/IconCheck';
 import IconBuilding from '../Icon/IconBuilding';
 import IconUsers from '../Icon/IconUsers';
 import IconRefresh from '../Icon/IconRefresh';
-import IconLoader from '../Icon/IconLoader';
+import IconCircleCheck from '../Icon/IconCircleCheck';
 
 import { getProvider } from '../../redux/providerSlice';
 import { syncBandWidth, syncSmartBytes, resetSyncStatus } from '../../redux/syncSlice';
@@ -36,7 +36,8 @@ const Header = () => {
     const allProviders: Provider[] = providerState.providerData || [];
     const providerLoading = providerState.loading || false;
 
-    const syncState = useSelector((state: any) => state.sync || {});
+    // Get sync state from Redux
+    const syncState = useSelector((state: any) => state.syncSlice || {});
     const bandwidthSync = syncState.bandwidth || {};
     const smartbytesSync = syncState.smartbytes || {};
     const overallSyncInProgress = syncState.overallSyncInProgress || false;
@@ -46,10 +47,125 @@ const Header = () => {
     const [selectedProviderName, setSelectedProviderName] = useState<string>('Tacitine');
     const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
-    const [shownMessages, setShownMessages] = useState<Set<string>>(new Set());
+    const [syncSuccess, setSyncSuccess] = useState(false);
+    const [syncError, setSyncError] = useState(false);
+    const [syncIconTimer, setSyncIconTimer] = useState<NodeJS.Timeout | null>(null);
+    const [syncStep, setSyncStep] = useState<'idle' | 'bandwidth' | 'smartbytes' | 'complete'>('idle');
+    const [hasShownSuccess, setHasShownSuccess] = useState(false);
 
     const loginDataString = localStorage.getItem('loginInfo');
     const loginData = loginDataString ? JSON.parse(loginDataString) : null;
+
+    // Debug: Monitor Redux sync state
+    useEffect(() => {
+        console.log('Redux Sync State:', {
+            bandwidthLoading: bandwidthSync.loading,
+            bandwidthSuccess: bandwidthSync.success,
+            smartbytesLoading: smartbytesSync.loading,
+            smartbytesSuccess: smartbytesSync.success,
+            overallSyncInProgress,
+            lastSyncComplete,
+            isSyncing,
+            syncSuccess,
+        });
+    }, [bandwidthSync, smartbytesSync, overallSyncInProgress, lastSyncComplete, isSyncing, syncSuccess]);
+
+    // Main effect to handle sync state changes
+    useEffect(() => {
+        // If either sync is loading, we're syncing
+        if ((bandwidthSync.loading || smartbytesSync.loading || overallSyncInProgress) && !isSyncing) {
+            console.log('Sync started (Redux loading detected)');
+            setIsSyncing(true);
+            setSyncSuccess(false);
+            setSyncError(false);
+            setHasShownSuccess(false);
+            setSyncStep(bandwidthSync.loading ? 'bandwidth' : 'smartbytes');
+
+            // Clear any existing timer
+            if (syncIconTimer) {
+                clearTimeout(syncIconTimer);
+                setSyncIconTimer(null);
+            }
+        }
+
+        // Check if sync completed successfully
+        if (!bandwidthSync.loading && !smartbytesSync.loading && !overallSyncInProgress && lastSyncComplete) {
+            if (isSyncing && bandwidthSync.success && smartbytesSync.success) {
+                console.log('Sync completed successfully (Redux state)');
+                setSyncSuccess(true);
+                setSyncError(false);
+                setIsSyncing(false);
+                setSyncStep('complete');
+
+                // Show success message if not already shown
+                if (!hasShownSuccess) {
+                    showMessage('success', 'Sync completed successfully!');
+                    setHasShownSuccess(true);
+                }
+
+                // Set timer to reset after 5 seconds
+                const timer = setTimeout(() => {
+                    console.log('Resetting sync UI after success');
+                    setSyncSuccess(false);
+                    setSyncStep('idle');
+                    fetchProviders(); // Refresh providers
+                }, 5000);
+
+                setSyncIconTimer(timer);
+            }
+        }
+
+        // Check if sync failed
+        if (!bandwidthSync.loading && !smartbytesSync.loading && !overallSyncInProgress) {
+            if (isSyncing && (bandwidthSync.error || smartbytesSync.error)) {
+                console.log('Sync failed (Redux error detected)');
+                setSyncSuccess(false);
+                setSyncError(true);
+                setIsSyncing(false);
+                setSyncStep('idle');
+
+                // Set timer to reset after 5 seconds
+                const timer = setTimeout(() => {
+                    setSyncError(false);
+                }, 5000);
+
+                setSyncIconTimer(timer);
+            }
+        }
+    }, [bandwidthSync.loading, smartbytesSync.loading, bandwidthSync.success, smartbytesSync.success, bandwidthSync.error, smartbytesSync.error, overallSyncInProgress, lastSyncComplete, isSyncing]);
+
+    // Show individual success messages
+    useEffect(() => {
+        if (bandwidthSync.success && bandwidthSync.message) {
+            showMessage('success', bandwidthSync.message);
+        }
+    }, [bandwidthSync.success, bandwidthSync.message]);
+
+    useEffect(() => {
+        if (smartbytesSync.success && smartbytesSync.message) {
+            showMessage('success', smartbytesSync.message);
+        }
+    }, [smartbytesSync.success, smartbytesSync.message]);
+
+    // Show individual error messages
+    useEffect(() => {
+        if (bandwidthSync.error) {
+            showMessage('error', bandwidthSync.error);
+        }
+
+        if (smartbytesSync.error) {
+            showMessage('error', smartbytesSync.error);
+        }
+    }, [bandwidthSync.error, smartbytesSync.error]);
+
+    // Clean up timer on unmount
+    useEffect(() => {
+        return () => {
+            if (syncIconTimer) {
+                clearTimeout(syncIconTimer);
+            }
+        };
+    }, [syncIconTimer]);
 
     useEffect(() => {
         fetchProviders();
@@ -76,55 +192,6 @@ const Header = () => {
         }
     }, [allProviders]);
 
-    useEffect(() => {
-        if (bandwidthSync.success && bandwidthSync.message) {
-            const messageKey = `bandwidth-${bandwidthSync.message}`;
-            if (!shownMessages.has(messageKey)) {
-                showMessage('success', bandwidthSync.message);
-                setShownMessages(prev => new Set(prev).add(messageKey));
-            }
-        }
-    }, [bandwidthSync.success, bandwidthSync.message]);
-
-    useEffect(() => {
-        if (smartbytesSync.success && smartbytesSync.message) {
-            const messageKey = `smartbytes-${smartbytesSync.message}`;
-            if (!shownMessages.has(messageKey)) {
-                showMessage('success', smartbytesSync.message);
-                setShownMessages(prev => new Set(prev).add(messageKey));
-            }
-        }
-    }, [smartbytesSync.success, smartbytesSync.message]);
-
-    useEffect(() => {
-        if (bandwidthSync.error && !bandwidthSync.loading) {
-            const messageKey = `bandwidth-error-${bandwidthSync.error}`;
-            if (!shownMessages.has(messageKey)) {
-                showMessage('error', bandwidthSync.error);
-                setShownMessages(prev => new Set(prev).add(messageKey));
-            }
-        }
-        
-        if (smartbytesSync.error && !smartbytesSync.loading) {
-            const messageKey = `smartbytes-error-${smartbytesSync.error}`;
-            if (!shownMessages.has(messageKey)) {
-                showMessage('error', smartbytesSync.error);
-                setShownMessages(prev => new Set(prev).add(messageKey));
-            }
-        }
-    }, [bandwidthSync.error, smartbytesSync.error, bandwidthSync.loading, smartbytesSync.loading]);
-
-    useEffect(() => {
-        if (lastSyncComplete && !overallSyncInProgress) {
-            setIsSyncing(false);
-            
-            setTimeout(() => {
-                setShownMessages(new Set());
-                dispatch(resetSyncStatus());
-            }, 1000);
-        }
-    }, [lastSyncComplete, overallSyncInProgress]);
-
     const fetchProviders = async () => {
         try {
             await dispatch(getProvider() as any);
@@ -141,46 +208,69 @@ const Header = () => {
         localStorage.setItem('selectedProviderName', providerName);
 
         setProviderDropdownOpen(false);
-
-        console.log(`Selected provider: ${providerName} (ID: ${providerId})`);
     };
 
     const handleSync = async (e: React.MouseEvent, providerId: string, providerName: string) => {
-        e.stopPropagation(); 
-        
+        e.stopPropagation();
+
         if (providerName.toLowerCase() !== 'tacitine') {
             showMessage('warning', 'Sync is only available for Tacitine provider');
             return;
         }
 
-        if (isSyncing || overallSyncInProgress) {
+        if (isSyncing) {
             showMessage('warning', 'Sync already in progress');
             return;
         }
 
+        // Clear any existing timer
+        if (syncIconTimer) {
+            clearTimeout(syncIconTimer);
+            setSyncIconTimer(null);
+        }
+
+        // Reset states
+        setSyncSuccess(false);
+        setSyncError(false);
+        setSyncStep('idle');
+        setHasShownSuccess(false);
+
+        // Start syncing immediately (UI feedback)
         setIsSyncing(true);
-        setShownMessages(new Set());
-        
+        setSyncStep('bandwidth');
+
         try {
+            // Reset sync status
             dispatch(resetSyncStatus());
-            
-            showMessage('info', 'Starting sync process for Tacitine...', null);
-            
+
+            showMessage('info', 'Starting sync process for Tacitine...');
+
+            console.log('Starting bandwidth sync...');
+
+            // Start bandwidth sync
             await dispatch(syncBandWidth() as any);
-            
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
+
+            // Wait a moment before starting smartbytes sync
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+            console.log('Starting smartbytes sync...');
+            setSyncStep('smartbytes');
+
+            // Start smartbytes sync
             await dispatch(syncSmartBytes() as any);
-            
-            setTimeout(() => {
-                fetchProviders();
-            }, 2000);
-            
+
+            // Note: The useEffect above will handle the completion based on Redux state
         } catch (error) {
-            console.error('Sync failed:', error);
+            console.error('Sync setup failed:', error);
+            showMessage('error', 'Failed to start sync process');
             setIsSyncing(false);
-            showMessage('error', 'An unexpected error occurred during sync');
-            dispatch(resetSyncStatus());
+            setSyncError(true);
+            setSyncStep('idle');
+
+            const timer = setTimeout(() => {
+                setSyncError(false);
+            }, 5000);
+            setSyncIconTimer(timer);
         }
     };
 
@@ -200,6 +290,39 @@ const Header = () => {
         const colors = ['bg-primary', 'bg-success', 'bg-warning', 'bg-danger', 'bg-info', 'bg-secondary'];
         const index = letter.charCodeAt(0) % colors.length;
         return colors[index];
+    };
+
+    // Get sync icon based on current state
+    const getSyncIcon = () => {
+        if (syncSuccess) {
+            return <IconCircleCheck className="w-3.5 h-3.5 text-success" />;
+        }
+        if (syncError) {
+            return <span className="text-danger text-sm font-bold">✗</span>;
+        }
+        if (isSyncing) {
+            return <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-primary border-t-transparent"></div>;
+        }
+        return <IconRefresh className="w-3.5 h-3.5 text-gray-500 hover:text-primary" />;
+    };
+
+    // Get sync status text
+    const getSyncStatusText = () => {
+        if (syncSuccess) return 'Sync completed!';
+        if (syncError) return 'Sync failed';
+        if (isSyncing) {
+            switch (syncStep) {
+                case 'bandwidth':
+                    return 'Syncing bandwidth plans...';
+                case 'smartbytes':
+                    return 'Syncing smartbytes plans...';
+                case 'complete':
+                    return 'Finalizing sync...';
+                default:
+                    return 'Syncing Tacitine...';
+            }
+        }
+        return '';
     };
 
     useEffect(() => {
@@ -274,10 +397,12 @@ const Header = () => {
                                     <li className="sticky top-0 bg-white dark:bg-dark border-b dark:border-white/10 z-10">
                                         <div className="px-3 py-2.5">
                                             <h4 className="text-sm font-semibold">Select Provider</h4>
-                                            {isSyncing && (
-                                                <div className="mt-1 text-xs text-primary flex items-center gap-1">
-                                                    <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary border-t-transparent"></div>
-                                                    Syncing Tacitine...
+                                            {getSyncStatusText() && (
+                                                <div className={`mt-1 text-xs flex items-center gap-1 ${syncSuccess ? 'text-success' : syncError ? 'text-danger' : 'text-primary'}`}>
+                                                    {syncSuccess && <IconCircleCheck className="w-3.5 h-3.5" />}
+                                                    {syncError && <span className="text-danger">⚠</span>}
+                                                    {isSyncing && !syncSuccess && !syncError && <div className="animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent"></div>}
+                                                    {getSyncStatusText()}
                                                 </div>
                                             )}
                                         </div>
@@ -331,31 +456,37 @@ const Header = () => {
                                                                 {getFirstLetter(provider.providerName)}
                                                             </div>
                                                             <span className="text-sm truncate flex-1">{provider.providerName}</span>
-                                                            
+
                                                             {/* Sync button only for Tacitine */}
                                                             {provider.providerName.toLowerCase() === 'tacitine' && (
                                                                 <button
                                                                     type="button"
-                                                                    className={`flex-shrink-0 p-1 rounded-full transition-colors ${
-                                                                        isSyncing 
-                                                                            ? 'opacity-50 cursor-not-allowed bg-primary/20' 
-                                                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                                                                    className={`flex-shrink-0 p-1 rounded-full transition-all duration-200 ${
+                                                                        isSyncing
+                                                                            ? syncSuccess
+                                                                                ? 'bg-success/20 cursor-default'
+                                                                                : syncError
+                                                                                ? 'bg-danger/20 cursor-default'
+                                                                                : 'opacity-50 cursor-not-allowed bg-primary/20'
+                                                                            : 'hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-110'
                                                                     }`}
                                                                     onClick={(e) => handleSync(e, provider.id, provider.providerName)}
-                                                                    disabled={isSyncing}
-                                                                    title={isSyncing ? "Syncing in progress..." : "Sync Tacitine data"}
+                                                                    disabled={isSyncing && !syncSuccess && !syncError}
+                                                                    title={
+                                                                        syncSuccess
+                                                                            ? 'Sync completed successfully'
+                                                                            : syncError
+                                                                            ? 'Sync failed'
+                                                                            : isSyncing
+                                                                            ? 'Syncing in progress...'
+                                                                            : 'Sync Tacitine data'
+                                                                    }
                                                                 >
-                                                                    {isSyncing ? (
-                                                                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary border-t-transparent"></div>
-                                                                    ) : (
-                                                                        <IconRefresh className="w-3.5 h-3.5 text-gray-500 hover:text-primary" />
-                                                                    )}
+                                                                    {getSyncIcon()}
                                                                 </button>
                                                             )}
-                                                            
-                                                            {selectedProvider === provider.id && (
-                                                                <IconCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                                                            )}
+
+                                                            {selectedProvider === provider.id && <IconCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
                                                         </div>
                                                     </div>
                                                 </li>
@@ -377,15 +508,30 @@ const Header = () => {
                                                     <span className="text-xs text-gray-500 truncate">
                                                         <span className="font-medium">{selectedProviderName}</span>
                                                     </span>
-                                                    {isSyncing && (
-                                                        <span className="text-xs text-primary px-2 py-1 rounded bg-primary/10">
-                                                            Syncing...
+                                                    {isSyncing && !syncSuccess && !syncError && (
+                                                        <span className="text-xs text-primary px-2 py-1 rounded bg-primary/10 flex items-center gap-1">
+                                                            <div className="animate-spin rounded-full h-2 w-2 border border-primary border-t-transparent"></div>
+                                                            {syncStep === 'bandwidth' ? 'Bandwidth...' : syncStep === 'smartbytes' ? 'Smartbytes...' : 'Syncing...'}
+                                                        </span>
+                                                    )}
+                                                    {syncSuccess && (
+                                                        <span className="text-xs text-success px-2 py-1 rounded bg-success/10 flex items-center gap-1">
+                                                            <IconCircleCheck className="w-3 h-3" />
+                                                            Synced
+                                                        </span>
+                                                    )}
+                                                    {syncError && (
+                                                        <span className="text-xs text-danger px-2 py-1 rounded bg-danger/10 flex items-center gap-1">
+                                                            <span className="text-xs">✗</span>
+                                                            Failed
                                                         </span>
                                                     )}
                                                     <button
                                                         type="button"
                                                         className="text-xs text-gray-500 hover:text-primary px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                                                        onClick={() => setProviderDropdownOpen(false)}
+                                                        onClick={() => {
+                                                            setProviderDropdownOpen(false);
+                                                        }}
                                                     >
                                                         Close
                                                     </button>
@@ -417,36 +563,6 @@ const Header = () => {
                                                     {loginData?.staffName || 'No staffName'}
                                                 </button>
                                             </div>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <div className="px-4 py-2 border-t border-white-light dark:border-white-light/10">
-                                            <div className="text-xs text-gray-500">Current Provider:</div>
-                                            <div className="font-medium text-sm">{selectedProviderName}</div>
-                                            {selectedProviderName.toLowerCase() === 'tacitine' && (
-                                                <button
-                                                    type="button"
-                                                    className={`mt-2 w-full text-xs px-3 py-1 rounded flex items-center justify-center gap-1 ${
-                                                        isSyncing 
-                                                            ? 'bg-primary/20 text-primary cursor-not-allowed' 
-                                                            : 'bg-primary/10 text-primary hover:bg-primary/20'
-                                                    }`}
-                                                    onClick={() => handleSync({ stopPropagation: () => {} } as any, selectedProvider, selectedProviderName)}
-                                                    disabled={isSyncing}
-                                                >
-                                                    {isSyncing ? (
-                                                        <>
-                                                            <div className="animate-spin rounded-full h-3 w-3 border border-primary border-t-transparent"></div>
-                                                            Syncing...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <IconRefresh className="w-3 h-3" />
-                                                            Sync Tacitine Data
-                                                        </>
-                                                    )}
-                                                </button>
-                                            )}
                                         </div>
                                     </li>
                                     <li className="border-t border-white-light dark:border-white-light/10">
