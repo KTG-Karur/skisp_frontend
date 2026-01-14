@@ -13,8 +13,8 @@ import * as XLSX from 'xlsx';
 import moment from 'moment';
 import { findArrObj } from '../../../util/AllFunction';
 import { getReport, resetReportStatus } from '../../../redux/reportSlice';
-import { getEmployee, resetEmployeeStatus } from '../../../redux/employeeSlice';
-import { getProvider, resetProviderStatus } from '../../../redux/providerSlice';
+import { getCustomers, resetCustomerStatus } from '../../../redux/customerSlice';
+import { getPlan, resetPlanStatus } from '../../../redux/planSlice';
 import { baseURL } from '../../../api/ApiConfig';
 import _ from 'lodash';
 
@@ -32,147 +32,152 @@ const Index = () => {
     const brandColorPrimary = '#1a73e8'; // ISP Blue
     const brandColorSecondary = '#00c853'; // ISP Green
 
-    const { getEmployeeSuccess, getEmployeeFailed, employeeData, providerData, getProviderSuccess, getProviderFailed, error, loading, getReportSuccess, getReportFailed, reportData } = useSelector(
-        (state) => ({
-            getReportSuccess: state.ReportSlice.getReportSuccess,
-            getReportFailed: state.ReportSlice.getReportFailed,
-            error: state.ReportSlice.error,
-            loading: state.ReportSlice.loading,
-            reportData: state.ReportSlice.reportData,
-            getEmployeeSuccess: state.EmployeeSlice.getEmployeeSuccess,
-            getEmployeeFailed: state.EmployeeSlice.getEmployeeFailed,
-            employeeData: state.EmployeeSlice.employeeData,
-            providerData: state.ProviderSlice.providerData,
-            getProviderSuccess: state.ProviderSlice.getProviderSuccess,
-            getProviderFailed: state.ProviderSlice.getProviderFailed,
-        })
-    );
+    // Get data from Redux store
+    const {
+        loading,
+        getReportSuccess,
+        getReportFailed,
+        reportData,
+        customers = [],
+        customerLoading = false,
+        plans = [],
+        planLoading = false,
+    } = useSelector((state) => ({
+        getReportSuccess: state.ReportSlice.getReportSuccess,
+        getReportFailed: state.ReportSlice.getReportFailed,
+        error: state.ReportSlice.error,
+        loading: state.ReportSlice.loading,
+        reportData: state.ReportSlice.reportData,
+        customers: state.CustomerSlice.customers || [],
+        customerLoading: state.CustomerSlice.loading || false,
+        plans: state.PlanSlice.planData || [],
+        planLoading: state.PlanSlice.loading || false,
+    }));
 
-    // ISP Plan Data Structure
-    const ispPlans = [
-        { value: '599', label: 'Basic 599 (50 Mbps)', price: 599, speed: '50 Mbps', data: 'Unlimited', users: 'Up to 3' },
-        { value: '799', label: 'Standard 799 (100 Mbps)', price: 799, speed: '100 Mbps', data: 'Unlimited', users: 'Up to 5' },
-        { value: '1199', label: 'Premium 1199 (200 Mbps)', price: 1199, speed: '200 Mbps', data: 'Unlimited', users: 'Up to 8' },
-        { value: '2999', label: 'Ultimate 2999 (500 Mbps)', price: 2999, speed: '500 Mbps', data: 'Unlimited', users: 'Up to 12' },
-        { value: '4999', label: 'Business 4999 (1 Gbps)', price: 4999, speed: '1 Gbps', data: 'Unlimited', users: 'Unlimited' },
-    ];
-
-    // Payment Status Options (only paid and pending)
-    const paymentStatusOptions = [
+    // Account Status Options (active, Expired, all)
+    const accountStatusOptions = [
         { value: '', label: 'All Status' },
-        { value: 'paid', label: 'Paid', color: 'bg-green-100 text-green-800' },
-        { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+        { value: 'active', label: 'Active', color: 'bg-green-100 text-green-800' },
+        { value: 'Expired', label: 'Expired', color: 'bg-red-100 text-red-800' },
+        { value: 'expiring_soon', label: 'Expiring Soon', color: 'bg-yellow-100 text-yellow-800' },
     ];
 
-    // Transform API data to match ISP Plan format
+    // Transform API data to match display format
     const transformApiData = (apiData) => {
         if (!apiData || !Array.isArray(apiData)) return [];
 
-        return apiData.map((plan, index) => {
-            // Find plan details from ispPlans array
-            const planDetails = ispPlans.find(p => p.value === plan.planAmount?.toString()) || ispPlans[0];
+        return apiData.map((item, index) => {
+            const userDetails = item.user_details || {};
+            const fullData = item.full_data || {};
 
-            // Calculate renewal date
-            let renewalDate = null;
-            if (plan.activationDate) {
-                renewalDate = moment(plan.activationDate).add(30, 'days').format('YYYY-MM-DD');
+            // Determine status based on days_remaining
+            let displayStatus = item.status || 'active';
+            if (item.days_remaining < 0) {
+                displayStatus = 'Expired';
+            } else if (item.days_remaining <= 30) {
+                displayStatus = 'expiring_soon';
+            } else {
+                displayStatus = 'active';
             }
 
-            // Calculate days until renewal
-            let daysUntilRenewal = null;
-            if (renewalDate) {
-                const today = moment();
-                const renewalMoment = moment(renewalDate);
-                daysUntilRenewal = renewalMoment.diff(today, 'days');
+            // Calculate bandwidth in Mbps
+            const bandwidthKbps = parseInt(userDetails.bandwidth) || 0;
+            const bandwidthMbps = Math.round(bandwidthKbps / 1000);
+
+            // Parse data quota
+            const dataQuota = userDetails.data_quota || 'Unlimited';
+            let dataLimit = 'Unlimited';
+            if (dataQuota.includes('MB')) {
+                const match = dataQuota.match(/(\d+)/);
+                if (match) {
+                    const mb = parseInt(match[1]);
+                    dataLimit = `${Math.round(mb / 1024)} GB`;
+                }
             }
 
-            // Calculate bandwidth usage percentage
-            const bandwidthUsage = plan.bandwidthUsage || 0;
-            const bandwidthLimit = plan.bandwidthLimit || 100;
-            const usagePercentage = Math.round((bandwidthUsage / bandwidthLimit) * 100);
+            // Get price
+            const price = parseFloat(userDetails.price) || 0;
 
             return {
-                id: plan.subscriptionId || `SUB-${index + 1000}`,
-                subscriptionId: plan.subscriptionId?.substring(0, 10) || `SUB-${index + 1000}`,
-                customerName: plan.customerName || 'Unknown Customer',
-                customerId: plan.customerId || `CUST-${index + 500}`,
-                contactNumber: plan.contactNumber || 'N/A',
-                email: plan.email || 'N/A',
-                address: plan.address || 'Not specified',
-                area: plan.area || 'General',
-                serviceType: plan.serviceType || 'fibre',
-                planName: planDetails.label,
-                planPrice: planDetails.price,
-                speed: planDetails.speed,
-                dataLimit: planDetails.data,
-                maxUsers: planDetails.users,
-                activationDate: plan.activationDate ? moment(plan.activationDate).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
-                renewalDate: renewalDate,
-                daysUntilRenewal: daysUntilRenewal,
-                bandwidthUsage: bandwidthUsage,
-                bandwidthLimit: bandwidthLimit,
-                usagePercentage: usagePercentage,
-                paymentStatus: plan.paymentStatus || 'pending',
-                connectionStatus: plan.connectionStatus || 'active',
-                lastPaymentDate: plan.lastPaymentDate ? moment(plan.lastPaymentDate).format('YYYY-MM-DD') : null,
-                totalPaid: plan.totalPaid || 0,
-                salesAgent: plan.salesAgent || 'System',
-                remarks: plan.remarks || 'No remarks provided',
-                installationStatus: plan.installationStatus || 'completed',
-                routerMac: plan.routerMac || 'N/A',
-                customerType: plan.customerType || 'residential',
-                originalData: plan,
+                id: item.mapping_id || `PLAN-${index + 1000}`,
+                subscriptionId: `SUB-${item.user_id?.substring(0, 6) || index + 1000}`,
+                customerName: userDetails.first_name ? `${userDetails.first_name} ${userDetails.last_name || ''}`.trim() : 'Unknown Customer',
+                customerId: item.user_id,
+                contactNumber: userDetails.mobile || 'N/A',
+                email: userDetails.email || 'N/A',
+                address: userDetails.address || 'Not specified',
+                area: item.setting?.location_name || 'General',
+                serviceType: 'fibre',
+                planName: userDetails.plan_name || 'Unknown Plan',
+                planPrice: price,
+                speed: `${bandwidthMbps} Mbps`,
+                dataLimit: dataLimit,
+                maxUsers: 'N/A',
+                activationDate: item.created_at ? moment(item.created_at).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
+                renewalDate: item.expiry_date || null,
+                daysUntilRenewal: item.days_remaining,
+                bandwidthUsage: Math.floor(Math.random() * 100), // Mock data
+                bandwidthLimit: 100,
+                usagePercentage: Math.floor(Math.random() * 100),
+                paymentStatus: 'pending',
+                connectionStatus: displayStatus,
+                lastPaymentDate: null,
+                totalPaid: 0,
+                salesAgent: 'System',
+                remarks: userDetails.account_state || 'No remarks provided',
+                installationStatus: 'completed',
+                routerMac: 'N/A',
+                customerType: 'residential',
+                originalData: item,
+                userDetails: userDetails,
+                fullData: fullData,
+                expiryDate: item.expiry_date,
+                daysRemaining: item.days_remaining,
+                accountState: userDetails.account_state,
+                create_ts: item.created_at,
             };
         });
     };
 
-    const [plans, setPlans] = useState([]);
+    const [Plans, setPlans] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [summaryData, setSummaryData] = useState(null);
+    const [insightsData, setInsightsData] = useState(null);
 
     const [filters, setFilters] = useState({
         searchQuery: '',
         selectedPlan: null,
-        selectedPaymentStatus: null,
         selectedCustomer: null,
-        startDate: '',
-        toDate: '',
+        selectedAccountStatus: null,
+        daysThreshold: 30,
     });
 
     const [optionListState, setOptionListState] = useState({
-        planList: ispPlans,
-        paymentStatusList: paymentStatusOptions,
+        planList: [],
+        accountStatusList: accountStatusOptions,
         customerList: [],
     });
 
     const [appliedFilters, setAppliedFilters] = useState(null);
     const [showSearch, setShowSearch] = useState(true);
-    const [showDateFilter, setShowDateFilter] = useState(false);
 
     const getStatusColor = (status) => {
-        const statusOption = paymentStatusOptions.find(opt => opt.value === status);
+        const statusOption = accountStatusOptions.find((opt) => opt.value === status);
         return statusOption?.color || 'bg-gray-100 text-gray-800';
     };
 
     const getPlanColor = (planPrice) => {
-        switch (planPrice) {
-            case 599:
-                return '#10b981'; // Green for basic
-            case 799:
-                return '#3b82f6'; // Blue for standard
-            case 1199:
-                return '#8b5cf6'; // Purple for premium
-            case 2999:
-                return '#ff6d00'; // Orange for ultimate
-            case 4999:
-                return '#6200ea'; // Purple for business
-            default:
-                return brandColorPrimary;
-        }
+        const price = parseFloat(planPrice) || 0;
+        if (price <= 1000) return '#10b981'; // Green for basic
+        if (price <= 2000) return '#3b82f6'; // Blue for standard
+        if (price <= 3000) return '#8b5cf6'; // Purple for premium
+        if (price <= 4000) return '#ff6d00'; // Orange for ultimate
+        return '#6200ea'; // Purple for business
     };
 
     const getUsageColor = (percentage) => {
@@ -202,6 +207,7 @@ const Index = () => {
                 <div>
                     <div className="font-medium text-gray-900">{value}</div>
                     <div className="text-xs text-gray-500">{row.original.contactNumber}</div>
+                    <div className="text-xs text-gray-500">ID: {row.original.customerId}</div>
                 </div>
             ),
         },
@@ -221,45 +227,31 @@ const Index = () => {
                     <div>
                         <div className="font-medium text-gray-900">{value}</div>
                         <div className="text-xs text-gray-500">₹{row.original.planPrice}/month</div>
+                        <div className="text-xs text-gray-500">{row.original.speed}</div>
                     </div>
                 </div>
             ),
         },
         {
-            Header: 'Speed',
-            accessor: 'speed',
-            sort: true,
-            Cell: ({ value }) => (
-                <div>
-                    <div className="font-medium text-gray-900">{value}</div>
-                </div>
-            ),
-        },
-        {
-            Header: 'Activation Date',
-            accessor: 'activationDate',
-            sort: true,
-            Cell: ({ value }) => <div className="font-medium text-gray-900">{moment(value).format('DD/MM/YYYY')}</div>,
-        },
-        {
-            Header: 'Renewal Date',
-            accessor: 'renewalDate',
+            Header: 'Expiry Date',
+            accessor: 'expiryDate',
             sort: true,
             Cell: ({ value, row }) => {
                 if (!value) return <div className="text-gray-400">-</div>;
 
-                const renewalDate = moment(value);
+                const expiryDate = moment(value);
                 const today = moment();
-                const daysDiff = renewalDate.diff(today, 'days');
+                const daysDiff = row.original.daysRemaining || expiryDate.diff(today, 'days');
+
                 let className = 'font-medium';
                 let additionalInfo = '';
 
                 if (daysDiff < 0) {
                     className = 'text-red-600 font-semibold';
-                    additionalInfo = ` (${Math.abs(daysDiff)} days overdue)`;
+                    additionalInfo = ` (${Math.abs(daysDiff)} days ago)`;
                 } else if (daysDiff === 0) {
                     className = 'text-orange-600 font-semibold';
-                    additionalInfo = ' - Due today!';
+                    additionalInfo = ' - Expires today!';
                 } else if (daysDiff <= 7) {
                     className = 'text-yellow-600 font-semibold';
                     additionalInfo = ` (in ${daysDiff} days)`;
@@ -267,43 +259,54 @@ const Index = () => {
 
                 return (
                     <div className={className}>
-                        {renewalDate.format('DD/MM/YYYY')}
+                        {expiryDate.format('DD/MM/YYYY')}
                         {additionalInfo && <span className="text-xs block mt-0.5">{additionalInfo}</span>}
                     </div>
                 );
             },
         },
         {
-            Header: 'Payment Status',
-            accessor: 'paymentStatus',
+            Header: 'Days Remaining',
+            accessor: 'daysRemaining',
             sort: true,
             Cell: ({ value }) => {
-                const statusOption = paymentStatusOptions.find(opt => opt.value === value);
-                return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
-                        {statusOption?.label || value}
-                    </span>
-                );
+                let className = 'font-medium';
+                let displayValue = value;
+
+                if (value < 0) {
+                    className = 'text-red-600 font-semibold';
+                    displayValue = `Expired ${Math.abs(value)} days ago`;
+                } else if (value === 0) {
+                    className = 'text-orange-600 font-semibold';
+                    displayValue = 'Today';
+                } else if (value <= 7) {
+                    className = 'text-yellow-600 font-semibold';
+                    displayValue = `${value} days`;
+                } else {
+                    displayValue = `${value} days`;
+                }
+
+                return <div className={className}>{displayValue}</div>;
             },
         },
         {
-            Header: 'Usage',
-            accessor: 'usagePercentage',
+            Header: 'Status',
+            accessor: 'connectionStatus',
             sort: true,
-            Cell: ({ value, row }) => (
-                <div className="flex items-center">
-                    <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
-                        <div
-                            className="h-2 rounded-full transition-all duration-300"
-                            style={{
-                                width: `${value}%`,
-                                backgroundColor: getUsageColor(value),
-                            }}
-                        ></div>
-                    </div>
-                    <span className="text-xs font-medium">{value}%</span>
-                </div>
-            ),
+            Cell: ({ value }) => {
+                let displayLabel = value;
+                if (value === 'expiring_soon') displayLabel = 'Expiring Soon';
+                return <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>{displayLabel}</span>;
+            },
+        },
+        {
+            Header: 'Account State',
+            accessor: 'accountState',
+            sort: true,
+            Cell: ({ value }) => {
+                const isActive = value === 'Active';
+                return <span className={`px-2 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{value || 'Unknown'}</span>;
+            },
         },
         {
             Header: 'Actions',
@@ -327,98 +330,170 @@ const Index = () => {
         },
     ];
 
+    const getSettingId = () => {
+        const loginInfoStr = localStorage.getItem('loginInfo');
+
+        if (!loginInfoStr) {
+            return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+        }
+
+        try {
+            const loginInfo = JSON.parse(loginInfoStr);
+            if (loginInfo?.settingId) {
+                return loginInfo.settingId;
+            }
+
+            return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+        } catch (error) {
+            console.error('Invalid loginInfo JSON', error);
+            return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+        }
+    };
+
     useEffect(() => {
-        // Initialize data when reportData changes
-        if (reportData && reportData.data && Array.isArray(reportData.data)) {
-            const transformedPlans = transformApiData(reportData.data);
+        // Load initial data
+        dispatch(getCustomers());
+        dispatch(getPlan({ settingId: getSettingId() }));
+
+        const initialFilters = {
+            settingId: getSettingId(),
+            daysThreshold: 30,
+            accountState: '',
+            page: 1,
+            limit: 500,
+            search: '',
+            planName: '',
+            userId: '',
+        };
+        dispatch(getReport(initialFilters));
+    }, [dispatch]);
+
+    useEffect(() => {
+        // When report data changes, transform it
+        if (reportData?.data?.items) {
+            const transformedPlans = transformApiData(reportData.data.items);
             setPlans(transformedPlans);
             setFilteredData(transformedPlans);
-            
-            // Extract unique customers for filter dropdown - search only by name and phone
-            const uniqueCustomers = Array.from(
-                new Map(transformedPlans.map(plan => [plan.customerId, plan])).values()
-            ).map(plan => ({
-                value: plan.customerId,
-                label: plan.customerName,
-                phone: plan.contactNumber,
-                searchText: `${plan.customerName} ${plan.contactNumber}`.toLowerCase() // Only name and phone
+
+            // Set summary and insights data
+            if (reportData.data.summary) {
+                setSummaryData(reportData.data.summary);
+            }
+            if (reportData.data.insights) {
+                setInsightsData(reportData.data.insights);
+            }
+
+            // Prepare plan list for dropdown (unique plan names)
+            const planNames = [...new Set(transformedPlans.map((plan) => plan.planName))];
+            const planOptions = planNames.map((planName) => ({
+                value: planName,
+                label: planName,
+                searchText: planName.toLowerCase(),
             }));
-            
-            setOptionListState(prev => ({
+
+            // Prepare customer list for dropdown (phone numbers)
+            const customerOptions = transformedPlans.map((plan) => ({
+                value: plan.contactNumber !== 'N/A' ? plan.contactNumber : plan.customerId,
+                label: `${plan.customerName} (${plan.contactNumber})`,
+                phone: plan.contactNumber,
+                searchText: `${plan.customerName} ${plan.contactNumber} ${plan.customerId}`.toLowerCase(),
+            }));
+
+            // Remove duplicates
+            const uniqueCustomerOptions = Array.from(new Map(customerOptions.map((item) => [item.value, item])).values());
+
+            setOptionListState((prev) => ({
                 ...prev,
-                customerList: [{ value: '', label: 'All Customers' }, ...uniqueCustomers]
+                customerList: [{ value: '', label: 'All Customers' }, ...uniqueCustomerOptions],
+                planList: [{ value: '', label: 'All Plans' }, ...planOptions],
             }));
         } else {
             setPlans([]);
             setFilteredData([]);
-            setOptionListState(prev => ({
+            setSummaryData(null);
+            setInsightsData(null);
+            setOptionListState((prev) => ({
                 ...prev,
-                customerList: [{ value: '', label: 'All Customers' }]
+                customerList: [{ value: '', label: 'All Customers' }],
+                planList: [{ value: '', label: 'All Plans' }],
             }));
         }
-
-        // You can load additional data here if needed
-        dispatch(getEmployee());
-        dispatch(getProvider());
     }, [reportData]);
 
     useEffect(() => {
-        // Load initial data with default filters
-        const initialFilters = {
-            isActive: 1,
-        };
-        dispatch(getReport(initialFilters));
-    }, []);
+        // Apply filters to data
+        let filtered = [...Plans];
+
+        // Search filter
+        if (filters.searchQuery) {
+            const query = filters.searchQuery.toLowerCase();
+            filtered = filtered.filter(
+                (plan) =>
+                    plan.customerName?.toLowerCase().includes(query) ||
+                    plan.customerId?.toLowerCase().includes(query) ||
+                    plan.contactNumber?.includes(query) ||
+                    plan.email?.toLowerCase().includes(query) ||
+                    plan.planName?.toLowerCase().includes(query)
+            );
+        }
+
+        // Customer filter (by phone number)
+        if (filters.selectedCustomer?.value) {
+            filtered = filtered.filter((plan) => plan.contactNumber === filters.selectedCustomer.value || plan.customerId === filters.selectedCustomer.value);
+        }
+
+        // Plan filter (by plan name)
+        if (filters.selectedPlan?.value) {
+            filtered = filtered.filter((plan) => plan.planName === filters.selectedPlan.value);
+        }
+
+        // Account status filter
+        if (filters.selectedAccountStatus?.value) {
+            filtered = filtered.filter((plan) => {
+                if (filters.selectedAccountStatus.value === 'expiring_soon') {
+                    return plan.daysRemaining > 0 && plan.daysRemaining <= filters.daysThreshold;
+                }
+                return plan.connectionStatus === filters.selectedAccountStatus.value;
+            });
+        }
+
+        setFilteredData(filtered);
+    }, [Plans, filters]);
 
     const buildBackendFilters = () => {
         const backendFilters = {
-            isActive: 1,
-            reportType: 'plan',
+            settingId: getSettingId(),
+            daysThreshold: filters.daysThreshold,
+            page: 1,
+            limit: 500,
+            exportFormat: 'json',
         };
 
         if (filters.searchQuery) {
             backendFilters.search = filters.searchQuery;
         }
 
-        if (showDateFilter && filters.startDate) {
-            backendFilters.fromDate = filters.startDate;
+        // Send plan name (not ID)
+        if (filters.selectedPlan?.value) {
+            backendFilters.planName = filters.selectedPlan.value;
         }
 
-        if (showDateFilter && filters.toDate) {
-            backendFilters.toDate = filters.toDate;
+        // Send user phone number (not ID)
+        if (filters.selectedCustomer?.value) {
+            backendFilters.userId = filters.selectedCustomer.value;
         }
 
-        if (filters.selectedPlan) {
-            backendFilters.planAmount = filters.selectedPlan.value;
-        }
-
-        if (filters.selectedPaymentStatus) {
-            backendFilters.paymentStatus = filters.selectedPaymentStatus.value;
-        }
-
-        // For customer filter, we'll handle it provider-side
-        return backendFilters;
-    };
-
-    // Filter data based on selected customer - only by name and phone
-    const filterByCustomer = (data, customerId, customerSearchText) => {
-        if (!customerId) return data;
-        
-        return data.filter(plan => {
-            // First check if customerId matches exactly
-            if (plan.customerId === customerId) return true;
-            
-            // If we have search text, check only name and phone
-            if (customerSearchText) {
-                const searchLower = customerSearchText.toLowerCase();
-                return (
-                    plan.customerName?.toLowerCase().includes(searchLower) ||
-                    plan.contactNumber?.includes(customerSearchText)
-                );
+        // Send account state
+        if (filters.selectedAccountStatus?.value) {
+            if (filters.selectedAccountStatus.value === 'expiring_soon') {
+                backendFilters.accountState = 'Active';
+                backendFilters.daysThreshold = 7; // For expiring soon, use 7 days threshold
+            } else {
+                backendFilters.accountState = filters.selectedAccountStatus.value === 'Expired' ? 'Expired' : filters.selectedAccountStatus.value;
             }
-            
-            return false;
-        });
+        }
+
+        return backendFilters;
     };
 
     const handleSubmit = async (e) => {
@@ -432,7 +507,7 @@ const Index = () => {
             setAppliedFilters({ ...filters });
             setCurrentPage(0);
         } catch (error) {
-            console.error('Error fetching filtered plans:', error);
+            console.error('Error fetching report:', error);
         } finally {
             setSearchLoading(false);
         }
@@ -442,35 +517,26 @@ const Index = () => {
         setFilters({
             searchQuery: '',
             selectedPlan: null,
-            selectedPaymentStatus: null,
             selectedCustomer: null,
-            startDate: '',
-            toDate: '',
+            selectedAccountStatus: null,
+            daysThreshold: 30,
         });
         setAppliedFilters(null);
-        setShowDateFilter(false);
         setSearchLoading(false);
         setCurrentPage(0);
 
-        // Fetch all active plans when clearing filters
-        dispatch(getReport({ isActive: 1, reportType: 'plan' }));
-    };
-
-    const toggleDateFilter = () => {
-        setShowDateFilter(!showDateFilter);
-        if (!showDateFilter) {
-            setFilters((prev) => ({
-                ...prev,
-                startDate: moment().subtract(30, 'days').format('YYYY-MM-DD'),
-                toDate: moment().format('YYYY-MM-DD'),
-            }));
-        } else {
-            setFilters((prev) => ({
-                ...prev,
-                startDate: '',
-                toDate: '',
-            }));
-        }
+        // Reset to default filters
+        const defaultFilters = {
+            settingId: getSettingId(),
+            daysThreshold: 30,
+            accountState: '',
+            page: 1,
+            limit: 500,
+            search: '',
+            planName: '',
+            userId: '',
+        };
+        dispatch(getReport(defaultFilters));
     };
 
     const handleViewDetails = (plan) => {
@@ -483,65 +549,72 @@ const Index = () => {
         setSelectedPlan(null);
     };
 
-    // Custom filter function for customer dropdown - search only by name and phone
     const filterCustomerOptions = (option, inputValue) => {
         const searchLower = inputValue.toLowerCase();
         const optionData = option.data;
-        
-        // Search ONLY by name and phone
-        const matches = 
-            optionData.label?.toLowerCase().includes(searchLower) ||
-            optionData.phone?.includes(inputValue);
-        
+
+        const matches = optionData.label?.toLowerCase().includes(searchLower) || optionData.phone?.includes(inputValue) || optionData.value?.includes(inputValue);
+
         return matches;
     };
 
-    // Format option label to show name and phone only
     const formatCustomerOptionLabel = (option) => {
         if (option.value === '') return option.label;
-        
+
         return (
             <div className="py-1">
                 <div className="font-medium text-gray-900">{option.label}</div>
-                {option.phone && option.phone !== 'N/A' && (
-                    <div className="text-xs text-gray-500">
-                        Phone: {option.phone}
-                    </div>
-                )}
+                {option.phone && option.phone !== 'N/A' && <div className="text-xs text-gray-500">Phone: {option.phone}</div>}
             </div>
         );
     };
 
-    const onDownload = () => {
-        const yearMonth = showDateFilter && filters.startDate && filters.toDate
-            ? `${moment(filters.startDate).format('DD MMM YYYY')} to ${moment(filters.toDate).format('DD MMM YYYY')}`
-            : 'All Time';
+    const formatPlanOptionLabel = (option) => {
+        if (option.value === '') return option.label;
 
-        const additionalDetails = `ISP Plan Report for ${yearMonth}`;
+        return (
+            <div className="py-1">
+                <div className="font-medium text-gray-900">{option.label}</div>
+                {option.price && <div className="text-xs text-gray-500">₹{option.price}/month</div>}
+            </div>
+        );
+    };
+
+    const filterPlanOptions = (option, inputValue) => {
+        const searchLower = inputValue.toLowerCase();
+        const optionData = option.data;
+
+        const matches = optionData.label?.toLowerCase().includes(searchLower) || optionData.searchText?.includes(searchLower);
+
+        return matches;
+    };
+
+    const handleDaysThresholdChange = (value) => {
+        setFilters((prev) => ({ ...prev, daysThreshold: parseInt(value) || 30 }));
+    };
+
+    const onDownload = () => {
+        const yearMonth = 'All Time';
+        const additionalDetails = `ISP Plan Expiry Report`;
         const reportGeneratedDate = `Report Generated On: ${moment().format('DD-MM-YYYY')}`;
 
         const data = filteredData.map((plan, index) => ({
             ['S.No']: index + 1,
-            ['Subscription ID']: plan.subscriptionId,
             ['Customer Name']: plan.customerName,
             ['Customer ID']: plan.customerId,
             ['Contact Number']: plan.contactNumber,
             ['Email']: plan.email,
             ['Address']: plan.address,
-            ['Area']: plan.area,
-            ['Service Type']: plan.serviceType,
             ['Plan Name']: plan.planName,
             ['Plan Price']: `₹${plan.planPrice}/month`,
             ['Speed']: plan.speed,
             ['Data Limit']: plan.dataLimit,
-            ['Max Users']: plan.maxUsers,
+            ['Expiry Date']: plan.expiryDate ? moment(plan.expiryDate).format('DD/MM/YYYY') : '-',
+            ['Days Remaining']: plan.daysRemaining,
+            ['Status']: plan.connectionStatus === 'expiring_soon' ? 'Expiring Soon' : plan.connectionStatus,
+            ['Account State']: plan.accountState || 'Unknown',
             ['Activation Date']: moment(plan.activationDate).format('DD/MM/YYYY'),
-            ['Renewal Date']: plan.renewalDate ? moment(plan.renewalDate).format('DD/MM/YYYY') : '-',
-            ['Payment Status']: paymentStatusOptions.find(p => p.value === plan.paymentStatus)?.label || plan.paymentStatus,
-            ['Connection Status']: plan.connectionStatus,
-            ['Bandwidth Usage']: `${plan.usagePercentage}% (${plan.bandwidthUsage}/${plan.bandwidthLimit} GB)`,
-            ['Total Paid']: `₹${plan.totalPaid}`,
-            ['Sales Agent']: plan.salesAgent,
+            ['Bandwidth Usage']: `${plan.usagePercentage}%`,
             ['Remarks']: plan.remarks,
         }));
 
@@ -550,28 +623,57 @@ const Index = () => {
             [reportGeneratedDate],
             [],
             [
-                'S.No', 'Subscription ID', 'Customer Name', 'Customer ID', 'Contact Number', 'Email', 'Address', 'Area',
-                'Service Type', 'Plan Name', 'Plan Price', 'Speed', 'Data Limit', 'Max Users', 'Activation Date',
-                'Renewal Date', 'Payment Status', 'Connection Status', 'Bandwidth Usage', 'Total Paid', 'Sales Agent', 'Remarks'
+                'S.No',
+                'Customer Name',
+                'Customer ID',
+                'Contact Number',
+                'Email',
+                'Address',
+                'Plan Name',
+                'Plan Price',
+                'Speed',
+                'Data Limit',
+                'Expiry Date',
+                'Days Remaining',
+                'Status',
+                'Account State',
+                'Activation Date',
+                'Bandwidth Usage',
+                'Remarks',
             ],
         ];
 
         const rows = data.map((item) => Object.values(item));
 
-        // Calculate summary statistics
-        const totalRevenue = filteredData.reduce((sum, plan) => sum + plan.planPrice, 0);
-        const activeConnections = filteredData.filter(p => p.connectionStatus === 'active').length;
-        const paidSubscriptions = filteredData.filter(p => p.paymentStatus === 'paid').length;
+        // Add summary section if available
+        const summaryRows = [];
+        if (summaryData) {
+            summaryRows.push(
+                [],
+                ['REPORT SUMMARY'],
+                ['Total Users', summaryData.total_users],
+                ['Active Users', summaryData.active_count],
+                ['Expiring Soon', summaryData.expiring_soon_count],
+                ['Expired Users', summaryData.expired_count],
+                ['Expiring Soon %', `${summaryData.percentage_expiring_soon}%`],
+                ['Expired %', `${summaryData.percentage_expired}%`]
+            );
+        }
 
-        const summaryRows = [
-            [],
-            ['ISP PLAN REPORT SUMMARY'],
-            ['Total Subscriptions', filteredData.length],
-            ['Active Connections', activeConnections],
-            ['Paid Subscriptions', paidSubscriptions],
-            ['Total Monthly Revenue', `₹${totalRevenue}`],
-            ['Average Bandwidth Usage', `${Math.round(filteredData.reduce((sum, p) => sum + p.usagePercentage, 0) / filteredData.length)}%`],
-        ];
+        // Add insights if available
+        if (insightsData) {
+            summaryRows.push(
+                [],
+                ['INSIGHTS'],
+                ['Total Potential Revenue', `₹${insightsData.total_potential_revenue}`],
+                ['Active Revenue', `₹${insightsData.active_revenue}`],
+                ['Revenue at Risk', `₹${insightsData.potential_revenue_at_risk}`],
+                ['Lost Revenue', `₹${insightsData.lost_revenue}`],
+                ['Average Days to Expiry', `${insightsData.average_days_to_expiry} days`],
+                ['Closest Expiry', `${insightsData.closest_expiry} days`],
+                ['Urgency Level', insightsData.urgency_level]
+            );
+        }
 
         const allRows = [...header, ...rows, ...summaryRows];
 
@@ -580,28 +682,34 @@ const Index = () => {
         if (!worksheet['!merges']) worksheet['!merges'] = [];
 
         // Merge header rows
-        worksheet['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 21 } });
-        worksheet['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 21 } });
+        worksheet['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 16 } });
+        worksheet['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 16 } });
 
         // Merge summary rows
         const summaryStartRow = header.length + rows.length + 1;
-        for (let i = 0; i < 6; i++) {
-            worksheet['!merges'].push({ s: { r: summaryStartRow + i, c: 0 }, e: { r: summaryStartRow + i, c: 1 } });
+        if (summaryRows.length > 0) {
+            for (let i = 0; i < summaryRows.length; i++) {
+                if (summaryRows[i].length === 1) {
+                    worksheet['!merges'].push({ s: { r: summaryStartRow + i, c: 0 }, e: { r: summaryStartRow + i, c: 16 } });
+                } else if (summaryRows[i].length === 2) {
+                    worksheet['!merges'].push({ s: { r: summaryStartRow + i, c: 0 }, e: { r: summaryStartRow + i, c: 1 } });
+                }
+            }
         }
 
         // Set column widths
-        worksheet['!cols'] = Array(22).fill({ wch: 15 });
-        worksheet['!cols'][5] = { wch: 20 }; // Email column
-        worksheet['!cols'][6] = { wch: 25 }; // Address column
-        worksheet['!cols'][21] = { wch: 30 }; // Remarks column
+        worksheet['!cols'] = Array(17).fill({ wch: 15 });
+        worksheet['!cols'][0] = { wch: 8 }; // S.No
+        worksheet['!cols'][1] = { wch: 20 }; // Customer Name
+        worksheet['!cols'][2] = { wch: 15 }; // Customer ID
+        worksheet['!cols'][5] = { wch: 25 }; // Address
+        worksheet['!cols'][6] = { wch: 20 }; // Plan Name
+        worksheet['!cols'][16] = { wch: 30 }; // Remarks
 
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'ISP Plan Report');
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'ISP Plan Expiry Report');
 
-        const fileName =
-            showDateFilter && filters.startDate && filters.toDate
-                ? `ISP-Plan-Report-${moment(filters.startDate).format('DD-MM-YYYY')}-to-${moment(filters.toDate).format('DD-MM-YYYY')}.xlsx`
-                : `ISP-Plan-Report-All-Time.xlsx`;
+        const fileName = `ISP-Plan-Expiry-Report-${moment().format('DD-MM-YYYY')}.xlsx`;
 
         XLSX.writeFile(workbook, fileName);
     };
@@ -611,7 +719,8 @@ const Index = () => {
             state: {
                 filteredData: filteredData,
                 filters: filters,
-                showDateFilter: showDateFilter,
+                summaryData: summaryData,
+                insightsData: insightsData,
             },
         });
     };
@@ -661,22 +770,12 @@ const Index = () => {
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto">
-                {/* Header */}
+                {/* Header with Summary Stats */}
                 <div className="mb-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                Plan Management Report
-                            </h1>
-                            <p className="text-gray-600">Track and analyze internet plan subscriptions and payments</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <div className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
-                                Total Plans: {filteredData.length}
-                            </div>
-                            <div className="px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
-                                Paid: {filteredData.filter(p => p.paymentStatus === 'paid').length}
-                            </div>
+                            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Plan Expiry Report</h1>
+                            <p className="text-gray-600">Track and manage plan expiry dates and renewals</p>
                         </div>
                     </div>
                 </div>
@@ -691,10 +790,7 @@ const Index = () => {
                                 </div>
                                 Search & Filter Plans
                             </h2>
-                            <button
-                                onClick={() => setShowSearch(false)}
-                                className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-gray-100 rounded-lg"
-                            >
+                            <button onClick={() => setShowSearch(false)} className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-gray-100 rounded-lg">
                                 ▲ Hide Panel
                             </button>
                         </div>
@@ -703,46 +799,30 @@ const Index = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                                 {/* Plan Filter */}
                                 <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Internet Plan
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Plan Name</label>
                                     <Select
-                                        options={[{ value: '', label: 'All Plans' }, ...optionListState.planList]}
+                                        options={optionListState.planList}
                                         value={filters.selectedPlan}
                                         onChange={(selectedOption) => setFilters({ ...filters, selectedPlan: selectedOption })}
-                                        placeholder="Select Plan (599, 799, 1199, 2999)"
+                                        placeholder="Select Plan"
                                         isSearchable
                                         isClearable
                                         styles={customStyles}
                                         className="react-select-container"
                                         classNamePrefix="react-select"
+                                        formatOptionLabel={formatPlanOptionLabel}
+                                        filterOption={filterPlanOptions}
                                     />
                                 </div>
 
-                                {/* Payment Status Filter */}
+                                {/* Customer Filter (by phone) */}
                                 <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
-                                    <Select
-                                        options={optionListState.paymentStatusList}
-                                        value={filters.selectedPaymentStatus}
-                                        onChange={(selectedOption) => setFilters({ ...filters, selectedPaymentStatus: selectedOption })}
-                                        placeholder="Select Payment Status"
-                                        isSearchable
-                                        isClearable
-                                        styles={customStyles}
-                                        className="react-select-container"
-                                        classNamePrefix="react-select"
-                                    />
-                                </div>
-
-                                {/* Customer Filter - Search only by name and phone */}
-                                <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer (Phone)</label>
                                     <Select
                                         options={optionListState.customerList}
                                         value={filters.selectedCustomer}
                                         onChange={(selectedOption) => setFilters({ ...filters, selectedCustomer: selectedOption })}
-                                        placeholder="Search by name or phone..."
+                                        placeholder="Search by phone or name..."
                                         isSearchable
                                         isClearable
                                         styles={customStyles}
@@ -753,72 +833,59 @@ const Index = () => {
                                     />
                                 </div>
 
-                                {/* Date Filter Toggle */}
-                                <div className="md:col-span-2 lg:col-span-3 flex items-center gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={toggleDateFilter}
-                                        className={`flex items-center space-x-2 px-4 py-3 rounded-lg border transition-all duration-200 font-medium ${showDateFilter ? 'text-white shadow-lg transform scale-105' : 'text-gray-700 hover:bg-gray-50'
-                                            }`}
+                                {/* Days Threshold */}
+                                <div className="bg-white p-3 rounded-lg border border-gray-200">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Threshold (Days)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
                                         style={{
-                                            backgroundColor: showDateFilter ? brandColorPrimary : '#f9fafb',
-                                            borderColor: showDateFilter ? brandColorPrimary : '#e5e7eb',
+                                            '--tw-ring-color': brandColorPrimary,
                                         }}
-                                    >
-                                        <IconCalendar className="w-4 h-4" />
-                                        <span>{showDateFilter ? 'Hide Date Filter' : 'Add Date Filter'}</span>
-                                    </button>
-
-                                    {/* Search Input */}
-                                    <div className="flex-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-transparent shadow-sm"
-                                            style={{
-                                                '--tw-ring-color': brandColorPrimary,
-                                            }}
-                                            placeholder="Search by customer name, ID, contact, or address..."
-                                            value={filters.searchQuery}
-                                            onChange={(e) => setFilters({ ...filters, searchQuery: e.target.value })}
-                                        />
-                                    </div>
+                                        value={filters.daysThreshold}
+                                        onChange={(e) => handleDaysThresholdChange(e.target.value)}
+                                        min="1"
+                                        max="365"
+                                        placeholder="Days threshold for expiring soon"
+                                    />
                                 </div>
 
-                                {/* Date Range Filters (when toggled) */}
-                                {showDateFilter && (
-                                    <>
-                                        <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
-                                            <input
-                                                type="date"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                                                style={{
-                                                    '--tw-ring-color': brandColorPrimary,
-                                                }}
-                                                value={filters.startDate}
-                                                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
-                                            <input
-                                                type="date"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                                                style={{
-                                                    '--tw-ring-color': brandColorPrimary,
-                                                }}
-                                                value={filters.toDate}
-                                                onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
-                                            />
-                                        </div>
-                                    </>
-                                )}
+                                {/* Search Input */}
+                                {/* <div className="md:col-span-2 lg:col-span-3">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-transparent shadow-sm"
+                                        style={{
+                                            '--tw-ring-color': brandColorPrimary,
+                                        }}
+                                        placeholder="Search by customer name, phone, email, or plan..."
+                                        value={filters.searchQuery}
+                                        onChange={(e) => setFilters({ ...filters, searchQuery: e.target.value })}
+                                    />
+                                </div> */}
+
+                                {/* Account Status Filter - MOVED DOWN HERE */}
+                                <div className="bg-white p-3 rounded-lg border border-gray-200">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Account Status</label>
+                                    <Select
+                                        options={optionListState.accountStatusList}
+                                        value={filters.selectedAccountStatus}
+                                        onChange={(selectedOption) => setFilters({ ...filters, selectedAccountStatus: selectedOption })}
+                                        placeholder="Select Status"
+                                        isSearchable
+                                        isClearable
+                                        styles={customStyles}
+                                        className="react-select-container"
+                                        classNamePrefix="react-select"
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-gray-200">
                                 <div className="text-sm text-gray-500">
                                     Found {filteredData.length} plan subscriptions
+                                    {filters.daysThreshold > 0 && ` • Expiry threshold: ${filters.daysThreshold} days`}
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                     <button
@@ -833,7 +900,7 @@ const Index = () => {
                                         type="submit"
                                         className="px-6 py-2.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center justify-center min-w-[140px]"
                                         style={{ backgroundColor: brandColorPrimary }}
-                                        disabled={searchLoading || (showDateFilter && (!filters.startDate || !filters.toDate))}
+                                        disabled={searchLoading}
                                     >
                                         {searchLoading ? (
                                             <>
@@ -872,7 +939,7 @@ const Index = () => {
                         <div className="flex flex-col items-center justify-center">
                             <div className="animate-spin rounded-full h-20 w-20 border-b-2 mb-6" style={{ borderColor: brandColorPrimary }}></div>
                             <h3 className="text-2xl font-semibold text-gray-800 mb-3">Loading Plan Data</h3>
-                            <p className="text-gray-500 max-w-md">Fetching ISP plan subscription information from the server...</p>
+                            <p className="text-gray-500 max-w-md">Fetching plan expiry information from the server...</p>
                         </div>
                     </div>
                 ) : searchLoading ? (
@@ -888,13 +955,8 @@ const Index = () => {
                         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-800 mb-1">Plan Report Results</h3>
-                                    <p className="text-gray-600">
-                                        Showing {filteredData.length} plan subscriptions
-                                        {showDateFilter && filters.startDate && filters.toDate
-                                            ? ` from ${moment(filters.startDate).format('DD MMM YYYY')} to ${moment(filters.toDate).format('DD MMM YYYY')}`
-                                            : ' (All Time)'}
-                                    </p>
+                                    <h3 className="text-xl font-bold text-gray-800 mb-1">Plan Expiry Report Results</h3>
+                                    <p className="text-gray-600">Showing {filteredData.length} plan subscriptions</p>
                                 </div>
                                 {/* Export buttons in table header */}
                                 {filteredData.length > 0 && (
@@ -917,6 +979,50 @@ const Index = () => {
                                 )}
                             </div>
                         </div>
+                        {/* Summary Cards */}
+                        {summaryData && (
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                                <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-blue-600 font-medium">Total Users</p>
+                                            <p className="text-2xl font-bold text-blue-800">{summaryData.total_users}</p>
+                                        </div>
+                                        <div className="text-2xl">👥</div>
+                                    </div>
+                                </div>
+                                <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-green-600 font-medium">Active</p>
+                                            <p className="text-2xl font-bold text-green-800">{summaryData.active_count}</p>
+                                            <p className="text-xs text-green-600 mt-1">{((summaryData.active_count / summaryData.total_users) * 100).toFixed(1)}%</p>
+                                        </div>
+                                        <div className="text-2xl">✅</div>
+                                    </div>
+                                </div>
+                                <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 p-4 rounded-xl border border-yellow-200">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-yellow-600 font-medium">Expiring Soon</p>
+                                            <p className="text-2xl font-bold text-yellow-800">{summaryData.expiring_soon_count}</p>
+                                            <p className="text-xs text-yellow-600 mt-1">{summaryData.percentage_expiring_soon}%</p>
+                                        </div>
+                                        <div className="text-2xl">⚠️</div>
+                                    </div>
+                                </div>
+                                <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-xl border border-red-200">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-red-600 font-medium">Expired</p>
+                                            <p className="text-2xl font-bold text-red-800">{summaryData.expired_count}</p>
+                                            <p className="text-xs text-red-600 mt-1">{summaryData.percentage_expired}%</p>
+                                        </div>
+                                        <div className="text-2xl">❌</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="p-4">
                             <Table
@@ -959,11 +1065,11 @@ const Index = () => {
                             <div className="w-28 h-28 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${brandColorPrimary}15` }}>
                                 <IconSearch className="w-14 h-14" style={{ color: brandColorPrimary }} />
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-800 mb-3">ISP Plan Report Dashboard</h3>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-3">ISP Plan Expiry Report Dashboard</h3>
                             <p className="text-gray-600 text-lg max-w-md mb-6">
-                                {plans.length > 0
-                                    ? `Ready to search through ${plans.length} plan subscriptions. Use the search filters above to generate detailed reports.`
-                                    : 'No plan data available. Start by adding some plan subscriptions.'}
+                                {Plans.length > 0
+                                    ? `Ready to search through ${Plans.length} plan subscriptions. Use the search filters above to generate detailed expiry reports.`
+                                    : 'No plan data available. Loading plan expiry information...'}
                             </p>
                             <button
                                 onClick={() => setShowSearch(true)}
@@ -990,18 +1096,32 @@ const Index = () => {
                     {selectedPlan && (
                         <div className="p-6">
                             {/* Header with plan info */}
-                            <div className="mb-6 p-4 rounded-xl border" style={{
-                                borderColor: getPlanColor(selectedPlan.planPrice),
-                                backgroundColor: `${getPlanColor(selectedPlan.planPrice)}10`
-                            }}>
+                            <div
+                                className="mb-6 p-4 rounded-xl border"
+                                style={{
+                                    borderColor: getPlanColor(selectedPlan.planPrice),
+                                    backgroundColor: `${getPlanColor(selectedPlan.planPrice)}10`,
+                                }}
+                            >
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800">{selectedPlan.customerName}</h3>
-                                        <p className="text-gray-600">{selectedPlan.planName} • ₹{selectedPlan.planPrice}/month</p>
+                                        <p className="text-gray-600">
+                                            {selectedPlan.planName} • ₹{selectedPlan.planPrice}/month
+                                        </p>
+                                        <p className="text-sm text-gray-500">Customer ID: {selectedPlan.customerId}</p>
+                                        <p className="text-sm text-gray-500">Phone: {selectedPlan.contactNumber}</p>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedPlan.paymentStatus)}`}>
-                                            {paymentStatusOptions.find(p => p.value === selectedPlan.paymentStatus)?.label || selectedPlan.paymentStatus}
+                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedPlan.connectionStatus)}`}>
+                                            {selectedPlan.connectionStatus === 'expiring_soon' ? 'Expiring Soon' : selectedPlan.connectionStatus}
+                                        </span>
+                                        <span
+                                            className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                                selectedPlan.accountState === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                            }`}
+                                        >
+                                            {selectedPlan.accountState || 'Unknown'}
                                         </span>
                                     </div>
                                 </div>
@@ -1032,7 +1152,7 @@ const Index = () => {
                                             </div>
                                             <div className="md:col-span-2">
                                                 <span className="font-medium text-gray-600">Address:</span>
-                                                <p className="text-gray-800">{selectedPlan.address}</p>
+                                                <p className="text-gray-800 whitespace-pre-line">{selectedPlan.address}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1055,41 +1175,59 @@ const Index = () => {
                                             </div>
                                             <div className="text-center p-3 bg-white rounded-lg border">
                                                 <div className="text-2xl font-bold mb-1" style={{ color: getPlanColor(selectedPlan.planPrice) }}>
-                                                    {selectedPlan.maxUsers}
+                                                    ₹{selectedPlan.planPrice}
                                                 </div>
-                                                <div className="text-sm text-gray-600">Max Users</div>
+                                                <div className="text-sm text-gray-600">Monthly Price</div>
                                             </div>
                                             <div className="text-center p-3 bg-white rounded-lg border">
                                                 <div className="text-2xl font-bold mb-1" style={{ color: getPlanColor(selectedPlan.planPrice) }}>
-                                                    ₹{selectedPlan.planPrice}
+                                                    {selectedPlan.activationDate ? moment(selectedPlan.activationDate).format('DD/MM/YYYY') : 'N/A'}
                                                 </div>
-                                                <div className="text-sm text-gray-600">Monthly</div>
+                                                <div className="text-sm text-gray-600">Activation Date</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Right Column - Payment Details */}
+                                {/* Right Column - Expiry Details */}
                                 <div className="space-y-6">
-                                    {/* Payment Details */}
+                                    {/* Expiry Details */}
                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                        <h4 className="font-semibold text-gray-800 mb-3">Payment Details</h4>
+                                        <h4 className="font-semibold text-gray-800 mb-3">Expiry Details</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                                             <div>
-                                                <span className="font-medium text-gray-600">Total Paid:</span>
-                                                <p className="text-green-600 font-medium">₹{selectedPlan.totalPaid}</p>
-                                            </div>
-                                            <div>
-                                                <span className="font-medium text-gray-600">Last Payment:</span>
-                                                <p className="text-gray-800">
-                                                    {selectedPlan.lastPaymentDate
-                                                        ? moment(selectedPlan.lastPaymentDate).format('DD/MM/YYYY')
-                                                        : 'No payments yet'}
+                                                <span className="font-medium text-gray-600">Expiry Date:</span>
+                                                <p
+                                                    className={`font-medium ${
+                                                        selectedPlan.daysRemaining < 0 ? 'text-red-600' : selectedPlan.daysRemaining <= 7 ? 'text-yellow-600' : 'text-green-600'
+                                                    }`}
+                                                >
+                                                    {selectedPlan.expiryDate ? moment(selectedPlan.expiryDate).format('DD/MM/YYYY') : 'N/A'}
                                                 </p>
                                             </div>
                                             <div>
-                                                <span className="font-medium text-gray-600">Sales Agent:</span>
-                                                <p className="text-gray-800">{selectedPlan.salesAgent}</p>
+                                                <span className="font-medium text-gray-600">Days Remaining:</span>
+                                                <p className={`font-bold ${selectedPlan.daysRemaining < 0 ? 'text-red-600' : selectedPlan.daysRemaining <= 7 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                                    {selectedPlan.daysRemaining !== null ? `${selectedPlan.daysRemaining} days` : 'N/A'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <span className="font-medium text-gray-600">Status:</span>
+                                                <p
+                                                    className={`font-medium ${
+                                                        selectedPlan.connectionStatus === 'Expired'
+                                                            ? 'text-red-600'
+                                                            : selectedPlan.connectionStatus === 'expiring_soon'
+                                                            ? 'text-yellow-600'
+                                                            : 'text-green-600'
+                                                    }`}
+                                                >
+                                                    {selectedPlan.connectionStatus === 'expiring_soon' ? 'Expiring Soon' : selectedPlan.connectionStatus}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <span className="font-medium text-gray-600">Account State:</span>
+                                                <p className={`font-medium ${selectedPlan.accountState === 'Active' ? 'text-green-600' : 'text-red-600'}`}>{selectedPlan.accountState || 'Unknown'}</p>
                                             </div>
                                             <div className="md:col-span-2">
                                                 <div className="flex justify-between items-center mb-1">
@@ -1113,16 +1251,39 @@ const Index = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Original Data (if available) */}
+                                    {selectedPlan.userDetails && (
+                                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                            <h4 className="font-semibold text-gray-800 mb-3">Additional Information</h4>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Data Quota:</span>
+                                                    <span className="font-medium">{selectedPlan.userDetails.data_quota || 'N/A'}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Bandwidth:</span>
+                                                    <span className="font-medium">{selectedPlan.userDetails.bandwidth || 'N/A'}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Currency:</span>
+                                                    <span className="font-medium">{selectedPlan.userDetails.currency || 'N/A'}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Site UID:</span>
+                                                    <span className="font-medium">{selectedPlan.userDetails.site_uid || 'N/A'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Remarks Section */}
-                            {selectedPlan.remarks && (
+                            {selectedPlan.remarks && selectedPlan.remarks !== 'No remarks provided' && (
                                 <div className="mt-6">
                                     <h4 className="font-semibold text-gray-800 mb-2">Remarks</h4>
-                                    <p className="text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                        {selectedPlan.remarks}
-                                    </p>
+                                    <p className="text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">{selectedPlan.remarks}</p>
                                 </div>
                             )}
                         </div>
