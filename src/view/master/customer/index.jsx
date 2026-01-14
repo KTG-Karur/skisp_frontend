@@ -47,6 +47,7 @@ const Index = () => {
         syncCustomerSuccess = false,
         selectedCustomer = null,
         customerDetails = null,
+
         plans = [],
         plansLoading = false,
         total = 0,
@@ -78,6 +79,8 @@ const Index = () => {
         num_conc_logins: '1',
         login_control: 'default',
         login_proto: 'plogin',
+        first_login_before_ts: '0',
+        user_pass_type: 'specify',
         acct_ref: '',
         first_name: '',
         last_name: '',
@@ -91,6 +94,7 @@ const Index = () => {
     const [extPlanSearch, setExtPlanSearch] = useState('');
     const [showPriPlanList, setShowPriPlanList] = useState(false);
     const [showExtPlanList, setShowExtPlanList] = useState(false);
+    const [allPlans, setAllPlans] = useState([]);
 
     useEffect(() => {
         dispatch(setPageTitle('Customer Management'));
@@ -131,6 +135,17 @@ const Index = () => {
         }
     }, [createCustomerSuccess, updateCustomerSuccess, deleteCustomerSuccess, syncCustomerSuccess, customerError]);
 
+    useEffect(() => {
+        // Extract plans data from API response
+        if (plans && Array.isArray(plans)) {
+            setAllPlans(plans);
+        } else if (plans && plans.data && Array.isArray(plans.data)) {
+            setAllPlans(plans.data);
+        } else if (plans && Array.isArray(plans.data)) {
+            setAllPlans(plans.data);
+        }
+    }, [plans]);
+
     const fetchCustomers = () => {
         dispatch(
             getCustomers({
@@ -147,22 +162,54 @@ const Index = () => {
     };
 
     const getFilteredPriPlans = () => {
-        let filtered = plans.filter((plan) => plan.profile_type === 'primary' || plan.profile_type === 'both');
+        let filtered = allPlans.filter((plan) => {
+            // Check if plan has required properties
+            if (!plan || typeof plan !== 'object') return false;
+
+            const profileType = plan.profile_type || '';
+            const ruleName = plan.rule_name || '';
+
+            // Include primary and both profile types
+            return profileType === 'primary' || profileType === 'both' || !profileType;
+        });
 
         if (priPlanSearch) {
             const term = priPlanSearch.toLowerCase();
-            filtered = filtered.filter((plan) => plan.rule_name?.toLowerCase().includes(term) || plan.plan_price?.toString().includes(term));
+            filtered = filtered.filter((plan) => {
+                const ruleName = (plan.rule_name || '').toLowerCase();
+                const planPrice = (plan.plan_price || '').toString();
+                const bwUp = (plan.bw_up_kbps || '').toString();
+                const bwDown = (plan.bw_dn_kbps || '').toString();
+
+                return ruleName.includes(term) || planPrice.includes(term) || bwUp.includes(term) || bwDown.includes(term);
+            });
         }
 
         return filtered;
     };
 
     const getFilteredExtPlans = () => {
-        let filtered = plans.filter((plan) => plan.profile_type === 'external' || plan.profile_type === 'both');
+        let filtered = allPlans.filter((plan) => {
+            // Check if plan has required properties
+            if (!plan || typeof plan !== 'object') return false;
+
+            const profileType = plan.profile_type || '';
+            const ruleName = plan.rule_name || '';
+
+            // Include external and both profile types
+            return profileType === 'external' || profileType === 'both' || !profileType;
+        });
 
         if (extPlanSearch) {
             const term = extPlanSearch.toLowerCase();
-            filtered = filtered.filter((plan) => plan.rule_name?.toLowerCase().includes(term) || plan.plan_price?.toString().includes(term));
+            filtered = filtered.filter((plan) => {
+                const ruleName = (plan.rule_name || '').toLowerCase();
+                const planPrice = (plan.plan_price || '').toString();
+                const bwUp = (plan.bw_up_kbps || '').toString();
+                const bwDown = (plan.bw_dn_kbps || '').toString();
+
+                return ruleName.includes(term) || planPrice.includes(term) || bwUp.includes(term) || bwDown.includes(term);
+            });
         }
 
         return filtered;
@@ -281,26 +328,18 @@ const Index = () => {
                         return result?.value || '';
                     };
 
-                    setFormState({
+                    setFormState((prev) => ({
+                        ...prev,
                         user_id: getResultValue('user_id'),
-                        user_pass: '', // Don't load password
-                        account_validity: 'num_days_from_acct_creation', // Default
-                        validity_data: '30',
-                        delete_expired_acct: 'enable',
-                        del_q_exceeded_acct: 'enable',
                         pri_bandwidth_plan_name: getResultValue('q1_plan_name') || '',
                         ext_bandwidth_plan_name: getResultValue('q2_plan_name') || '',
-                        num_mac_binding: '1', // Default
-                        num_conc_logins: '1', // Default
-                        login_control: 'default',
-                        login_proto: 'plogin',
                         acct_ref: getResultValue('acct_ref'),
                         first_name: getResultValue('first_name'),
                         last_name: getResultValue('last_name'),
                         email_addr: getResultValue('user_email'),
                         postal_addr: getResultValue('user_address'),
                         mobile_num: getResultValue('user_mobile'),
-                    });
+                    }));
                 }
                 setCustomerModal(true);
                 setActiveTab('view');
@@ -360,8 +399,6 @@ const Index = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-
         try {
             if (isEdit) {
                 await dispatch(
@@ -420,21 +457,16 @@ const Index = () => {
         return dataArray.slice(startIndex, endIndex);
     };
 
-    const formatCustomerDetailResults = () => {
-        if (!customerDetails?.data?.results) return [];
+    // Plan select component - Debug version
+    const PlanSelect = ({ value, onChange, placeholder, searchValue, onSearchChange, showList, onShowList, onHideList, plans, required = false, disabled = false, label = '' }) => {
+        // Debug log
+        console.log('PlanSelect Debug:', { label, plansCount: plans.length, plans });
 
-        return customerDetails.data.results.map((item, index) => ({
-            id: index,
-            label: item.label,
-            value: item.value,
-            fid: item.fid,
-        }));
-    };
-
-    // Plan select component
-    const PlanSelect = ({ value, onChange, placeholder, searchValue, onSearchChange, showList, onShowList, onHideList, plans, required = false, disabled = false }) => {
         return (
             <div className="relative">
+                <label className="block text-sm font-medium mb-2">
+                    {label} {required && <span className="text-red-500">*</span>}
+                </label>
                 <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                         <IconSearch className="w-5 h-5" />
@@ -467,34 +499,39 @@ const Index = () => {
 
                 {showList && plans.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {plans.map((plan) => (
-                            <div
-                                key={plan.id || plan.plan_id}
-                                onClick={() => {
-                                    onChange(plan.rule_name);
-                                    onSearchChange(plan.rule_name);
-                                    onHideList();
-                                }}
-                                className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                            >
-                                <div className="font-medium text-gray-800">{plan.rule_name}</div>
-                                <div className="text-sm text-gray-600">
-                                    {plan.bw_up_kbps} Kbps Up / {plan.bw_dn_kbps} Kbps Down • ₹{plan.plan_price}
-                                    {plan.data_limit && ` • ${plan.data_limit} ${plan.data_limit_type}`}
-                                    {plan.time_limit && ` • ${plan.time_limit} ${plan.time_limit_type}`}
+                        {plans.map((plan, index) => {
+                            console.log('Plan item:', plan); // Debug log
+                            return (
+                                <div
+                                    key={plan.id || plan.plan_id || index}
+                                    onClick={() => {
+                                        onChange(plan.rule_name || '');
+                                        onSearchChange(plan.rule_name || '');
+                                        onHideList();
+                                    }}
+                                    className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                >
+                                    <div className="font-medium text-gray-800">{plan.rule_name || 'Unnamed Plan'}</div>
+                                    <div className="text-sm text-gray-600">
+                                        {plan.bw_up_kbps ? `${plan.bw_up_kbps} Kbps Up` : ''}
+                                        {plan.bw_dn_kbps ? ` / ${plan.bw_dn_kbps} Kbps Down` : ''}
+                                        {plan.plan_price ? ` • ₹${plan.plan_price}` : ''}
+                                        {plan.data_limit ? ` • ${plan.data_limit} ${plan.data_limit_type || ''}` : ''}
+                                        {plan.time_limit ? ` • ${plan.time_limit} ${plan.time_limit_type || ''}` : ''}
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        {plan.profile_type ? `Profile: ${plan.profile_type}` : 'No profile type'}
+                                        {plan.is_active !== undefined ? ` • ${plan.is_active ? 'Active' : 'Inactive'}` : ''}
+                                    </div>
                                 </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    {plan.profile_type === 'primary' ? 'Primary Plan' : plan.profile_type === 'external' ? 'External Plan' : 'Both'}
-                                    {plan.is_active ? ' • Active' : ' • Inactive'}
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
                 {showList && plans.length === 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-                        <div className="px-4 py-3 text-gray-500 text-center">No plans found</div>
+                        <div className="px-4 py-3 text-gray-500 text-center">{plansLoading ? 'Loading plans...' : 'No plans found'}</div>
                     </div>
                 )}
             </div>
@@ -532,9 +569,11 @@ const Index = () => {
                             setModal(true);
                         }}
                         className="btn btn-success"
+                        disabled={plansLoading}
                     >
                         <IconUserPlus className="w-5 h-5" />
                         <span>Add New Customer</span>
+                        {plansLoading && <span className="ml-2">(Loading Plans...)</span>}
                     </button>
                 </div>
             </div>
@@ -608,103 +647,125 @@ const Index = () => {
             </div>
 
             {/* Add Customer Modal */}
-            <ModelViewBox modal={modal} modelHeader={'Add New Customer'} setModel={closeModal} handleSubmit={handleSubmit} modelSize="xl" submitBtnText={'Create Customer'} loadings={customerLoading}>
+            <ModelViewBox
+                modal={modal}
+                modelHeader={'Add New Customer'}
+                setModel={closeModal}
+                handleSubmit={handleSubmit}
+                modelSize="xl"
+                submitBtnText={'Create Customer'}
+                loadings={customerLoading || plansLoading}
+            >
                 <div className="p-6">
-                    <form onSubmit={handleSubmit}>
-                        <div className="space-y-6">
-                            {/* Basic Information */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {plansLoading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading plans data...</p>
+                        </div>
+                    ) : allPlans.length === 0 ? (
+                        <div className="text-center py-12">
+                            <IconWifi className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-gray-700 mb-2">No Plans Available</h3>
+                            <p className="text-gray-500">Please check if plans are configured in the system.</p>
+                            <button onClick={fetchPlans} className="mt-4 btn btn-primary">
+                                <IconRefresh className="w-4 h-4 mr-2" />
+                                Reload Plans
+                            </button>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleSubmit}>
+                            <div className="space-y-6">
+                                {/* Basic Information */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">User ID *</label>
+                                        <input
+                                            type="text"
+                                            value={formState.user_id}
+                                            onChange={(e) => setFormState({ ...formState, user_id: e.target.value })}
+                                            placeholder="Enter user ID"
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Password *</label>
+                                        <input
+                                            type="password"
+                                            value={formState.user_pass}
+                                            onChange={(e) => setFormState({ ...formState, user_pass: e.target.value })}
+                                            placeholder="Enter password"
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Personal Information */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">First Name *</label>
+                                        <input
+                                            type="text"
+                                            value={formState.first_name}
+                                            onChange={(e) => setFormState({ ...formState, first_name: e.target.value })}
+                                            placeholder="Enter first name"
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Last Name</label>
+                                        <input
+                                            type="text"
+                                            value={formState.last_name}
+                                            onChange={(e) => setFormState({ ...formState, last_name: e.target.value })}
+                                            placeholder="Enter last name"
+                                            className="form-input"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Email *</label>
+                                        <input
+                                            type="email"
+                                            value={formState.email_addr}
+                                            onChange={(e) => setFormState({ ...formState, email_addr: e.target.value })}
+                                            placeholder="Enter email"
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Mobile Number *</label>
+                                        <input
+                                            type="tel"
+                                            value={formState.mobile_num}
+                                            onChange={(e) => setFormState({ ...formState, mobile_num: e.target.value })}
+                                            placeholder="Enter mobile number"
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Account Reference */}
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">User ID *</label>
+                                    <label className="block text-sm font-medium mb-2">Account Reference</label>
                                     <input
                                         type="text"
-                                        value={formState.user_id}
-                                        onChange={(e) => setFormState({ ...formState, user_id: e.target.value })}
-                                        placeholder="Enter user ID"
-                                        className="form-input"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Password *</label>
-                                    <input
-                                        type="password"
-                                        value={formState.user_pass}
-                                        onChange={(e) => setFormState({ ...formState, user_pass: e.target.value })}
-                                        placeholder="Enter password"
-                                        className="form-input"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Personal Information */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">First Name *</label>
-                                    <input
-                                        type="text"
-                                        value={formState.first_name}
-                                        onChange={(e) => setFormState({ ...formState, first_name: e.target.value })}
-                                        placeholder="Enter first name"
-                                        className="form-input"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Last Name</label>
-                                    <input
-                                        type="text"
-                                        value={formState.last_name}
-                                        onChange={(e) => setFormState({ ...formState, last_name: e.target.value })}
-                                        placeholder="Enter last name"
+                                        value={formState.acct_ref}
+                                        onChange={(e) => setFormState({ ...formState, acct_ref: e.target.value })}
+                                        placeholder="Enter account reference (optional)"
                                         className="form-input"
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Email *</label>
-                                    <input
-                                        type="email"
-                                        value={formState.email_addr}
-                                        onChange={(e) => setFormState({ ...formState, email_addr: e.target.value })}
-                                        placeholder="Enter email"
-                                        className="form-input"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Mobile Number *</label>
-                                    <input
-                                        type="tel"
-                                        value={formState.mobile_num}
-                                        onChange={(e) => setFormState({ ...formState, mobile_num: e.target.value })}
-                                        placeholder="Enter mobile number"
-                                        className="form-input"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Account Reference */}
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Account Reference</label>
-                                <input
-                                    type="text"
-                                    value={formState.acct_ref}
-                                    onChange={(e) => setFormState({ ...formState, acct_ref: e.target.value })}
-                                    placeholder="Enter account reference (optional)"
-                                    className="form-input"
-                                />
-                            </div>
-
-                            {/* Bandwidth Plans */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Primary Bandwidth Plan *</label>
+                                {/* Bandwidth Plans */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <PlanSelect
                                         value={formState.pri_bandwidth_plan_name}
                                         onChange={(value) => setFormState({ ...formState, pri_bandwidth_plan_name: value })}
@@ -713,14 +774,14 @@ const Index = () => {
                                         onSearchChange={setPriPlanSearch}
                                         showList={showPriPlanList}
                                         onShowList={() => setShowPriPlanList(true)}
-                                        onHideList={() => setShowPriPlanList(false)}
+                                        onHideList={() => {
+                                            setTimeout(() => setShowPriPlanList(false), 200);
+                                        }}
                                         plans={getFilteredPriPlans()}
                                         required
+                                        label="Primary Bandwidth Plan"
                                     />
-                                </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">External Bandwidth Plan</label>
                                     <PlanSelect
                                         value={formState.ext_bandwidth_plan_name}
                                         onChange={(value) => setFormState({ ...formState, ext_bandwidth_plan_name: value })}
@@ -729,58 +790,61 @@ const Index = () => {
                                         onSearchChange={setExtPlanSearch}
                                         showList={showExtPlanList}
                                         onShowList={() => setShowExtPlanList(true)}
-                                        onHideList={() => setShowExtPlanList(false)}
+                                        onHideList={() => {
+                                            setTimeout(() => setShowExtPlanList(false), 200);
+                                        }}
                                         plans={getFilteredExtPlans()}
+                                        label="External Bandwidth Plan"
+                                    />
+                                </div>
+
+                                {/* Network Settings */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">MAC Binding Limit</label>
+                                        <select value={formState.num_mac_binding} onChange={(e) => setFormState({ ...formState, num_mac_binding: e.target.value })} className="form-select" required>
+                                            {[0, 1, 2, 3, 4, 5].map((num) => (
+                                                <option key={num} value={num}>
+                                                    {num}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Concurrent Logins</label>
+                                        <select value={formState.num_conc_logins} onChange={(e) => setFormState({ ...formState, num_conc_logins: e.target.value })} className="form-select" required>
+                                            {[1, 2, 3, 4, 5].map((num) => (
+                                                <option key={num} value={num}>
+                                                    {num}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Login Protocol</label>
+                                        <select value={formState.login_proto} onChange={(e) => setFormState({ ...formState, login_proto: e.target.value })} className="form-select" required>
+                                            <option value="plogin">Portal Login</option>
+                                            <option value="auto">Auto</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Address */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Address</label>
+                                    <textarea
+                                        value={formState.postal_addr}
+                                        onChange={(e) => setFormState({ ...formState, postal_addr: e.target.value })}
+                                        placeholder="Enter address"
+                                        className="form-input"
+                                        rows="3"
                                     />
                                 </div>
                             </div>
-
-                            {/* Network Settings */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">MAC Binding Limit</label>
-                                    <select value={formState.num_mac_binding} onChange={(e) => setFormState({ ...formState, num_mac_binding: e.target.value })} className="form-select" required>
-                                        {[0, 1, 2, 3, 4, 5].map((num) => (
-                                            <option key={num} value={num}>
-                                                {num}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Concurrent Logins</label>
-                                    <select value={formState.num_conc_logins} onChange={(e) => setFormState({ ...formState, num_conc_logins: e.target.value })} className="form-select" required>
-                                        {[1, 2, 3, 4, 5].map((num) => (
-                                            <option key={num} value={num}>
-                                                {num}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Login Protocol</label>
-                                    <select value={formState.login_proto} onChange={(e) => setFormState({ ...formState, login_proto: e.target.value })} className="form-select" required>
-                                        <option value="plogin">Portal Login</option>
-                                        <option value="auto">Auto</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Address */}
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Address</label>
-                                <textarea
-                                    value={formState.postal_addr}
-                                    onChange={(e) => setFormState({ ...formState, postal_addr: e.target.value })}
-                                    placeholder="Enter address"
-                                    className="form-input"
-                                    rows="3"
-                                />
-                            </div>
-                        </div>
-                    </form>
+                        </form>
+                    )}
                 </div>
             </ModelViewBox>
 
@@ -793,7 +857,7 @@ const Index = () => {
                 showSubmit={activeTab === 'edit'}
                 submitBtnText="Update Customer"
                 handleSubmit={handleUpdateSubmit}
-                loadings={customerLoading}
+                loadings={customerLoading || plansLoading}
                 customHeader={
                     <div className="flex items-center justify-between w-full">
                         <div className="flex items-center space-x-3">
@@ -835,7 +899,7 @@ const Index = () => {
                     {activeTab === 'view' ? (
                         // View Tab
                         <div className="space-y-6">
-                            {customerDetails?.data?.results && (
+                            {customerDetails?.data?.results ? (
                                 <>
                                     {/* Account Information */}
                                     <div className="bg-blue-50 p-6 rounded-xl">
@@ -967,79 +1031,88 @@ const Index = () => {
                                         </div>
                                     </div>
                                 </>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                                    <p className="text-gray-600">Loading customer details...</p>
+                                </div>
                             )}
                         </div>
                     ) : (
                         // Edit Tab
                         <div>
-                            <form onSubmit={handleUpdateSubmit}>
-                                <div className="space-y-6">
-                                    {/* Personal Information */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {plansLoading ? (
+                                <div className="text-center py-12">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                                    <p className="text-gray-600">Loading plans data...</p>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleUpdateSubmit}>
+                                    <div className="space-y-6">
+                                        {/* Personal Information */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">First Name *</label>
+                                                <input
+                                                    type="text"
+                                                    value={formState.first_name}
+                                                    onChange={(e) => setFormState({ ...formState, first_name: e.target.value })}
+                                                    placeholder="Enter first name"
+                                                    className="form-input"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Last Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={formState.last_name}
+                                                    onChange={(e) => setFormState({ ...formState, last_name: e.target.value })}
+                                                    placeholder="Enter last name"
+                                                    className="form-input"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Email *</label>
+                                                <input
+                                                    type="email"
+                                                    value={formState.email_addr}
+                                                    onChange={(e) => setFormState({ ...formState, email_addr: e.target.value })}
+                                                    placeholder="Enter email"
+                                                    className="form-input"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Mobile Number *</label>
+                                                <input
+                                                    type="tel"
+                                                    value={formState.mobile_num}
+                                                    onChange={(e) => setFormState({ ...formState, mobile_num: e.target.value })}
+                                                    placeholder="Enter mobile number"
+                                                    className="form-input"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Account Reference */}
                                         <div>
-                                            <label className="block text-sm font-medium mb-2">First Name *</label>
+                                            <label className="block text-sm font-medium mb-2">Account Reference</label>
                                             <input
                                                 type="text"
-                                                value={formState.first_name}
-                                                onChange={(e) => setFormState({ ...formState, first_name: e.target.value })}
-                                                placeholder="Enter first name"
-                                                className="form-input"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Last Name</label>
-                                            <input
-                                                type="text"
-                                                value={formState.last_name}
-                                                onChange={(e) => setFormState({ ...formState, last_name: e.target.value })}
-                                                placeholder="Enter last name"
+                                                value={formState.acct_ref}
+                                                onChange={(e) => setFormState({ ...formState, acct_ref: e.target.value })}
+                                                placeholder="Enter account reference"
                                                 className="form-input"
                                             />
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Email *</label>
-                                            <input
-                                                type="email"
-                                                value={formState.email_addr}
-                                                onChange={(e) => setFormState({ ...formState, email_addr: e.target.value })}
-                                                placeholder="Enter email"
-                                                className="form-input"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Mobile Number *</label>
-                                            <input
-                                                type="tel"
-                                                value={formState.mobile_num}
-                                                onChange={(e) => setFormState({ ...formState, mobile_num: e.target.value })}
-                                                placeholder="Enter mobile number"
-                                                className="form-input"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Account Reference */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Account Reference</label>
-                                        <input
-                                            type="text"
-                                            value={formState.acct_ref}
-                                            onChange={(e) => setFormState({ ...formState, acct_ref: e.target.value })}
-                                            placeholder="Enter account reference"
-                                            className="form-input"
-                                        />
-                                    </div>
-
-                                    {/* Bandwidth Plans */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Primary Bandwidth Plan *</label>
+                                        {/* Bandwidth Plans */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <PlanSelect
                                                 value={formState.pri_bandwidth_plan_name}
                                                 onChange={(value) => setFormState({ ...formState, pri_bandwidth_plan_name: value })}
@@ -1048,14 +1121,14 @@ const Index = () => {
                                                 onSearchChange={setPriPlanSearch}
                                                 showList={showPriPlanList}
                                                 onShowList={() => setShowPriPlanList(true)}
-                                                onHideList={() => setShowPriPlanList(false)}
+                                                onHideList={() => {
+                                                    setTimeout(() => setShowPriPlanList(false), 200);
+                                                }}
                                                 plans={getFilteredPriPlans()}
                                                 required
+                                                label="Primary Bandwidth Plan"
                                             />
-                                        </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">External Bandwidth Plan</label>
                                             <PlanSelect
                                                 value={formState.ext_bandwidth_plan_name}
                                                 onChange={(value) => setFormState({ ...formState, ext_bandwidth_plan_name: value })}
@@ -1064,47 +1137,50 @@ const Index = () => {
                                                 onSearchChange={setExtPlanSearch}
                                                 showList={showExtPlanList}
                                                 onShowList={() => setShowExtPlanList(true)}
-                                                onHideList={() => setShowExtPlanList(false)}
+                                                onHideList={() => {
+                                                    setTimeout(() => setShowExtPlanList(false), 200);
+                                                }}
                                                 plans={getFilteredExtPlans()}
+                                                label="External Bandwidth Plan"
                                             />
                                         </div>
-                                    </div>
 
-                                    {/* Address */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Address</label>
-                                        <textarea
-                                            value={formState.postal_addr}
-                                            onChange={(e) => setFormState({ ...formState, postal_addr: e.target.value })}
-                                            placeholder="Enter address"
-                                            className="form-input"
-                                            rows="3"
-                                        />
-                                    </div>
+                                        {/* Address */}
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Address</label>
+                                            <textarea
+                                                value={formState.postal_addr}
+                                                onChange={(e) => setFormState({ ...formState, postal_addr: e.target.value })}
+                                                placeholder="Enter address"
+                                                className="form-input"
+                                                rows="3"
+                                            />
+                                        </div>
 
-                                    {/* Password Update (Optional) */}
-                                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                        <h4 className="text-lg font-semibold mb-2 text-yellow-800">Password Update</h4>
-                                        <p className="text-sm text-yellow-600 mb-4">Leave password fields empty if you don't want to change the password.</p>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">New Password</label>
-                                                <input
-                                                    type="password"
-                                                    value={formState.user_pass}
-                                                    onChange={(e) => setFormState({ ...formState, user_pass: e.target.value })}
-                                                    placeholder="Enter new password (optional)"
-                                                    className="form-input"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Confirm Password</label>
-                                                <input type="password" placeholder="Confirm new password" className="form-input" />
+                                        {/* Password Update (Optional) */}
+                                        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                            <h4 className="text-lg font-semibold mb-2 text-yellow-800">Password Update</h4>
+                                            <p className="text-sm text-yellow-600 mb-4">Leave password fields empty if you don't want to change the password.</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">New Password</label>
+                                                    <input
+                                                        type="password"
+                                                        value={formState.user_pass}
+                                                        onChange={(e) => setFormState({ ...formState, user_pass: e.target.value })}
+                                                        placeholder="Enter new password (optional)"
+                                                        className="form-input"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Confirm Password</label>
+                                                    <input type="password" placeholder="Confirm new password" className="form-input" />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </form>
+                                </form>
+                            )}
                         </div>
                     )}
                 </div>

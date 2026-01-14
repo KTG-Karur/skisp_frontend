@@ -171,7 +171,7 @@ export async function syncCustomerApi(userId) {
         }
 
         const userDetails = hs5200Data.data || {};
-        
+
         // Return user data with sync status
         return {
             success: true,

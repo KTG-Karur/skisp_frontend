@@ -109,6 +109,8 @@ const customerSlice = createSlice({
             state.getOperationsHistoryFailed = false;
             state.retryOperationFailed = false;
 
+            
+
             state.error = null;
             state.loading = false;
         },
@@ -313,7 +315,29 @@ const customerSlice = createSlice({
                 state.error = action.error.message || 'Failed to retry operation';
                 state.retryOperationSuccess = false;
                 state.retryOperationFailed = true;
-            });
+            })
+
+            // In your customerSlice.js, add these to extraReducers:
+
+// GET ALL PLANS
+.addCase(getAllPlans.pending, (state) => {
+    state.plansLoading = true;
+    state.error = null;
+    state.getAllPlansSuccess = false;
+    state.getAllPlansFailed = false;
+})
+.addCase(getAllPlans.fulfilled, (state, action) => {
+    state.plansLoading = false;
+    state.plans = action.payload.data || [];
+    state.getAllPlansSuccess = true;
+    state.getAllPlansFailed = false;
+})
+.addCase(getAllPlans.rejected, (state, action) => {
+    state.plansLoading = false;
+    state.error = action.error.message || 'Failed to fetch plans';
+    state.getAllPlansSuccess = false;
+    state.getAllPlansFailed = true;
+})
     },
 });
 
