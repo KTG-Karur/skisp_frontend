@@ -13,7 +13,8 @@ const Index = () => {
     const [planData, setPlanData] = useState([]);
     const [companyInfo, setCompanyInfo] = useState({});
     const [filters, setFilters] = useState({});
-    const [showDateFilter, setShowDateFilter] = useState(false);
+    const [summaryData, setSummaryData] = useState(null);
+    const [insightsData, setInsightsData] = useState(null);
     const [metrics, setMetrics] = useState({});
 
     const { getCompanySuccess, companyData, getCompanyFailed, errorMessage } = useSelector((state) => ({
@@ -32,8 +33,11 @@ const Index = () => {
         if (location.state?.filters) {
             setFilters(location.state.filters);
         }
-        if (location.state?.showDateFilter !== undefined) {
-            setShowDateFilter(location.state.showDateFilter);
+        if (location.state?.summaryData) {
+            setSummaryData(location.state.summaryData);
+        }
+        if (location.state?.insightsData) {
+            setInsightsData(location.state.insightsData);
         }
     }, [location.state]);
 
@@ -58,21 +62,22 @@ const Index = () => {
         }
     }, [getCompanySuccess, companyData, dispatch]);
 
-    // Calculate statistics
+    // Calculate statistics from plan data
     const calculateStatistics = (data) => {
-        const activeConnections = data.filter(p => p.connectionStatus === 'active').length;
-        const paidSubscriptions = data.filter(p => p.paymentStatus === 'paid').length;
+        const activeCount = data.filter(p => p.connectionStatus === 'active').length;
+        const expiringSoonCount = data.filter(p => p.connectionStatus === 'expiring_soon').length;
+        const expiredCount = data.filter(p => p.connectionStatus === 'expired').length;
         const totalRevenue = data.reduce((sum, plan) => sum + (plan.planPrice || 0), 0);
-        const avgBandwidthUsage = data.length > 0 
-            ? Math.round(data.reduce((sum, p) => sum + (p.usagePercentage || 0), 0) / data.length)
-            : 0;
-
+        
         setMetrics({
             totalSubscriptions: data.length,
-            activeConnections,
-            paidSubscriptions,
+            activeCount,
+            expiringSoonCount,
+            expiredCount,
             totalMonthlyRevenue: totalRevenue,
-            averageBandwidthUsage: avgBandwidthUsage,
+            averageDaysRemaining: data.length > 0 
+                ? Math.round(data.reduce((sum, p) => sum + (p.daysRemaining || 0), 0) / data.length)
+                : 0,
         });
     };
 
@@ -91,50 +96,51 @@ const Index = () => {
         return moment(date).format('DD/MM/YYYY');
     };
 
-    const getStatusColorClass = (status, type = 'payment') => {
-        if (type === 'payment') {
-            return status?.toLowerCase() === 'paid' ? 'text-green-600' : 'text-yellow-600';
-        } else {
-            return status?.toLowerCase() === 'active' ? 'text-blue-600' : 'text-gray-600';
+    const getStatusColorClass = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'active':
+                return 'text-green-600';
+            case 'expired':
+                return 'text-red-600';
+            case 'expiring_soon':
+                return 'text-yellow-600';
+            default:
+                return 'text-gray-600';
         }
     };
 
-    const getStatusText = (status, type = 'payment') => {
+    const getStatusText = (status) => {
         const statusLower = status?.toLowerCase();
-        
-        if (type === 'payment') {
-            if (statusLower === 'paid') {
-                return 'Paid';
-            } else {
-                return 'Pending';
-            }
+        if (statusLower === 'expiring_soon') {
+            return 'Expiring Soon';
+        } else if (statusLower === 'active') {
+            return 'Active';
+        } else if (statusLower === 'expired') {
+            return 'Expired';
         } else {
-            if (statusLower === 'active') {
-                return 'Active';
-            } else if (statusLower === 'inactive') {
-                return 'Inactive';
-            } else if (statusLower === 'suspended') {
-                return 'Suspended';
-            } else {
-                return status || 'Unknown';
-            }
+            return status || 'Unknown';
         }
     };
 
     const getPlanColor = (planPrice) => {
-        switch (planPrice) {
-            case 599:
-                return 'text-green-600';
-            case 799:
-                return 'text-blue-600';
-            case 1199:
-                return 'text-purple-600';
-            case 2999:
-                return 'text-orange-600';
-            case 4999:
-                return 'text-pink-600';
+        const price = parseFloat(planPrice) || 0;
+        if (price <= 1000) return '#10b981';
+        if (price <= 2000) return '#3b82f6';
+        if (price <= 3000) return '#8b5cf6';
+        if (price <= 4000) return '#ff6d00';
+        return '#6200ea';
+    };
+
+    const getStatusIndicator = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'active':
+                return '●';
+            case 'expired':
+                return '■';
+            case 'expiring_soon':
+                return '▲';
             default:
-                return 'text-gray-600';
+                return '○';
         }
     };
 
@@ -148,33 +154,31 @@ const Index = () => {
 
     // Get report title
     const getReportTitle = () => {
-        return 'ISP Plan Management Report';
+        return 'ISP PLAN EXPIRY REPORT';
     };
 
-    // Get date range text
-    const getDateRangeText = () => {
-        if (showDateFilter && filters.startDate && filters.toDate) {
-            return `${moment(filters.startDate).format('DD MMM YY')} to ${moment(filters.toDate).format('DD MMM YY')}`;
+    // Get subtitle
+    const getReportSubtitle = () => {
+        if (filters.selectedAccountStatus?.value) {
+            return `Status: ${filters.selectedAccountStatus.label}`;
         }
-        return 'All Time';
+        if (filters.selectedPlan?.value) {
+            return `Plan: ${filters.selectedPlan.label}`;
+        }
+        return 'All Plan Subscriptions';
     };
 
-    // Get renewal status
-    const getRenewalStatus = (plan) => {
-        if (!plan.renewalDate) return '';
-        
-        const renewalDate = moment(plan.renewalDate);
-        const today = moment();
-        const daysDiff = renewalDate.diff(today, 'days');
-        
-        if (daysDiff < 0) {
-            return `(${Math.abs(daysDiff)} days overdue)`;
-        } else if (daysDiff === 0) {
-            return '(Due today)';
-        } else if (daysDiff <= 7) {
-            return `(in ${daysDiff} days)`;
+    // Get days remaining text with color
+    const getDaysRemainingText = (days) => {
+        if (days < 0) {
+            return { text: `Expired ${Math.abs(days)} days ago`, color: '#dc2626' };
+        } else if (days === 0) {
+            return { text: 'Expires Today', color: '#ea580c' };
+        } else if (days <= 7) {
+            return { text: `${days} days`, color: '#d97706' };
+        } else {
+            return { text: `${days} days`, color: '#059669' };
         }
-        return '';
     };
 
     return (
@@ -198,8 +202,8 @@ const Index = () => {
                                     alt="Company Logo"
                                     crossOrigin="anonymous"
                                     style={{
-                                        maxHeight: '35px',
-                                        marginRight: '10px',
+                                        maxHeight: '40px',
+                                        marginRight: '12px',
                                     }}
                                 />
                             )}
@@ -212,19 +216,19 @@ const Index = () => {
                                     {companyInfo.companyAddressTwo && `, ${companyInfo.companyAddressTwo}`}
                                 </p>
                                 <p className="text-gray-500" style={{ fontSize: '8pt', lineHeight: '1.1', padding: '1px' }}>
-                                    Internet Service Provider • Plan Management System
+                                    Internet Service Provider • Plan Expiry Monitoring System
                                 </p>
                             </div>
                         </div>
                         <div className="text-right">
-                            <h2 className="font-bold text-blue-800 uppercase" style={{ fontSize: '12pt', lineHeight: '1.1', padding: '1px' }}>
+                            <h2 className="font-bold text-blue-800 uppercase" style={{ fontSize: '16pt', lineHeight: '1.1', padding: '1px' }}>
                                 {getReportTitle()}
                             </h2>
-                            <p className="text-gray-600" style={{ fontSize: '9pt', lineHeight: '1.1', padding: '1px' }}>
-                                {getDateRangeText()}
+                            <p className="text-gray-600" style={{ fontSize: '10pt', lineHeight: '1.1', padding: '1px' }}>
+                                {getReportSubtitle()}
                             </p>
                             <p className="text-gray-500" style={{ fontSize: '8pt', lineHeight: '1.1', padding: '1px' }}>
-                                Generated: {moment().format('DD/MM/YY HH:mm')}
+                                Generated: {moment().format('DD/MM/YYYY HH:mm')}
                             </p>
                         </div>
                     </div>
@@ -248,35 +252,36 @@ const Index = () => {
                                 <th className="border border-gray-300 font-semibold text-gray-700 text-center p-1" style={{ width: '4%' }}>
                                     #
                                 </th>
-                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '18%' }}>
+                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '15%' }}>
                                     Customer Details
                                 </th>
-                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '12%' }}>
+                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '10%' }}>
                                     Subscription ID
                                 </th>
-                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '15%' }}>
+                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '14%' }}>
                                     Plan Details
                                 </th>
                                 <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '10%' }}>
-                                    Activation Date
+                                    Expiry Date
+                                </th>
+                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '10%' }}>
+                                    Days Remaining
                                 </th>
                                 <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '12%' }}>
-                                    Renewal Date
+                                    Status
                                 </th>
-                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '10%' }}>
-                                    Payment Status
+                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '12%' }}>
+                                    Account State
                                 </th>
-                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '10%' }}>
-                                    Connection Status
-                                </th>
-                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '9%' }}>
-                                    Bandwidth Usage
+                                <th className="border border-gray-300 font-semibold text-gray-700 text-left p-1" style={{ width: '13%' }}>
+                                    Contact & Area
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
                             {planData.map((plan, index) => {
-                                const renewalStatus = getRenewalStatus(plan);
+                                const daysRemainingInfo = getDaysRemainingText(plan.daysRemaining);
+                                const planColor = getPlanColor(plan.planPrice);
 
                                 return (
                                     <tr key={index} className="hover:bg-gray-50">
@@ -286,8 +291,9 @@ const Index = () => {
                                         <td className="border border-gray-300 align-top p-1" style={{ wordWrap: 'break-word' }}>
                                             <div style={{ fontWeight: 'bold', fontSize: '8pt' }}>{plan.customerName}</div>
                                             <div style={{ fontSize: '7pt', color: '#666' }}>ID: {plan.customerId}</div>
-                                            <div style={{ fontSize: '7pt', color: '#666' }}>{plan.contactNumber}</div>
-                                            <div style={{ fontSize: '7pt', color: '#666' }}>{plan.area}</div>
+                                            <div style={{ fontSize: '7pt', color: '#666' }}>
+                                                Activation: {formatDate(plan.activationDate)}
+                                            </div>
                                         </td>
                                         <td className="border border-gray-300 align-top p-1" style={{ wordWrap: 'break-word' }}>
                                             <div style={{ fontWeight: '600', fontSize: '8pt', color: '#2563eb' }}>
@@ -295,73 +301,104 @@ const Index = () => {
                                             </div>
                                         </td>
                                         <td className="border border-gray-300 align-top p-1" style={{ wordWrap: 'break-word' }}>
-                                            <div style={{ fontWeight: '600', fontSize: '8pt' }} className={getPlanColor(plan.planPrice)}>
+                                            <div style={{ 
+                                                fontWeight: '600', 
+                                                fontSize: '8pt', 
+                                                color: planColor,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                            }}>
+                                                <div style={{ 
+                                                    width: '6px', 
+                                                    height: '6px', 
+                                                    backgroundColor: planColor, 
+                                                    borderRadius: '50%',
+                                                    display: 'inline-block'
+                                                }}></div>
                                                 {plan.planName}
                                             </div>
-                                            <div style={{ fontSize: '7pt', color: '#666' }}>
-                                                {plan.speed} • {plan.dataLimit}
+                                            <div style={{ fontSize: '7pt', color: '#666', marginTop: '2px' }}>
+                                                {plan.speed}
                                             </div>
-                                            <div style={{ fontSize: '7pt', color: '#666', fontWeight: '600' }}>
+                                            <div style={{ fontSize: '7pt', color: '#666', marginTop: '2px' }}>
+                                                Data: {plan.dataLimit}
+                                            </div>
+                                            <div style={{ 
+                                                fontSize: '7pt', 
+                                                color: '#666', 
+                                                fontWeight: '600',
+                                                marginTop: '2px'
+                                            }}>
                                                 {formatCurrency(plan.planPrice)}/month
                                             </div>
                                         </td>
                                         <td className="border border-gray-300 align-top p-1" style={{ wordWrap: 'break-word' }}>
-                                            <div style={{ fontSize: '8pt' }}>{formatDate(plan.activationDate)}</div>
+                                            <div style={{ fontSize: '8pt', fontWeight: '600' }}>
+                                                {formatDate(plan.expiryDate)}
+                                            </div>
                                         </td>
                                         <td className="border border-gray-300 align-top p-1" style={{ wordWrap: 'break-word' }}>
-                                            <div style={{ fontSize: '8pt', fontWeight: renewalStatus ? '600' : 'normal' }}>
-                                                {formatDate(plan.renewalDate)}
+                                            <div style={{ 
+                                                fontSize: '8pt', 
+                                                fontWeight: '600',
+                                                color: daysRemainingInfo.color
+                                            }}>
+                                                {daysRemainingInfo.text}
                                             </div>
-                                            {renewalStatus && (
+                                            {plan.daysRemaining < 0 && (
                                                 <div style={{ 
                                                     fontSize: '7pt', 
-                                                    color: renewalStatus.includes('overdue') ? '#dc2626' : 
-                                                           renewalStatus.includes('Due today') ? '#ea580c' : 
-                                                           renewalStatus.includes('in') ? '#d97706' : '#666'
+                                                    color: '#dc2626',
+                                                    marginTop: '2px'
                                                 }}>
-                                                    {renewalStatus}
+                                                    Action Required
+                                                </div>
+                                            )}
+                                            {plan.daysRemaining <= 7 && plan.daysRemaining >= 0 && (
+                                                <div style={{ 
+                                                    fontSize: '7pt', 
+                                                    color: '#d97706',
+                                                    marginTop: '2px'
+                                                }}>
+                                                    Urgent Renewal
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="border border-gray-300 align-middle p-1 text-center" style={{ wordWrap: 'break-word' }}>
-                                            <span className={`font-medium ${getStatusColorClass(plan.paymentStatus, 'payment')}`} style={{ lineHeight: '1' }}>
-                                                {getStatusText(plan.paymentStatus, 'payment')}
-                                            </span>
+                                        <td className="border border-gray-300 align-middle p-1" style={{ wordWrap: 'break-word' }}>
+                                            <div style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: '4px',
+                                                fontSize: '8pt',
+                                                color: getStatusColorClass(plan.connectionStatus).replace('text-', '')
+                                            }}>
+                                                <span style={{ fontSize: '10pt' }}>
+                                                    {getStatusIndicator(plan.connectionStatus)}
+                                                </span>
+                                                <span style={{ fontWeight: '600' }}>
+                                                    {getStatusText(plan.connectionStatus)}
+                                                </span>
+                                            </div>
                                         </td>
-                                        <td className="border border-gray-300 align-middle p-1 text-center" style={{ wordWrap: 'break-word' }}>
-                                            <span className={`font-medium ${getStatusColorClass(plan.connectionStatus, 'connection')}`} style={{ lineHeight: '1' }}>
-                                                {getStatusText(plan.connectionStatus, 'connection')}
-                                            </span>
+                                        <td className="border border-gray-300 align-middle p-1" style={{ wordWrap: 'break-word' }}>
+                                            <div style={{ 
+                                                fontSize: '8pt',
+                                                fontWeight: plan.accountState === 'Active' ? '600' : 'normal',
+                                                color: plan.accountState === 'Active' ? '#059669' : '#dc2626'
+                                            }}>
+                                                {plan.accountState || 'Unknown'}
+                                            </div>
                                         </td>
                                         <td className="border border-gray-300 align-top p-1" style={{ wordWrap: 'break-word' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <div style={{ 
-                                                    flex: 1, 
-                                                    height: '6px', 
-                                                    backgroundColor: '#e5e7eb', 
-                                                    borderRadius: '3px',
-                                                    overflow: 'hidden'
-                                                }}>
-                                                    <div 
-                                                        style={{ 
-                                                            height: '100%', 
-                                                            backgroundColor: plan.usagePercentage >= 90 ? '#ef4444' : 
-                                                                          plan.usagePercentage >= 70 ? '#f59e0b' : 
-                                                                          plan.usagePercentage >= 40 ? '#10b981' : '#3b82f6',
-                                                            width: `${Math.min(plan.usagePercentage, 100)}%`,
-                                                            borderRadius: '3px'
-                                                        }}
-                                                    />
-                                                </div>
-                                                <span style={{ 
-                                                    fontSize: '7pt', 
-                                                    fontWeight: '600',
-                                                    color: plan.usagePercentage >= 90 ? '#ef4444' : 
-                                                          plan.usagePercentage >= 70 ? '#f59e0b' : 
-                                                          plan.usagePercentage >= 40 ? '#10b981' : '#3b82f6'
-                                                }}>
-                                                    {plan.usagePercentage}%
-                                                </span>
+                                            <div style={{ fontSize: '8pt', color: '#666' }}>
+                                                📞 {plan.contactNumber}
+                                            </div>
+                                            <div style={{ fontSize: '7pt', color: '#666', marginTop: '2px' }}>
+                                                📧 {plan.email || 'N/A'}
+                                            </div>
+                                            <div style={{ fontSize: '7pt', color: '#666', marginTop: '2px' }}>
+                                                📍 {plan.area || 'General'}
                                             </div>
                                         </td>
                                     </tr>
@@ -371,28 +408,100 @@ const Index = () => {
                     </table>
                 </div>
 
+                {/* Report Summary Section */}
+                <div className="mt-4 p-3 bg-gray-50 border border-gray-300 rounded" style={{ fontSize: '9pt' }}>
+                    <h3 className="font-bold text-gray-800 mb-2" style={{ fontSize: '10pt' }}>REPORT SUMMARY</h3>
+                    
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <div className="font-medium text-gray-700">Total Subscriptions</div>
+                            <div className="font-bold text-blue-800 text-lg">{metrics.totalSubscriptions || 0}</div>
+                        </div>
+                        <div>
+                            <div className="font-medium text-gray-700">Active Connections</div>
+                            <div className="font-bold text-green-800 text-lg">{metrics.activeCount || 0}</div>
+                        </div>
+                        <div>
+                            <div className="font-medium text-gray-700">Expiring Soon</div>
+                            <div className="font-bold text-yellow-800 text-lg">{metrics.expiringSoonCount || 0}</div>
+                        </div>
+                        <div>
+                            <div className="font-medium text-gray-700">Expired Connections</div>
+                            <div className="font-bold text-red-800 text-lg">{metrics.expiredCount || 0}</div>
+                        </div>
+                        <div>
+                            <div className="font-medium text-gray-700">Total Monthly Revenue</div>
+                            <div className="font-bold text-purple-800 text-lg">
+                                {formatCurrency(metrics.totalMonthlyRevenue || 0)}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="font-medium text-gray-700">Avg. Days Remaining</div>
+                            <div className="font-bold text-blue-800 text-lg">
+                                {metrics.averageDaysRemaining || 0} days
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Additional Insights if available */}
+                    {insightsData && (
+                        <div className="mt-4 pt-3 border-t border-gray-300">
+                            <h4 className="font-bold text-gray-700 mb-1" style={{ fontSize: '9pt' }}>INSIGHTS</h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                    <span className="text-gray-600">Total Potential Revenue:</span>
+                                    <span className="font-bold text-gray-800 ml-2">₹{insightsData.total_potential_revenue || 0}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Active Revenue:</span>
+                                    <span className="font-bold text-green-700 ml-2">₹{insightsData.active_revenue || 0}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Revenue at Risk:</span>
+                                    <span className="font-bold text-yellow-700 ml-2">₹{insightsData.potential_revenue_at_risk || 0}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Lost Revenue:</span>
+                                    <span className="font-bold text-red-700 ml-2">₹{insightsData.lost_revenue || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 {/* Footer */}
                 <div className="mt-4 pt-2 border-t border-gray-300 text-center">
                     <p className="text-gray-500" style={{ fontSize: '8pt' }}>
-                        Computer generated report • {moment().format('DD/MM/YY HH:mm')} •
-                        Total Plans: {planData.length} •
-                        Active: {metrics.activeConnections || 0} •
-                        Paid: {metrics.paidSubscriptions || 0} •
-                        Revenue: {formatCurrency(metrics.totalMonthlyRevenue || 0)}/month
+                        Computer generated report • Generated on: {moment().format('DD/MM/YYYY HH:mm')} • 
+                        Total Plans: {planData.length} • 
+                        Active: {metrics.activeCount || 0} • 
+                        Expiring Soon: {metrics.expiringSoonCount || 0} • 
+                        Expired: {metrics.expiredCount || 0}
                     </p>
                     <p className="text-gray-400" style={{ fontSize: '7pt' }}>
-                        ConnectNet Internet Service Provider • Plan Management Department • GST: {companyInfo.companyGstNo || 'N/A'}
+                        {companyInfo.companyName} • Plan Expiry Monitoring System • 
+                        {companyInfo.companyMobile && ` Contact: ${companyInfo.companyMobile}`} • 
+                        {companyInfo.companyGstNo && ` GST: ${companyInfo.companyGstNo}`}
+                    </p>
+                    <p className="text-gray-400" style={{ fontSize: '7pt' }}>
+                        Note: This report shows plan expiry status as of generation time. For real-time updates, please check the online system.
                     </p>
                 </div>
             </div>
 
             {/* Action Buttons */}
             <div className="d-print-none mt-6 flex justify-center gap-4">
-                <button onClick={handleBack} className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium">
-                    ← Back
+                <button 
+                    onClick={handleBack} 
+                    className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                >
+                    ← Back to Report
                 </button>
-                <button onClick={handlePrint} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                    🖨️ Print
+                <button 
+                    onClick={handlePrint} 
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                    🖨️ Print Report
                 </button>
             </div>
 
@@ -448,8 +557,22 @@ const Index = () => {
                     }
 
                     /* Statistics grid for print */
+                    .grid-cols-4,
+                    .grid-cols-3,
+                    .grid-cols-2 {
+                        display: grid !important;
+                    }
+
                     .grid-cols-4 {
                         grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                    }
+
+                    .grid-cols-3 {
+                        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                    }
+
+                    .grid-cols-2 {
+                        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                     }
 
                     /* Ensure table fits properly */
@@ -524,58 +647,29 @@ const Index = () => {
                         page-break-after: auto;
                     }
 
-                    /* Status colors for print */
-                    .text-green-600,
-                    .text-green-700 {
-                        color: #059669 !important;
-                    }
-                    .text-blue-600,
-                    .text-blue-700 {
-                        color: #2563eb !important;
-                    }
-                    .text-yellow-600,
-                    .text-yellow-700 {
-                        color: #d97706 !important;
-                    }
-                    .text-red-600,
-                    .text-red-700 {
-                        color: #dc2626 !important;
-                    }
-                    .text-orange-600 {
-                        color: #ea580c !important;
-                    }
-                    .text-purple-600 {
-                        color: #7c3aed !important;
-                    }
-                    .text-pink-600 {
-                        color: #db2777 !important;
-                    }
-                    .text-gray-600 {
-                        color: #4b5563 !important;
-                    }
-                    .text-gray-500 {
-                        color: #6b7280 !important;
-                    }
-                    .text-gray-400 {
-                        color: #9ca3af !important;
-                    }
+                    /* Colors for print */
+                    .text-blue-800 { color: #1e40af !important; }
+                    .text-green-800 { color: #065f46 !important; }
+                    .text-yellow-800 { color: #92400e !important; }
+                    .text-red-800 { color: #991b1b !important; }
+                    .text-purple-800 { color: #5b21b6 !important; }
+                    .text-gray-800 { color: #1f2937 !important; }
+                    .text-gray-700 { color: #374151 !important; }
+                    .text-gray-600 { color: #4b5563 !important; }
+                    .text-gray-500 { color: #6b7280 !important; }
+                    .text-gray-400 { color: #9ca3af !important; }
 
-                    /* Progress bar colors for print */
-                    .bg-red-600 { background-color: #dc2626 !important; }
-                    .bg-yellow-600 { background-color: #d97706 !important; }
-                    .bg-green-600 { background-color: #059669 !important; }
-                    .bg-blue-600 { background-color: #2563eb !important; }
-                    .bg-gray-200 { background-color: #e5e7eb !important; }
                     .bg-blue-50 { background-color: #eff6ff !important; }
                     .bg-green-50 { background-color: #f0fdf4 !important; }
-                    .bg-purple-50 { background-color: #faf5ff !important; }
-                    .bg-orange-50 { background-color: #fff7ed !important; }
+                    .bg-yellow-50 { background-color: #fefce8 !important; }
+                    .bg-red-50 { background-color: #fef2f2 !important; }
                     .bg-gray-50 { background-color: #f9fafb !important; }
+
                     .border-blue-200 { border-color: #bfdbfe !important; }
                     .border-green-200 { border-color: #bbf7d0 !important; }
-                    .border-purple-200 { border-color: #e9d5ff !important; }
-                    .border-orange-200 { border-color: #fed7aa !important; }
-                    .border-gray-200 { border-color: #e5e7eb !important; }
+                    .border-yellow-200 { border-color: #fde68a !important; }
+                    .border-red-200 { border-color: #fecaca !important; }
+                    .border-gray-300 { border-color: #d1d5db !important; }
                 }
 
                 /* Screen styles */
@@ -619,14 +713,6 @@ const Index = () => {
                     /* Force table to use all available space */
                     table {
                         border-spacing: 0;
-                    }
-
-                    /* Statistics cards */
-                    .grid-cols-4 {
-                        display: grid;
-                        grid-template-columns: repeat(4, 1fr);
-                        gap: 8px;
-                        margin-bottom: 16px;
                     }
                 }
             `}</style>

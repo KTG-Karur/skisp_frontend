@@ -1,5 +1,5 @@
-export const baseURL = 'http://localhost:5043';
-// export const baseURL = 'https://erpapi.optimangle.com'; // live
+// export const baseURL = 'http://localhost:5043';
+export const baseURL = 'https://api.skisp.in'; // live
 
 const getBaseUrl = (url) => {
     return `${baseURL}${url}`;

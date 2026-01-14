@@ -1,10 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-    PieChart, Pie, Cell, LineChart, Line, AreaChart, Area,
-    ResponsiveContainer, LabelList
-} from 'recharts';
+import { useDispatch, useSelector } from 'react-redux';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, ResponsiveContainer, LabelList } from 'recharts';
+import moment from 'moment';
 import IconUsers from '../components/Icon/IconUser';
 import IconCreditCard from '../components/Icon/IconCreditCard';
 import IconNetwork from '../components/Icon/IconNetwork';
@@ -29,34 +27,84 @@ import IconChartLine from '../components/Icon/IconChartLine';
 import IconShield from '../components/Icon/IconShield';
 import IconZap from '../components/Icon/IconZap';
 import IconGlobe from '../components/Icon/IconGlobe';
+import IconClock from '../components/Icon/IconClock';
+import IconAlertCircle from '../components/Icon/IconAlertCircle';
+import { getReport } from '../redux/reportSlice';
 
-// ISP Dashboard Component with Sample Data
+// ISP Dashboard Component with Integrated Report API
 const ISPDashboard = () => {
     const navigate = useNavigate();
-    const [timeRange, setTimeRange] = useState('month'); // day, week, month, quarter, year
+    const dispatch = useDispatch();
+
+    const [timeRange, setTimeRange] = useState('month');
     const [isLoading, setIsLoading] = useState(false);
     const [hoveredCard, setHoveredCard] = useState(null);
     const [statsVisible, setStatsVisible] = useState(false);
+    const [reportData, setReportData] = useState(null);
+
+    // Get report data from Redux store
+    const { loading, reportData: reduxReportData } = useSelector((state) => ({
+        loading: state.ReportSlice.loading,
+        reportData: state.ReportSlice.reportData,
+    }));
 
     useEffect(() => {
         // Trigger animations after mount
         setTimeout(() => setStatsVisible(true), 300);
-    }, []);
+
+        // Load initial report data
+        const getSettingId = () => {
+            const loginInfoStr = localStorage.getItem('loginInfo');
+            if (!loginInfoStr) {
+                return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+            }
+            try {
+                const loginInfo = JSON.parse(loginInfoStr);
+                if (loginInfo?.settingId) {
+                    return loginInfo.settingId;
+                }
+                return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+            } catch (error) {
+                console.error('Invalid loginInfo JSON', error);
+                return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+            }
+        };
+
+        const initialFilters = {
+            settingId: getSettingId(),
+            daysThreshold: 30,
+            accountState: '',
+            page: 1,
+            limit: 500,
+            search: '',
+            planName: '',
+            userId: '',
+        };
+
+        dispatch(getReport(initialFilters));
+    }, [dispatch]);
+
+    useEffect(() => {
+        // Update report data when Redux data changes
+        if (reduxReportData?.data) {
+            setReportData(reduxReportData.data);
+        }
+    }, [reduxReportData]);
 
     // Warm Color Palette based on #FFF4E2 (Creamy warm beige)
     const brandColors = {
-        primary: '#E67E22',     // Warm orange (Carrot orange)
-        secondary: '#D35400',   // Dark orange (Pumpkin)
-        accent: '#F39C12',      // Bright orange (Sunflower)
-        warning: '#E74C3C',     // Red orange (Alizarin)
-        danger: '#C0392B',      // Deep red (Pomegranate)
-        success: '#27AE60',     // Emerald green
-        info: '#3498DB',        // Soft blue (Peter River)
-        dark: '#2C3E50',        // Midnight blue
-        light: '#FFF4E2',       // Creamy warm beige (Base color)
-        muted: '#ECF0F1',       // Light gray
-        card: '#FFFFFF',        // White for cards
-        border: '#FDE3A7'       // Warm light orange border
+        primary: '#E67E22', // Warm orange (Carrot orange)
+        secondary: '#D35400', // Dark orange (Pumpkin)
+        accent: '#F39C12', // Bright orange (Sunflower)
+        warning: '#E74C3C', // Red orange (Alizarin)
+        danger: '#C0392B', // Deep red (Pomegranate)
+        success: '#27AE60', // Emerald green
+        info: '#3498DB', // Soft blue (Peter River)
+        dark: '#2C3E50', // Midnight blue
+        light: '#FFF4E2', // Creamy warm beige (Base color)
+        muted: '#ECF0F1', // Light gray
+        card: '#FFFFFF', // White for cards
+        border: '#FDE3A7', // Warm light orange border
     };
 
     // Gradient backgrounds for cards - Warm color palette
@@ -67,138 +115,176 @@ const ISPDashboard = () => {
         warning: 'linear-gradient(135deg, #E74C3C 0%, #C0392B 100%)',
         success: 'linear-gradient(135deg, #27AE60 0%, #229954 100%)',
         danger: 'linear-gradient(135deg, #E74C3C 0%, #C0392B 100%)',
-        info: 'linear-gradient(135deg, #3498DB 0%, #2980B9 100%)'
+        info: 'linear-gradient(135deg, #3498DB 0%, #2980B9 100%)',
     };
 
-    // Sample Dashboard Data
-    const sampleData = {
-        // Main Metrics
-        dashboardMetrics: {
-            totalCustomers: 12543,
-            activeSubscriptions: 11892,
-            monthlyRevenue: 458750,
-            collectionRate: 94.2,
-            avgRevenuePerUser: 38.52,
-            leftCustomerRate: 2.8,
-            newCustomers: 324,
-            leftCustomer: 89,
-            mrrGrowth: 15.2,
-            customerLifetimeValue: 1824,
-            referralRate: 12.5,
-            operatingCosts: 187500,
-            previousTotalCustomers: 12045,
-            previousActiveSubscriptions: 11432,
-            previousMonthlyRevenue: 398450,
-            previousCollectionRate: 91.7,
-            previousAvgRevenuePerUser: 34.82,
-            previousleftCustomerRate: 3.2,
-        },
+    // Transform report data for dashboard
+    const transformDashboardData = useMemo(() => {
+        if (!reportData) return null;
 
-        // Employee Performance
-        employeePerformance: {
-            topPerformers: [
-                { employeeId: 'EMP001', employeeName: 'John Smith', salesCount: 142, revenueGenerated: 54890, customerSatisfaction: 96 },
-                { employeeId: 'EMP002', employeeName: 'Sarah Johnson', salesCount: 128, revenueGenerated: 49850, customerSatisfaction: 95 },
-                { employeeId: 'EMP003', employeeName: 'Mike Wilson', salesCount: 115, revenueGenerated: 42875, customerSatisfaction: 94 },
-                { employeeId: 'EMP004', employeeName: 'Emma Davis', salesCount: 98, revenueGenerated: 38760, customerSatisfaction: 97 },
-                { employeeId: 'EMP005', employeeName: 'Robert Brown', salesCount: 87, revenueGenerated: 32480, customerSatisfaction: 93 }
-            ],
-            avgResolutionTime: '4.2h',
-            avgSatisfaction: 95.2
-        },
+        const summary = reportData.summary || {};
+        const insights = reportData.insights || {};
+        const items = reportData.items || [];
 
-        // Plan Analytics
-        planAnalytics: {
-            revenueByPlan: [
-                { planName: 'Basic 50Mbps', revenue: 125480, subscribers: 3245 },
-                { planName: 'Standard 100Mbps', revenue: 187650, subscribers: 4521 },
-                { planName: 'Premium 200Mbps', revenue: 98560, subscribers: 1876 },
-                { planName: 'Ultra 500Mbps', revenue: 75620, subscribers: 985 },
-                { planName: 'Business 1Gbps', revenue: 62430, subscribers: 456 }
-            ],
-            popularity: [
-                { planName: 'Standard 100Mbps', subscriberCount: 4521, revenue: 187650, growthRate: 12.5 },
-                { planName: 'Basic 50Mbps', subscriberCount: 3245, revenue: 125480, growthRate: 8.2 },
-                { planName: 'Premium 200Mbps', subscriberCount: 1876, revenue: 98560, growthRate: 15.8 },
-                { planName: 'Business 1Gbps', subscriberCount: 456, revenue: 62430, growthRate: 22.4 },
-                { planName: 'Ultra 500Mbps', subscriberCount: 985, revenue: 75620, growthRate: 18.7 }
-            ]
-        },
+        // Calculate additional metrics from report data
+        const activeSubscribers = summary.active_count || 0;
+        const expiringSoon = summary.expiring_soon_count || 0;
+        const expired = summary.expired_count || 0;
+        const totalUsers = summary.total_users || 0;
 
-        // Provider Stats
-        providerStats: {
-            performance: [
-                { providerId: 'PROV001', providerName: 'FiberTech', uptimePercentage: 99.8, customerCount: 5421, revenueGenerated: 214850, issueCount: 12 },
-                { providerId: 'PROV002', providerName: 'NetConnect', uptimePercentage: 99.5, customerCount: 4215, revenueGenerated: 165420, issueCount: 18 },
-                { providerId: 'PROV003', providerName: 'SpeedWave', uptimePercentage: 99.2, customerCount: 3874, revenueGenerated: 142580, issueCount: 24 },
-                { providerId: 'PROV004', providerName: 'BroadBand Plus', uptimePercentage: 98.9, customerCount: 2154, revenueGenerated: 87560, issueCount: 31 }
-            ],
-            totalProviders: 4,
-            avgUptime: 99.35
-        },
+        // Calculate revenue metrics
+        const activeRevenue = parseFloat(insights.active_revenue) || 0;
+        const revenueAtRisk = parseFloat(insights.potential_revenue_at_risk) || 0;
+        const lostRevenue = parseFloat(insights.lost_revenue) || 0;
+        const totalPotentialRevenue = parseFloat(insights.total_potential_revenue) || 0;
 
-        // Customer Growth
-        customerGrowth: {
-            data: [
-                { date: 'Jan', newCustomers: 285, totalCustomers: 11458, leftCustomer: 42 },
-                { date: 'Feb', newCustomers: 312, totalCustomers: 11728, leftCustomer: 38 },
-                { date: 'Mar', newCustomers: 298, totalCustomers: 11988, leftCustomer: 45 },
-                { date: 'Apr', newCustomers: 325, totalCustomers: 12268, leftCustomer: 51 },
-                { date: 'May', newCustomers: 342, totalCustomers: 12559, leftCustomer: 47 },
-                { date: 'Jun', newCustomers: 324, totalCustomers: 12836, leftCustomer: 43 },
-                { date: 'Jul', newCustomers: 356, totalCustomers: 13149, leftCustomer: 52 },
-                { date: 'Aug', newCustomers: 389, totalCustomers: 13486, leftCustomer: 48 },
-                { date: 'Sep', newCustomers: 412, totalCustomers: 13850, leftCustomer: 56 },
-                { date: 'Oct', newCustomers: 395, totalCustomers: 14189, leftCustomer: 61 },
-                { date: 'Nov', newCustomers: 378, totalCustomers: 14506, leftCustomer: 53 },
-                { date: 'Dec', newCustomers: 412, totalCustomers: 14865, leftCustomer: 59 }
-            ]
-        },
+        // Calculate ARPU (Average Revenue Per User)
+        const arpu = activeSubscribers > 0 ? (activeRevenue / activeSubscribers).toFixed(2) : 0;
 
-        // Payment Analytics
-        paymentAnalytics: {
-            paymentStatus: {
-                paid: 11425,
-                paidAmount: 432890,
-                pending: 328,
-                pendingAmount: 12480
+        // Calculate renewal rate (estimated)
+        const renewalRate = totalUsers > 0 ? (((activeSubscribers + expiringSoon) / totalUsers) * 100).toFixed(1) : 0;
+
+        // Calculate churn rate
+        const churnRate = totalUsers > 0 ? ((expired / totalUsers) * 100).toFixed(1) : 0;
+        // Helper function to get color based on plan name
+        const getPlanColor = (planName) => {
+            const colors = [brandColors.primary, brandColors.secondary, brandColors.accent, brandColors.info, brandColors.success, brandColors.warning, '#FF8C42', '#FF6B35'];
+
+            if (!planName) return colors[0];
+
+            // Simple hash function for consistent colors
+            let hash = 0;
+            for (let i = 0; i < planName.length; i++) {
+                hash = planName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+
+            return colors[Math.abs(hash) % colors.length];
+        };
+
+        // Plan distribution analysis
+        const planDistribution = insights.expiring_plan_distribution || {};
+        const planData = Object.entries(planDistribution).map(([planName, count]) => ({
+            name: planName,
+            count: count,
+            value: count,
+            color: getPlanColor(planName),
+        }));
+
+        // Sort plans by count
+        planData.sort((a, b) => b.count - a.count);
+
+        // Customer status distribution for pie chart
+        const statusDistribution = [
+            { name: 'Active', value: activeSubscribers, color: brandColors.success },
+            { name: 'Expiring Soon', value: expiringSoon, color: brandColors.warning },
+            { name: 'Expired', value: expired, color: brandColors.danger },
+        ];
+
+        // Revenue distribution
+        const revenueDistribution = [
+            { name: 'Active Revenue', value: activeRevenue, color: brandColors.success },
+            { name: 'At Risk', value: revenueAtRisk, color: brandColors.warning },
+            { name: 'Lost', value: lostRevenue, color: brandColors.danger },
+        ];
+
+        // Monthly trend simulation (since API doesn't provide historical data)
+        const currentMonth = moment().format('MMM');
+        const monthlyTrend = Array.from({ length: 6 }, (_, i) => {
+            const month = moment()
+                .subtract(5 - i, 'months')
+                .format('MMM');
+            const baseRevenue = activeRevenue / 6;
+            const variation = 1 + (Math.random() * 0.3 - 0.15); // ±15% variation
+            return {
+                month: month,
+                revenue: Math.round(baseRevenue * variation),
+                target: Math.round(baseRevenue * 1.1), // 10% higher target
+            };
+        });
+
+        // Expiry timeline data
+        const expiryTimeline = items
+            .filter((item) => item.days_remaining > 0 && item.days_remaining <= 30)
+            .sort((a, b) => a.days_remaining - b.days_remaining)
+            .slice(0, 10)
+            .map((item, index) => ({
+                id: item.user_id,
+                name: item.user_details?.first_name || 'Customer',
+                plan: item.user_details?.plan_name || 'Unknown Plan',
+                days: item.days_remaining,
+                amount: parseFloat(item.user_details?.price) || 0,
+            }));
+
+        // Top revenue plans
+        const planRevenueData = items
+            .filter((item) => item.days_remaining > 0) // Active plans
+            .reduce((acc, item) => {
+                const planName = item.user_details?.plan_name || 'Unknown';
+                const price = parseFloat(item.user_details?.price) || 0;
+
+                if (!acc[planName]) {
+                    acc[planName] = {
+                        name: planName,
+                        revenue: 0,
+                        subscribers: 0,
+                        color: getPlanColor(planName),
+                    };
+                }
+
+                acc[planName].revenue += price;
+                acc[planName].subscribers += 1;
+
+                return acc;
+            }, {});
+
+        const topPlans = Object.values(planRevenueData)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 5);
+
+        return {
+            // Main metrics
+            metrics: {
+                totalCustomers: totalUsers,
+                activeSubscriptions: activeSubscribers,
+                expiringSoon: expiringSoon,
+                expired: expired,
+                monthlyRevenue: activeRevenue,
+                revenueAtRisk: revenueAtRisk,
+                lostRevenue: lostRevenue,
+                arpu: arpu,
+                renewalRate: renewalRate,
+                churnRate: churnRate,
+                averageDaysToExpiry: parseFloat(insights.average_days_to_expiry) || 0,
+                closestExpiry: insights.closest_expiry || 0,
+                urgencyLevel: insights.urgency_level || 'medium',
             },
-            monthlyTrend: [
-                { month: 'Jan', revenue: 398450, target: 420000 },
-                { month: 'Feb', revenue: 412580, target: 430000 },
-                { month: 'Mar', revenue: 425670, target: 440000 },
-                { month: 'Apr', revenue: 438920, target: 450000 },
-                { month: 'May', revenue: 452150, target: 460000 },
-                { month: 'Jun', revenue: 468750, target: 470000 },
-                { month: 'Jul', revenue: 478920, target: 480000 },
-                { month: 'Aug', revenue: 492150, target: 490000 },
-                { month: 'Sep', revenue: 508420, target: 500000 },
-                { month: 'Oct', revenue: 518750, target: 510000 },
-                { month: 'Nov', revenue: 532150, target: 520000 },
-                { month: 'Dec', revenue: 548920, target: 530000 }
-            ],
-            collectionRate: 94.2,
-            avgDaysToPay: 18.5
-        },
 
-        // Service Metrics
-        serviceMetrics: {
-            avgSpeedDelivered: '85 Mbps',
-            serviceReliability: '99.2%',
-            ticketResolutionRate: '96.7%',
-            customerSupportRating: '4.8/5',
-            networkUptime: '99.8%',
-            avgResponseTime: '2.4h'
-        }
-    };
+            // Charts data
+            charts: {
+                statusDistribution,
+                revenueDistribution,
+                planDistribution: planData.slice(0, 5),
+                monthlyTrend,
+                expiryTimeline,
+                topPlans,
+            },
+
+            // Raw data for tables
+            rawData: {
+                expiringSoonItems: items.filter((item) => item.days_remaining > 0 && item.days_remaining <= 30),
+                expiredItems: items.filter((item) => item.days_remaining <= 0),
+                activeItems: items.filter((item) => item.days_remaining > 30),
+            },
+        };
+    }, [reportData, brandColors]);
 
     // Format currency
     const formatCurrency = (value) => {
-        return new Intl.NumberFormat('en-US', {
+        return new Intl.NumberFormat('en-IN', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'INR',
             minimumFractionDigits: 0,
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(value);
     };
 
@@ -209,141 +295,63 @@ const ISPDashboard = () => {
 
     // Main metrics cards data
     const mainMetrics = useMemo(() => {
-        const data = sampleData.dashboardMetrics;
+        if (!transformDashboardData) return [];
+
+        const { metrics } = transformDashboardData;
 
         return [
             {
                 id: 'totalCustomers',
                 title: 'Total Customers',
-                value: formatNumber(data.totalCustomers || 0),
-                change: 12.5,
+                value: formatNumber(metrics.totalCustomers || 0),
+                change: 0,
                 icon: IconUsers,
                 color: brandColors.primary,
                 gradient: cardGradients.primary,
-                trend: 'up'
+                trend: 'stable',
             },
             {
                 id: 'activeSubscriptions',
                 title: 'Active Subscriptions',
-                value: formatNumber(data.activeSubscriptions || 0),
-                change: 8.7,
+                value: formatNumber(metrics.activeSubscriptions || 0),
+                change: metrics.totalCustomers > 0 ? ((metrics.activeSubscriptions / metrics.totalCustomers) * 100).toFixed(1) : 0,
                 icon: IconUserCheck,
                 color: brandColors.secondary,
                 gradient: cardGradients.secondary,
-                trend: 'up'
+                trend: 'up',
             },
             {
                 id: 'monthlyRevenue',
-                title: 'Revenue',
-                value: formatCurrency(data.monthlyRevenue || 0),
-                change: 15.2,
+                title: 'Monthly Revenue',
+                value: formatCurrency(metrics.monthlyRevenue || 0),
+                change: 0,
                 icon: IconDollarSign,
                 color: brandColors.accent,
                 gradient: cardGradients.accent,
-                trend: 'up'
+                trend: 'up',
             },
             {
-                id: 'Customer leftRate',
-                title: 'Customer left Rate',
-                value: `${(data.leftCustomerRate || 0).toFixed(1)}%`,
-                change: -5.3,
-                icon: IconArrowDown,
+                id: 'expiringSoon',
+                title: 'Expiring Soon',
+                value: formatNumber(metrics.expiringSoon || 0),
+                change: metrics.totalCustomers > 0 ? ((metrics.expiringSoon / metrics.totalCustomers) * 100).toFixed(1) : 0,
+                icon: IconAlertCircle,
+                color: brandColors.warning,
+                gradient: cardGradients.warning,
+                trend: 'warning',
+            },
+            {
+                id: 'revenueAtRisk',
+                title: 'Revenue at Risk',
+                value: formatCurrency(metrics.revenueAtRisk || 0),
+                change: 0,
+                icon: IconShield,
                 color: brandColors.danger,
                 gradient: cardGradients.danger,
-                trend: 'down'
-            },
-            {
-                id: 'New Customer',
-                title: 'New Customer',
-                value: formatNumber(data.newCustomers || 0),
-                change: 18.4,
-                icon: IconUsers,
-                color: brandColors.success,
-                gradient: cardGradients.success,
-                trend: 'up'
-            }
-        ];
-    }, []);
-
-    // Revenue by plan type data for pie chart
-    const revenueByPlanData = useMemo(() => {
-        return sampleData.planAnalytics.revenueByPlan.map((plan, index) => ({
-            name: plan.planName,
-            value: plan.revenue,
-            subscribers: plan.subscribers,
-            color: [
-                brandColors.primary,
-                brandColors.secondary,
-                brandColors.accent,
-                brandColors.warning,
-                brandColors.danger,
-                '#FF8C42',
-                '#FF6B35'
-            ][index % 7]
-        }));
-    }, []);
-
-    // Customer growth data for area chart
-    const customerGrowthData = useMemo(() => {
-        return sampleData.customerGrowth.data;
-    }, []);
-
-    // Payment status data for bar chart
-    const paymentStatusData = useMemo(() => {
-        const data = sampleData.paymentAnalytics.paymentStatus;
-
-        return [
-            {
-                status: 'Paid',
-                count: data.paid || 0,
-                amount: data.paidAmount || 0,
-                color: brandColors.success
-            },
-            {
-                status: 'Pending',
-                count: data.pending || 0,
-                amount: data.pendingAmount || 0,
-                color: brandColors.warning
+                trend: 'down',
             },
         ];
-    }, []);
-
-    // Top performing employees data
-    const topEmployeesData = useMemo(() => {
-        return sampleData.employeePerformance.topPerformers.slice(0, 5).map(emp => ({
-            name: emp.employeeName,
-            sales: emp.salesCount,
-            revenue: emp.revenueGenerated,
-            satisfaction: emp.customerSatisfaction,
-            avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`
-        }));
-    }, []);
-
-    // Provider performance data
-    const providerPerformanceData = useMemo(() => {
-        return sampleData.providerStats.performance.map(provider => ({
-            name: provider.providerName,
-            uptime: provider.uptimePercentage,
-            customers: provider.customerCount,
-            revenue: provider.revenueGenerated,
-            issues: provider.issueCount
-        }));
-    }, []);
-
-    // Plan popularity data
-    const planPopularityData = useMemo(() => {
-        return sampleData.planAnalytics.popularity.map(plan => ({
-            name: plan.planName,
-            subscribers: plan.subscriberCount,
-            revenue: plan.revenue,
-            growth: plan.growthRate
-        }));
-    }, []);
-
-    // Monthly revenue trend data
-    const revenueTrendData = useMemo(() => {
-        return sampleData.paymentAnalytics.monthlyTrend;
-    }, []);
+    }, [transformDashboardData, brandColors, cardGradients]);
 
     // Custom tooltip for charts
     const CustomTooltip = ({ active, payload, label }) => {
@@ -354,11 +362,12 @@ const ISPDashboard = () => {
                     {payload.map((entry, index) => (
                         <p key={index} className="text-sm flex items-center gap-2" style={{ color: entry.color }}>
                             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></span>
-                            {entry.name}: {entry.dataKey === 'revenue' || entry.dataKey === 'amount'
+                            {entry.name}:{' '}
+                            {entry.dataKey === 'revenue' || entry.dataKey === 'value' || entry.dataKey === 'amount'
                                 ? formatCurrency(entry.value)
-                                : entry.dataKey === 'subscribers' || entry.dataKey === 'count'
-                                    ? formatNumber(entry.value)
-                                    : entry.value}
+                                : entry.dataKey === 'count' || entry.dataKey === 'subscribers'
+                                ? formatNumber(entry.value)
+                                : entry.value}
                         </p>
                     ))}
                 </div>
@@ -370,15 +379,18 @@ const ISPDashboard = () => {
     // Animated Metric Card Component
     const MetricCard = ({ metric, index }) => {
         const Icon = metric.icon;
-        const isPositive = metric.change >= 0;
+        const isPositive = metric.trend === 'up';
+        const isWarning = metric.trend === 'warning';
 
         return (
             <div
-                className={`relative overflow-hidden rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border ${statsVisible ? 'animate-fadeInUp' : 'opacity-0'}`}
+                className={`relative overflow-hidden rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border ${
+                    statsVisible ? 'animate-fadeInUp' : 'opacity-0'
+                }`}
                 style={{
                     background: metric.gradient,
                     animationDelay: `${index * 100}ms`,
-                    borderColor: brandColors.border
+                    borderColor: brandColors.border,
                 }}
                 onMouseEnter={() => setHoveredCard(metric.id)}
                 onMouseLeave={() => setHoveredCard(null)}
@@ -388,25 +400,23 @@ const ISPDashboard = () => {
                         <div className="p-3 rounded-xl bg-white/30 backdrop-blur-sm">
                             <Icon className="w-6 h-6 text-white" />
                         </div>
-                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full bg-white/30 backdrop-blur-sm ${isPositive ? 'text-green-100' : 'text-red-100'}`}>
-                            {isPositive ?
-                                <IconArrowUp className="w-4 h-4" /> :
-                                <IconArrowDown className="w-4 h-4" />
-                            }
-                        </div>
+                        {metric.change > 0 && (
+                            <div
+                                className={`flex items-center gap-2 px-3 py-1 rounded-full bg-white/30 backdrop-blur-sm ${
+                                    isWarning ? 'text-yellow-100' : isPositive ? 'text-green-100' : 'text-red-100'
+                                }`}
+                            >
+                                {isWarning ? '⚠️' : isPositive ? <IconArrowUp className="w-4 h-4" /> : <IconArrowDown className="w-4 h-4" />}
+                                <span className="text-sm font-semibold">{metric.change}%</span>
+                            </div>
+                        )}
                     </div>
-
                     <h3 className="text-3xl font-bold text-white mb-2 tracking-tight">{metric.value}</h3>
                     <p className="text-white/90 font-medium">{metric.title}</p>
 
                     {/* Progress bar indicator */}
                     <div className="mt-4 w-full bg-white/30 rounded-full h-1.5">
-                        <div
-                            className="h-1.5 rounded-full bg-white transition-all duration-300"
-                            style={{
-                                width: `${Math.min(Math.abs(metric.change) + 20, 100)}%`
-                            }}
-                        ></div>
+                        <div className="h-1.5 rounded-full bg-white transition-all duration-300" style={{ width: `${Math.min(Math.abs(metric.change) + 20, 100)}%` }}></div>
                     </div>
                 </div>
             </div>
@@ -416,30 +426,38 @@ const ISPDashboard = () => {
     // Refresh dashboard data
     const handleRefresh = () => {
         setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-        }, 1000);
+
+        const getSettingId = () => {
+            const loginInfoStr = localStorage.getItem('loginInfo');
+            if (!loginInfoStr) return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+            try {
+                const loginInfo = JSON.parse(loginInfoStr);
+                return loginInfo?.settingId || '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+            } catch (error) {
+                return '25c1c6c1-3ea7-439c-f0b-b03e42f21a5d';
+            }
+        };
+
+        const filters = {
+            settingId: getSettingId(),
+            daysThreshold: 30,
+            accountState: '',
+            page: 1,
+            limit: 500,
+        };
+
+        dispatch(getReport(filters)).finally(() => {
+            setTimeout(() => setIsLoading(false), 500);
+        });
     };
 
-    // Quick Stats Card
-    const QuickStatCard = ({ title, value, icon: Icon, color, change }) => {
-
-        const colorClass = colorClasses[color] || colorClasses.orange;
-
-        return (
-            <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
-                <div className="flex items-center justify-between mb-3">
-                    <div className={`p-2 rounded-lg ${colorClass.bg}`}>
-                        <Icon className={`w-5 h-5 ${colorClass.text}`} />
-                    </div>
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${change >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {change >= 0 ? '+' : ''}{change}%
-                    </span>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-1">{value}</h3>
-                <p className="text-sm text-gray-600">{title}</p>
-            </div>
-        );
+    // Navigate to detailed reports
+    const navigateToReport = (type) => {
+        navigate('/reports/plan-report', {
+            state: {
+                defaultFilter: type === 'expiring' ? 'expiring_soon' : type === 'expired' ? 'Expired' : 'active',
+            },
+        });
     };
 
     return (
@@ -457,67 +475,42 @@ const ISPDashboard = () => {
                             </div>
                             <div>
                                 <h1 className="text-3xl md:text-4xl font-bold" style={{ color: brandColors.dark }}>
-                                    Analytics Dashboard
+                                    ISP Analytics Dashboard
                                 </h1>
-                                <p className="text-gray-600 mt-2">Real-time insights for internet service business management</p>
+                                <p className="text-gray-600 mt-2">
+                                    Real-time insights from plan expiry report data
+                                    {transformDashboardData && ` • Last updated: ${moment().format('DD MMM YYYY, hh:mm A')}`}
+                                </p>
                             </div>
                         </div>
                     </div>
-
                     <div className="flex items-center gap-3 animate-slideInRight">
                         <button
                             onClick={handleRefresh}
-                            disabled={isLoading}
+                            disabled={isLoading || loading}
                             className="flex items-center gap-2 px-4 py-2.5 bg-white border rounded-xl hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50"
                             style={{ borderColor: brandColors.border }}
                         >
-                            <IconRefresh className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} style={{ color: brandColors.primary }} />
-                            <span className="text-sm font-semibold" style={{ color: brandColors.dark }}>Refresh</span>
+                            <IconRefresh className={`w-4 h-4 ${isLoading || loading ? 'animate-spin' : ''}`} style={{ color: brandColors.primary }} />
+                            <span className="text-sm font-semibold" style={{ color: brandColors.dark }}>
+                                Refresh
+                            </span>
                         </button>
-                    </div>
-                </div>
-
-                {/* Time Range Filter with Animation */}
-                <div className="flex items-center justify-between mb-8 animate-fadeIn">
-                    <div className="flex items-center gap-3">
-                        <IconFilter className="w-5 h-5" style={{ color: brandColors.primary }} />
-                        <span className="text-sm font-medium" style={{ color: brandColors.dark }}>Time Range:</span>
-                    </div>
-                    <div className="flex p-1 rounded-xl" style={{ backgroundColor: brandColors.muted }}>
-                        {['day', 'week', 'month', 'quarter', 'year'].map((range) => (
-                            <button
-                                key={range}
-                                onClick={() => setTimeRange(range)}
-                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 transform hover:scale-105 capitalize ${timeRange === range
-                                    ? 'bg-white shadow-sm border'
-                                    : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                style={timeRange === range ? {
-                                    color: brandColors.primary,
-                                    borderColor: brandColors.border
-                                } : {}}
-                            >
-                                {range}
-                            </button>
-                        ))}
                     </div>
                 </div>
             </div>
 
             {/* Loading State */}
-            {isLoading && (
+            {(isLoading || loading) && (
                 <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-16 w-16 border-4 mx-auto mb-4" style={{
-                            borderColor: brandColors.primary,
-                            borderTopColor: 'transparent'
-                        }}></div>
+                        <div className="animate-spin rounded-full h-16 w-16 border-4 mx-auto mb-4" style={{ borderColor: brandColors.primary, borderTopColor: 'transparent' }}></div>
                         <p className="text-gray-600 font-medium">Updating dashboard data...</p>
                     </div>
                 </div>
             )}
 
-            {/* Single Overview Page */}
+            {/* Main Content */}
             <div>
                 {/* Animated Main Metrics Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-8">
@@ -526,482 +519,424 @@ const ISPDashboard = () => {
                     ))}
                 </div>
 
-                {/* Top Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    {/* Revenue by Plan Type */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-slideInLeft" style={{ borderColor: brandColors.border }}>
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl" style={{ background: cardGradients.secondary }}>
-                                    <IconChartPie className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>Revenue by Plan Type</h3>
-                                    <p className="text-sm text-gray-500">Distribution across service plans</p>
-                                </div>
-                            </div>
-                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <IconMoreVertical className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="h-80">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={revenueByPlanData}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={false}
-                                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                        outerRadius={80}
-                                        innerRadius={40}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                        animationBegin={800}
-                                        animationDuration={1500}
-                                    >
-                                        {revenueByPlanData.map((entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={entry.color}
-                                                stroke="white"
-                                                strokeWidth={2}
-                                                className="transition-all duration-500 hover:opacity-80"
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    {/* Customer Growth Trend */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-slideInRight" style={{ borderColor: brandColors.border }}>
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl" style={{ background: cardGradients.accent }}>
-                                    <IconTrendingUp className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>Customer Growth Trend</h3>
-                                    <p className="text-sm text-gray-500">Monthly growth analytics</p>
-                                </div>
-                            </div>
-                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <IconMoreVertical className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="h-80">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={customerGrowthData}>
-                                    <defs>
-                                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={brandColors.primary} stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor={brandColors.primary} stopOpacity={0.1} />
-                                        </linearGradient>
-                                        <linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={brandColors.secondary} stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor={brandColors.secondary} stopOpacity={0.1} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                    <XAxis dataKey="date" />
-                                    <YAxis />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="totalCustomers"
-                                        name="Total Customers"
-                                        stroke={brandColors.primary}
-                                        fill="url(#colorTotal)"
-                                        strokeWidth={3}
-                                        animationBegin={600}
-                                        animationDuration={1500}
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="newCustomers"
-                                        name="New Customers"
-                                        stroke={brandColors.secondary}
-                                        fill="url(#colorNew)"
-                                        strokeWidth={2}
-                                        animationBegin={900}
-                                        animationDuration={1500}
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Middle Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    {/* Payment Status */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp" style={{ borderColor: brandColors.border }}>
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl" style={{ background: cardGradients.warning }}>
-                                    <IconCreditCard className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>Payment Status</h3>
-                                    <p className="text-sm text-gray-500">Current payment distribution</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="h-72">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={paymentStatusData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                    <XAxis dataKey="status" />
-                                    <YAxis />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend />
-                                    <Bar
-                                        dataKey="amount"
-                                        name="Amount"
-                                        radius={[8, 8, 0, 0]}
-                                        animationBegin={1200}
-                                        animationDuration={1500}
-                                    >
-                                        {paymentStatusData.map((entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={entry.color}
-                                                className="transition-all duration-300 hover:opacity-80"
-                                            />
-                                        ))}
-                                        <LabelList
-                                            dataKey="amount"
-                                            position="top"
-                                            formatter={(value) => formatCurrency(value)}
-                                            className="text-sm font-semibold"
-                                        />
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    {/* Customer Acquisition vs Customer left */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp" style={{
-                        borderColor: brandColors.border,
-                        animationDelay: '300ms'
-                    }}>
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl" style={{ background: cardGradients.info }}>
-                                    <IconChartLine className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>Customer Acquisition vs Customer left</h3>
-                                    <p className="text-sm text-gray-500">Monthly customer movement analysis</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="h-72">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={customerGrowthData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                    <XAxis dataKey="date" />
-                                    <YAxis yAxisId="left" />
-                                    <YAxis yAxisId="right" orientation="right" />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend />
-                                    <Line
-                                        yAxisId="left"
-                                        type="monotone"
-                                        dataKey="newCustomers"
-                                        name="New Customers"
-                                        stroke={brandColors.primary}
-                                        strokeWidth={3}
-                                        dot={{ r: 4 }}
-                                        animationDuration={1500}
-                                    />
-                                    <Line
-                                        yAxisId="right"
-                                        type="monotone"
-                                        dataKey="leftCustomer"
-                                        name="Customer left"
-                                        stroke={brandColors.danger}
-                                        strokeWidth={2}
-                                        strokeDasharray="5 5"
-                                        animationDuration={1500}
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Revenue vs Target Chart */}
-                <div className="mb-8">
-                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp" style={{
-                        borderColor: brandColors.border,
-                        animationDelay: '600ms'
-                    }}>
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl" style={{ background: cardGradients.success }}>
-                                    <IconChartLine className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>Revenue vs Target</h3>
-                                    <p className="text-sm text-gray-500">Monthly performance tracking</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="h-72">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={revenueTrendData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="revenue"
-                                        name="Actual Revenue"
-                                        stroke={brandColors.primary}
-                                        strokeWidth={3}
-                                        dot={{ r: 5, fill: brandColors.primary }}
-                                        activeDot={{ r: 8, fill: brandColors.primary }}
-                                        animationBegin={1500}
-                                        animationDuration={1500}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="target"
-                                        name="Target Revenue"
-                                        stroke={brandColors.warning}
-                                        strokeWidth={2}
-                                        strokeDasharray="5 5"
-                                        dot={{ r: 4, fill: brandColors.warning }}
-                                        animationBegin={1800}
-                                        animationDuration={1500}
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Bottom Stats Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Top Performing Employees */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp" style={{
-                        borderColor: brandColors.border,
-                        animationDelay: '900ms'
-                    }}>
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl" style={{ background: cardGradients.info }}>
-                                    <IconUserCheck className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>Top Performers</h3>
-                                    <p className="text-sm text-gray-500">Employee performance ranking</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => navigate('/employees')}
-                                className="text-sm font-semibold transition-colors"
-                                style={{ color: brandColors.primary }}
-                            >
-                                View All →
-                            </button>
-                        </div>
-                        <div className="space-y-4">
-                            {topEmployeesData.map((employee, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-xl transition-all duration-300 group"
-                                    style={{ backgroundColor: brandColors.muted }}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div
-                                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-sm group-hover:scale-110 transition-transform duration-300"
-                                            style={{
-                                                background: `linear-gradient(135deg, ${employee.avatarColor} 0%, ${employee.avatarColor}80 100%)`
-                                            }}
-                                        >
-                                            {employee.name.charAt(0)}
+                {transformDashboardData ? (
+                    <>
+                        {/* Top Charts Section */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                            {/* Customer Status Distribution */}
+                            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-slideInLeft" style={{ borderColor: brandColors.border }}>
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 rounded-xl" style={{ background: cardGradients.secondary }}>
+                                            <IconChartPie className="w-6 h-6 text-white" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold" style={{ color: brandColors.dark }}>{employee.name}</h4>
-                                            <p className="text-sm text-gray-500">{employee.sales} sales</p>
+                                            <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>
+                                                Customer Status Distribution
+                                            </h3>
+                                            <p className="text-sm text-gray-500">Active vs Expiring vs Expired</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-bold" style={{ color: brandColors.dark }}>{formatCurrency(employee.revenue)}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                                    <button onClick={() => navigateToReport('all')} className="text-sm font-semibold transition-colors hover:underline" style={{ color: brandColors.primary }}>
+                                        View Details →
+                                    </button>
+                                </div>
+                                <div className="h-80">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={transformDashboardData.charts.statusDistribution}
+                                                cx="50%"
+                                                cy="50%"
+                                                labelLine={false}
+                                                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                                outerRadius={80}
+                                                innerRadius={40}
+                                                paddingAngle={2}
+                                                dataKey="value"
+                                                animationBegin={800}
+                                                animationDuration={1500}
+                                            >
+                                                {transformDashboardData.charts.statusDistribution.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} stroke="white" strokeWidth={2} className="transition-all duration-500 hover:opacity-80" />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip content={<CustomTooltip />} />
+                                            <Legend />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* Revenue Distribution */}
+                            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-slideInRight" style={{ borderColor: brandColors.border }}>
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 rounded-xl" style={{ background: cardGradients.accent }}>
+                                            <IconDollarSign className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>
+                                                Revenue Distribution
+                                            </h3>
+                                            <p className="text-sm text-gray-500">Active, At Risk, and Lost Revenue</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="h-80">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={transformDashboardData.charts.revenueDistribution}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                            <XAxis dataKey="name" />
+                                            <YAxis />
+                                            <Tooltip content={<CustomTooltip />} />
+                                            <Legend />
+                                            <Bar dataKey="value" name="Revenue" radius={[8, 8, 0, 0]} animationBegin={1200} animationDuration={1500}>
+                                                {transformDashboardData.charts.revenueDistribution.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} className="transition-all duration-300 hover:opacity-80" />
+                                                ))}
+                                                <LabelList dataKey="value" position="top" formatter={(value) => formatCurrency(value)} className="text-sm font-semibold" />
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Middle Charts Section */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                            {/* Expiring Soon Timeline */}
+                            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp" style={{ borderColor: brandColors.border }}>
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 rounded-xl" style={{ background: cardGradients.warning }}>
+                                            <IconClock className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>
+                                                Upcoming Expiries
+                                            </h3>
+                                            <p className="text-sm text-gray-500">Next 10 subscriptions expiring soon</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => navigateToReport('expiring')} className="text-sm font-semibold transition-colors hover:underline" style={{ color: brandColors.primary }}>
+                                        View All →
+                                    </button>
+                                </div>
+                                <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
+                                    {transformDashboardData.charts.expiryTimeline.length > 0 ? (
+                                        transformDashboardData.charts.expiryTimeline.map((item, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center justify-between p-4 border rounded-xl hover:border-orange-300 transition-all duration-300 hover:shadow-sm"
+                                                style={{ borderColor: brandColors.border, backgroundColor: brandColors.muted }}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-sm" style={{ background: cardGradients.warning }}>
+                                                        {item.days}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold" style={{ color: brandColors.dark }}>
+                                                            {item.name}
+                                                        </h4>
+                                                        <p className="text-sm text-gray-500">{item.plan}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-bold" style={{ color: brandColors.dark }}>
+                                                        {formatCurrency(item.amount)}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">per month</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500">No upcoming expiries within 30 days</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Top Revenue Plans */}
+                            <div
+                                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp"
+                                style={{ borderColor: brandColors.border, animationDelay: '300ms' }}
+                            >
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 rounded-xl" style={{ background: cardGradients.info }}>
+                                            <IconPackage className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>
+                                                Top Revenue Plans
+                                            </h3>
+                                            <p className="text-sm text-gray-500">Highest revenue generating plans</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-5">
+                                    {transformDashboardData.charts.topPlans.map((plan, index) => (
+                                        <div key={index} className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-bold" style={{ color: brandColors.dark }}>
+                                                    {plan.name}
+                                                </span>
+                                                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: `${brandColors.primary}20`, color: brandColors.primary }}>
+                                                    {formatNumber(plan.subscribers)} subs
+                                                </span>
+                                            </div>
+                                            <div className="w-full rounded-full h-3 overflow-hidden" style={{ backgroundColor: brandColors.muted }}>
                                                 <div
-                                                    className="h-2 rounded-full transition-all duration-500"
+                                                    className="h-3 rounded-full transition-all duration-1000"
                                                     style={{
-                                                        width: `${employee.satisfaction}%`,
-                                                        backgroundColor: brandColors.success
+                                                        width: `${(plan.revenue / Math.max(...transformDashboardData.charts.topPlans.map((p) => p.revenue))) * 100}%`,
+                                                        background: `linear-gradient(90deg, ${plan.color} 0%, ${brandColors.secondary} 100%)`,
                                                     }}
                                                 ></div>
                                             </div>
-                                            <span className="text-sm font-semibold" style={{ color: brandColors.success }}>{employee.satisfaction}%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Plan Popularity */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp" style={{
-                        borderColor: brandColors.border,
-                        animationDelay: '1200ms'
-                    }}>
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl" style={{ background: cardGradients.secondary }}>
-                                    <IconPackage className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>Plan Popularity</h3>
-                                    <p className="text-sm text-gray-500">Subscriber distribution</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => navigate('/plans')}
-                                className="text-sm font-semibold transition-colors"
-                                style={{ color: brandColors.primary }}
-                            >
-                                View All →
-                            </button>
-                        </div>
-                        <div className="space-y-5">
-                            {planPopularityData.map((plan, index) => (
-                                <div key={index} className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-bold" style={{ color: brandColors.dark }}>{plan.name}</span>
-                                        <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{
-                                            backgroundColor: `${brandColors.primary}20`,
-                                            color: brandColors.primary
-                                        }}>
-                                            {formatNumber(plan.subscribers)}
-                                        </span>
-                                    </div>
-                                    <div className="w-full rounded-full h-3 overflow-hidden" style={{ backgroundColor: brandColors.muted }}>
-                                        <div
-                                            className="h-3 rounded-full transition-all duration-1000"
-                                            style={{
-                                                width: `${(plan.subscribers / Math.max(...planPopularityData.map(p => p.subscribers))) * 100}%`,
-                                                background: `linear-gradient(90deg, ${brandColors.primary} 0%, ${brandColors.secondary} 100%)`
-                                            }}
-                                        ></div>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-600">{formatCurrency(plan.revenue)}</span>
-                                        <span className={`font-semibold ${plan.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {plan.growth >= 0 ? '↑' : '↓'} {Math.abs(plan.growth).toFixed(1)}%
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Provider Performance */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp" style={{
-                        borderColor: brandColors.border,
-                        animationDelay: '1500ms'
-                    }}>
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl" style={{ background: cardGradients.accent }}>
-                                    <IconNetwork className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>Network Providers</h3>
-                                    <p className="text-sm text-gray-500">Performance overview</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => navigate('/providers')}
-                                className="text-sm font-semibold transition-colors"
-                                style={{ color: brandColors.primary }}
-                            >
-                                View All →
-                            </button>
-                        </div>
-                        <div className="space-y-4">
-                            {providerPerformanceData.map((provider, index) => (
-                                <div
-                                    key={index}
-                                    className="p-4 border rounded-xl hover:border-blue-300 transition-all duration-300 hover:shadow-sm"
-                                    style={{
-                                        borderColor: brandColors.border,
-                                        backgroundColor: brandColors.muted
-                                    }}
-                                >
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h4 className="font-bold" style={{ color: brandColors.dark }}>{provider.name}</h4>
-                                        <div className="flex items-center gap-2">
-                                            <div className="relative">
-                                                <div className="w-16 h-2 rounded-full overflow-hidden" style={{ backgroundColor: brandColors.light }}>
-                                                    <div
-                                                        className="h-2 rounded-full"
-                                                        style={{
-                                                            width: `${provider.uptime}%`,
-                                                            background: `linear-gradient(90deg, ${brandColors.success} 0%, ${brandColors.primary} 100%)`
-                                                        }}
-                                                    ></div>
-                                                </div>
-                                                <span className="text-xs font-semibold ml-2" style={{ color: brandColors.success }}>
-                                                    {provider.uptime}%
-                                                </span>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-600">{formatCurrency(plan.revenue)}</span>
+                                                <span className="text-gray-600">ARPU: {formatCurrency(plan.revenue / plan.subscribers)}</span>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3 text-sm">
-                                        <div className="flex flex-col">
-                                            <span className="text-gray-600">Customers</span>
-                                            <span className="font-semibold" style={{ color: brandColors.dark }}>{formatNumber(provider.customers)}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bottom Stats Section */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* Key Performance Indicators */}
+                            <div
+                                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp"
+                                style={{ borderColor: brandColors.border, animationDelay: '600ms' }}
+                            >
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 rounded-xl" style={{ background: cardGradients.success }}>
+                                            <IconTrendingUp className="w-6 h-6 text-white" />
                                         </div>
-                                        <div className="flex flex-col text-right">
-                                            <span className="text-gray-600">Revenue</span>
-                                            <span className="font-semibold" style={{ color: brandColors.dark }}>{formatCurrency(provider.revenue)}</span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-gray-600">Issues</span>
-                                            <span className="font-semibold" style={{
-                                                color: provider.issues > 20 ? brandColors.danger :
-                                                    provider.issues > 10 ? brandColors.warning :
-                                                        brandColors.success
-                                            }}>
-                                                {provider.issues}
-                                            </span>
-                                        </div>
-                                        <div className="flex flex-col text-right">
-                                            <span className="text-gray-600">Health</span>
-                                            <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{
-                                                backgroundColor: provider.uptime > 99.5 ? `${brandColors.success}20` :
-                                                    provider.uptime > 99 ? `${brandColors.warning}20` :
-                                                        `${brandColors.danger}20`,
-                                                color: provider.uptime > 99.5 ? brandColors.success :
-                                                    provider.uptime > 99 ? brandColors.warning :
-                                                        brandColors.danger
-                                            }}>
-                                                {provider.uptime > 99.5 ? 'Excellent' : provider.uptime > 99 ? 'Good' : 'Fair'}
-                                            </span>
+                                        <div>
+                                            <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>
+                                                Performance Metrics
+                                            </h3>
+                                            <p className="text-sm text-gray-500">Key business indicators</p>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                <div className="space-y-4">
+                                    {[
+                                        { label: 'Average Days to Expiry', value: `${transformDashboardData.metrics.averageDaysToExpiry} days`, color: brandColors.info },
+                                        { label: 'Renewal Rate', value: `${transformDashboardData.metrics.renewalRate}%`, color: brandColors.success },
+                                        { label: 'Churn Rate', value: `${transformDashboardData.metrics.churnRate}%`, color: brandColors.danger },
+                                        { label: 'ARPU (Average Revenue)', value: `₹${transformDashboardData.metrics.arpu}`, color: brandColors.accent },
+                                        { label: 'Closest Expiry', value: `${transformDashboardData.metrics.closestExpiry} days`, color: brandColors.warning },
+                                    ].map((metric, index) => (
+                                        <div key={index} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all duration-300">
+                                            <span className="text-gray-700">{metric.label}</span>
+                                            <span className="font-bold" style={{ color: metric.color }}>
+                                                {metric.value}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Plan Distribution */}
+                            <div
+                                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp"
+                                style={{ borderColor: brandColors.border, animationDelay: '900ms' }}
+                            >
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 rounded-xl" style={{ background: cardGradients.secondary }}>
+                                            <IconChartBar className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>
+                                                Expiring Plan Distribution
+                                            </h3>
+                                            <p className="text-sm text-gray-500">Plans expiring within 30 days</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    {transformDashboardData.charts.planDistribution.map((plan, index) => (
+                                        <div key={index} className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium" style={{ color: brandColors.dark }} title={plan.name}>
+                                                    {plan.name.length > 20 ? `${plan.name.substring(0, 20)}...` : plan.name}
+                                                </span>
+                                                <span className="text-sm font-semibold px-2 py-1 rounded" style={{ backgroundColor: `${plan.color}20`, color: plan.color }}>
+                                                    {plan.count} plans
+                                                </span>
+                                            </div>
+                                            <div className="w-full rounded-full h-2 overflow-hidden" style={{ backgroundColor: brandColors.muted }}>
+                                                <div
+                                                    className="h-2 rounded-full transition-all duration-1000"
+                                                    style={{
+                                                        width: `${(plan.count / Math.max(...transformDashboardData.charts.planDistribution.map((p) => p.count))) * 100}%`,
+                                                        backgroundColor: plan.color,
+                                                    }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Quick Actions */}
+                            <div
+                                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-500 border animate-fadeInUp"
+                                style={{ borderColor: brandColors.border, animationDelay: '1200ms' }}
+                            >
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 rounded-xl" style={{ background: cardGradients.primary }}>
+                                            <IconActivity className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold" style={{ color: brandColors.dark }}>
+                                                Quick Actions
+                                            </h3>
+                                            <p className="text-sm text-gray-500">Manage your subscriptions</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={() => navigateToReport('expiring')}
+                                        className="w-full text-left p-4 border rounded-xl hover:border-orange-300 transition-all duration-300 hover:shadow-sm flex items-center justify-between group"
+                                        style={{ borderColor: brandColors.border, backgroundColor: brandColors.muted }}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-yellow-100">
+                                                <IconAlertCircle className="w-5 h-5 text-yellow-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold" style={{ color: brandColors.dark }}>
+                                                    Expiring Soon
+                                                </h4>
+                                                <p className="text-sm text-gray-500">{transformDashboardData.metrics.expiringSoon} subscriptions</p>
+                                            </div>
+                                        </div>
+                                        <IconArrowUp className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                                    </button>
+
+                                    <button
+                                        onClick={() => navigateToReport('expired')}
+                                        className="w-full text-left p-4 border rounded-xl hover:border-red-300 transition-all duration-300 hover:shadow-sm flex items-center justify-between group"
+                                        style={{ borderColor: brandColors.border, backgroundColor: brandColors.muted }}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-red-100">
+                                                <IconShield className="w-5 h-5 text-red-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold" style={{ color: brandColors.dark }}>
+                                                    Expired
+                                                </h4>
+                                                <p className="text-sm text-gray-500">{transformDashboardData.metrics.expired} subscriptions</p>
+                                            </div>
+                                        </div>
+                                        <IconArrowUp className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" />
+                                    </button>
+
+                                    <button
+                                        onClick={() => navigate('/reports/plan-report')}
+                                        className="w-full text-left p-4 border rounded-xl hover:border-blue-300 transition-all duration-300 hover:shadow-sm flex items-center justify-between group"
+                                        style={{ borderColor: brandColors.border, backgroundColor: brandColors.muted }}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-blue-100">
+                                                <IconEye className="w-5 h-5 text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold" style={{ color: brandColors.dark }}>
+                                                    Full Report
+                                                </h4>
+                                                <p className="text-sm text-gray-500">Detailed plan expiry analysis</p>
+                                            </div>
+                                        </div>
+                                        <IconArrowUp className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                    </button>
+
+                                    <button
+                                        onClick={() => navigate('/customers')}
+                                        className="w-full text-left p-4 border rounded-xl hover:border-green-300 transition-all duration-300 hover:shadow-sm flex items-center justify-between group"
+                                        style={{ borderColor: brandColors.border, backgroundColor: brandColors.muted }}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-green-100">
+                                                <IconUsers className="w-5 h-5 text-green-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold" style={{ color: brandColors.dark }}>
+                                                    Customer Management
+                                                </h4>
+                                                <p className="text-sm text-gray-500">Manage all customers</p>
+                                            </div>
+                                        </div>
+                                        <IconArrowUp className="w-5 h-5 text-gray-400 group-hover:text-green-500 transition-colors" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    /* Initial Loading State */
+                    <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
+                        <div className="flex flex-col items-center justify-center">
+                            <div className="animate-spin rounded-full h-20 w-20 border-b-2 mb-6" style={{ borderColor: brandColors.primary }}></div>
+                            <h3 className="text-2xl font-semibold text-gray-800 mb-3">Loading Dashboard Data</h3>
+                            <p className="text-gray-500 max-w-md">Fetching plan expiry information and analytics from the server...</p>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
+
+            {/* Custom CSS for animations */}
+            <style jsx>{`
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                @keyframes slideInLeft {
+                    from {
+                        opacity: 0;
+                        transform: translateX(-30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+                @keyframes slideInRight {
+                    from {
+                        opacity: 0;
+                        transform: translateX(30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+                .animate-fadeInUp {
+                    animation: fadeInUp 0.6s ease-out;
+                }
+                .animate-slideInLeft {
+                    animation: slideInLeft 0.6s ease-out;
+                }
+                .animate-slideInRight {
+                    animation: slideInRight 0.6s ease-out;
+                }
+            `}</style>
         </div>
     );
 };
