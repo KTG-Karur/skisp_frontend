@@ -134,7 +134,7 @@ const themeConfigSlice = createSlice({
         },
 
         setPageTitle(state, { payload }) {
-            document.title = `${payload} | Task Management System`;
+            document.title = `${payload} | SKISP Admin Panel`;
         },
     },
 });

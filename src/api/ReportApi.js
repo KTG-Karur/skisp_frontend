@@ -4,7 +4,7 @@ import { apiReturnCallBack } from './ApiConfig';
 // GET report
 export async function getReportApi(request) {
     try {
-        const response = await apiReturnCallBack('GET', `/tasks`, request);
+        const response = await apiReturnCallBack('GET', `/hs5200/reports/expiry`, request);
         const data = await response.json();
         if (!response.ok) {
             if (data.code == 401) {

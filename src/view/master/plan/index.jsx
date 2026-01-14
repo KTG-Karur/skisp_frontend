@@ -90,9 +90,25 @@ const PlanManagement = () => {
     }, [createPlanSuccess, updatePlanSuccess, deletePlanSuccess, statusUpdateSuccess, error]);
 
     const getSettingId = () => {
-        const selectedProviderId = localStorage.getItem('selectedProvider');
-        return '6f786d38-1399-430e-9f27-aeedc7c95f44';
-    };
+    const loginInfoStr = localStorage.getItem('loginInfo');
+
+    if (!loginInfoStr) {
+        return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+    }
+
+    try {
+        const loginInfo = JSON.parse(loginInfoStr);
+        if (loginInfo?.settingId) {
+            return loginInfo.settingId;
+        }
+
+        return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+    } catch (error) {
+        console.error('Invalid loginInfo JSON', error);
+        return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+    }
+};
+
 
     const fetchPlans = () => {
         dispatch(getPlan({settingId: getSettingId()}));
