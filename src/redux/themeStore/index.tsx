@@ -20,6 +20,8 @@ import CategorySlice from '../catogerySlice';
 import TaskSlice from '../taskSlice';
 import NotificationSlice from '../notificationSlice';
 import paymentReportSlice from '../paymentReportSlice';
+import CustomerSlice from '../customerSlice';
+import UserSyncSlice from '../userSyncSlice';
 import syncSlice from '../syncSlice';
 import PlanSlice from '../planSlice';
 
@@ -46,6 +48,8 @@ const rootReducer = combineReducers({
     NotificationSlice,
     syncSlice,
     PlanSlice,
+    CustomerSlice,
+    UserSyncSlice,
     PaymentReportSlice: paymentReportSlice,
 });
 

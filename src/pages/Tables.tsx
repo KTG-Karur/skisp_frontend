@@ -895,7 +895,7 @@ const tableData = [
                                             <div className="whitespace-nowrap">{data.name}</div>
                                         </td>
                                         <td>
-                                            <div className="h-1.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex w-full">
+                                            <div className="h-1.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex w-full">
                                                 <div
                                                     className={`h-1.5 rounded-full rounded-bl-full text-center text-white text-xs ${
                                                         data.status === 'completed'
@@ -929,7 +929,7 @@ const tableData = [
                                                 {data.progress}
                                             </div>
                                         </td>
-                                        <td className="p-3 border-b border-[#ebedf2] dark:border-[#191e3a] text-center">
+                                        <td className="p-3 border-b border-[#ef7f1b] dark:border-[#191e3a] text-center">
                                             <Tippy content="Edit">
                                                 <button type="button">
                                                     <IconPencil className="ltr:mr-2 rtl:ml-2" />
@@ -1024,7 +1024,7 @@ const tableData = [
                             <div className="whitespace-nowrap">{data.name}</div>
                         </td>
                         <td>
-                            <div className="h-1.5 bg-[#ebedf2] dark:bg-dark/40 rounded-full flex w-full">
+                            <div className="h-1.5 bg-[#ef7f1b] dark:bg-dark/40 rounded-full flex w-full">
                                 <div
                                     className={\`h-1.5 rounded-full rounded-bl-full text-center text-white text-xs \${
                                         data.status === 'completed'
@@ -1058,7 +1058,7 @@ const tableData = [
                                 {data.progress}
                             </div>
                         </td>
-                        <td className="p-3 border-b border-[#ebedf2] dark:border-[#191e3a] text-center">
+                        <td className="p-3 border-b border-[#ef7f1b] dark:border-[#191e3a] text-center">
                             <Tippy content="Edit">
                                 <button type="button">
                                     <svg>...</svg>
