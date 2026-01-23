@@ -23,6 +23,26 @@ export async function getPlanApi(request) {
     }
 }
 
+// GET all Active plans with settingId
+export async function getActivePlanApi(request) {
+    try {
+        const response = await apiReturnCallBack('GET', `/hs5200/plans/bandwidth`, request);
+        const data = await response.json();
+        if (!response.ok) {
+            if (data.code == 401) {
+                localStorage.clear();
+                window.location.href = '/auth/boxed-signin';
+                throw new Error('Unauthorized');
+            }
+            throw new Error(data.message || JSON.stringify(data));
+        }
+        return data;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
 // CREATE plan
 export async function createPlanApi(request) {
     try {

@@ -153,7 +153,7 @@ const Index = () => {
                 listType: 'all',
                 numSeconds: 0,
                 getDetails: true,
-            })
+            }),
         );
     };
 
@@ -320,25 +320,30 @@ const Index = () => {
         setSelectedUserId(userId);
         dispatch(getCustomerDetails(userId))
             .then(() => {
+                console.log("customerDetails")
+                console.log(customerDetails)
                 // Set form state from customer details if available
-                if (customerDetails?.data?.results) {
-                    const results = customerDetails.data.results;
-                    const getResultValue = (fid) => {
-                        const result = results.find((r) => r.fid === fid);
-                        return result?.value || '';
+                if (customerDetails?.data?.mapping?.full_user_data) {
+                    const userData = customerDetails.data.mapping.full_user_data;
+                    const detailsArray = userData.details || [];
+
+                    // Helper function to get value from details array
+                    const getDetailValue = (fid) => {
+                        const detail = detailsArray.find((item) => item.fid === fid);
+                        return detail?.value || '';
                     };
 
                     setFormState((prev) => ({
                         ...prev,
-                        user_id: getResultValue('user_id'),
-                        pri_bandwidth_plan_name: getResultValue('q1_plan_name') || '',
-                        ext_bandwidth_plan_name: getResultValue('q2_plan_name') || '',
-                        acct_ref: getResultValue('acct_ref'),
-                        first_name: getResultValue('first_name'),
-                        last_name: getResultValue('last_name'),
-                        email_addr: getResultValue('user_email'),
-                        postal_addr: getResultValue('user_address'),
-                        mobile_num: getResultValue('user_mobile'),
+                        user_id: userData.user_id || '',
+                        pri_bandwidth_plan_name: getDetailValue('q1_plan_name') || '',
+                        ext_bandwidth_plan_name: getDetailValue('q2_plan_name') || '',
+                        acct_ref: getDetailValue('acct_ref'),
+                        first_name: userData.first_name || '',
+                        last_name: userData.last_name || '',
+                        email_addr: userData.email || '',
+                        postal_addr: userData.address || '',
+                        mobile_num: userData.mobile || '',
                     }));
                 }
                 setCustomerModal(true);
@@ -405,7 +410,7 @@ const Index = () => {
                     updateCustomer({
                         request: formState,
                         userId: formState.user_id,
-                    })
+                    }),
                 ).unwrap();
             } else {
                 await dispatch(createCustomer(formState)).unwrap();
@@ -423,7 +428,7 @@ const Index = () => {
                 updateCustomer({
                     request: formState,
                     userId: selectedUserId,
-                })
+                }),
             ).unwrap();
         } catch (error) {
             showMessage('error', error.message || 'Failed to update customer');
@@ -863,16 +868,15 @@ const Index = () => {
                         <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                                 <span className="text-xl text-white font-bold">
-                                    {customerDetails?.data?.results?.find((r) => r.fid === 'first_name')?.value?.[0] || '?'}
-                                    {customerDetails?.data?.results?.find((r) => r.fid === 'last_name')?.value?.[0] || ''}
+                                    {customerDetails?.data?.mapping?.full_user_data?.first_name?.[0] || selectedUserId?.[0] || '?'}
+                                    {customerDetails?.data?.mapping?.full_user_data?.last_name?.[0] || ''}
                                 </span>
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold">
-                                    {customerDetails?.data?.results?.find((r) => r.fid === 'first_name')?.value || ''}
-                                    {customerDetails?.data?.results?.find((r) => r.fid === 'last_name')?.value ? ' ' + customerDetails.data.results.find((r) => r.fid === 'last_name').value : ''}
+                                    {customerDetails?.data?.mapping?.full_user_data?.first_name || ''}
+                                    {customerDetails?.data?.mapping?.full_user_data?.last_name ? ' ' + customerDetails.data.mapping.full_user_data.last_name : ''}
                                 </h3>
-                                <p className="text-gray-600">ID: {selectedUserId}</p>
                             </div>
                         </div>
 
@@ -899,8 +903,36 @@ const Index = () => {
                     {activeTab === 'view' ? (
                         // View Tab
                         <div className="space-y-6">
-                            {customerDetails?.data?.results ? (
+                            {customerDetails?.data?.mapping?.full_user_data ? (
                                 <>
+                                    {/* Sync Status & Basic Info */}
+                                    <div className="bg-gray-50 p-6 rounded-xl">
+                                        <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                                            <IconInfoCircle className="w-5 h-5 mr-2" />
+                                            Sync Information
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">Sync Status</label>
+                                                <p className={`font-medium ${customerDetails.data.mapping.sync_status === 'synced' ? 'text-green-600' : 'text-yellow-600'}`}>
+                                                    {customerDetails.data.mapping.sync_status}
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">Last Sync</label>
+                                                <p className="font-medium text-gray-800">{new Date(customerDetails.data.mapping.last_sync_at).toLocaleString()}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">Location</label>
+                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.setting_info?.location_name || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">HS5200 IP</label>
+                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.setting_info?.hs5200_ip || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {/* Account Information */}
                                     <div className="bg-blue-50 p-6 rounded-xl">
                                         <h4 className="text-lg font-semibold mb-4 flex items-center text-blue-800">
@@ -908,7 +940,7 @@ const Index = () => {
                                             Account Information
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {customerDetails.data.results
+                                            {customerDetails.data.mapping.full_user_data.details
                                                 .filter((item) => ['user_id', 'rule_enable', 'acct_ref', 'account_state', 'active_plan', 'expire_time'].includes(item.fid))
                                                 .map((item) => (
                                                     <div key={item.fid} className="space-y-1">
@@ -918,12 +950,12 @@ const Index = () => {
                                                                 item.fid === 'account_state' && item.value === 'Active'
                                                                     ? 'text-green-600'
                                                                     : item.fid === 'account_state' && item.value === 'Inactive'
-                                                                    ? 'text-red-600'
-                                                                    : item.fid === 'rule_enable' && item.value === 'Enable'
-                                                                    ? 'text-green-600'
-                                                                    : item.fid === 'rule_enable' && item.value === 'Disable'
-                                                                    ? 'text-red-600'
-                                                                    : 'text-gray-800'
+                                                                      ? 'text-red-600'
+                                                                      : item.fid === 'rule_enable' && item.value === 'Enable'
+                                                                        ? 'text-green-600'
+                                                                        : item.fid === 'rule_enable' && item.value === 'Disable'
+                                                                          ? 'text-red-600'
+                                                                          : 'text-gray-800'
                                                             }`}
                                                         >
                                                             {item.value}
@@ -944,7 +976,7 @@ const Index = () => {
                                             <div className="bg-white p-4 rounded-lg border border-green-200">
                                                 <h5 className="font-semibold text-green-700 mb-3">Primary Plan</h5>
                                                 <div className="space-y-2">
-                                                    {customerDetails.data.results
+                                                    {customerDetails.data.mapping.full_user_data.details
                                                         .filter((item) => item.fid.startsWith('q1_'))
                                                         .map((item) => (
                                                             <div key={item.fid} className="flex justify-between">
@@ -956,11 +988,11 @@ const Index = () => {
                                             </div>
 
                                             {/* External Plan */}
-                                            {customerDetails.data.results.some((item) => item.fid.startsWith('q2_') && item.value !== '-') && (
+                                            {customerDetails.data.mapping.full_user_data.ext_bw_plan_name !== 'disable' && (
                                                 <div className="bg-white p-4 rounded-lg border border-blue-200">
                                                     <h5 className="font-semibold text-blue-700 mb-3">External Plan</h5>
                                                     <div className="space-y-2">
-                                                        {customerDetails.data.results
+                                                        {customerDetails.data.mapping.full_user_data.details
                                                             .filter((item) => item.fid.startsWith('q2_'))
                                                             .map((item) => (
                                                                 <div key={item.fid} className="flex justify-between">
@@ -981,14 +1013,30 @@ const Index = () => {
                                             Personal Information
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {customerDetails.data.results
-                                                .filter((item) => ['first_name', 'last_name', 'user_email', 'user_mobile', 'user_phone', 'user_address'].includes(item.fid))
-                                                .map((item) => (
-                                                    <div key={item.fid} className="space-y-1">
-                                                        <label className="text-sm text-gray-500">{item.label}</label>
-                                                        <p className="font-medium text-gray-800">{item.value}</p>
-                                                    </div>
-                                                ))}
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">First Name</label>
+                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.first_name || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">Last Name</label>
+                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.last_name || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">Email</label>
+                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.email || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">Mobile</label>
+                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.mobile || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">GSTIN</label>
+                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.gstin_no || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm text-gray-500">Address</label>
+                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.address || 'N/A'}</p>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1003,7 +1051,7 @@ const Index = () => {
                                             <div className="bg-white p-4 rounded-lg border border-amber-200">
                                                 <h5 className="font-semibold text-amber-700 mb-3">Data Usage</h5>
                                                 <div className="space-y-2">
-                                                    {customerDetails.data.results
+                                                    {customerDetails.data.mapping.full_user_data.details
                                                         .filter((item) => item.fid.includes('dq_usage') || item.fid === 'monthly_dq_sts')
                                                         .map((item) => (
                                                             <div key={item.fid} className="flex justify-between">
@@ -1018,7 +1066,7 @@ const Index = () => {
                                             <div className="bg-white p-4 rounded-lg border border-amber-200">
                                                 <h5 className="font-semibold text-amber-700 mb-3">Time Usage</h5>
                                                 <div className="space-y-2">
-                                                    {customerDetails.data.results
+                                                    {customerDetails.data.mapping.full_user_data.details
                                                         .filter((item) => item.fid.includes('tq_usage') || item.fid === 'monthly_tq_sts')
                                                         .map((item) => (
                                                             <div key={item.fid} className="flex justify-between">
@@ -1030,6 +1078,32 @@ const Index = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* MAC Addresses */}
+                                    {customerDetails.data.mapping.full_user_data.mac_1 && (
+                                        <div className="bg-gray-50 p-6 rounded-xl">
+                                            <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                                                <IconWifi className="w-5 h-5 mr-2" />
+                                                MAC Address Binding
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                {['mac_1', 'mac_2', 'mac_3', 'mac_4', 'mac_5']
+                                                    .map((macField) => {
+                                                        const macValue = customerDetails.data.mapping.full_user_data[macField];
+                                                        if (macValue) {
+                                                            return (
+                                                                <div key={macField} className="space-y-1">
+                                                                    <label className="text-sm text-gray-500">MAC {macField.split('_')[1]}</label>
+                                                                    <p className="font-medium text-gray-800 font-mono">{macValue}</p>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })
+                                                    .filter(Boolean)}
+                                            </div>
+                                        </div>
+                                    )}
                                 </>
                             ) : (
                                 <div className="text-center py-12">
@@ -1039,7 +1113,7 @@ const Index = () => {
                             )}
                         </div>
                     ) : (
-                        // Edit Tab
+                        // Edit Tab (same as before)
                         <div>
                             {plansLoading ? (
                                 <div className="text-center py-12">

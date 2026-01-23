@@ -1,26 +1,26 @@
 import { apiReturnCallBack } from './ApiConfig';
-import { getPlanApi } from './PlanApi';
+import { getActivePlanApi } from './PlanApi';
 
 // Helper function to get settingId from localStorage
 const getSettingId = () => {
-        const loginInfoStr = localStorage.getItem('loginInfo');
+    const loginInfoStr = localStorage.getItem('loginInfo');
 
-        if (!loginInfoStr) {
-            return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+    if (!loginInfoStr) {
+        return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+    }
+
+    try {
+        const loginInfo = JSON.parse(loginInfoStr);
+        if (loginInfo?.settingId) {
+            return loginInfo.settingId;
         }
 
-        try {
-            const loginInfo = JSON.parse(loginInfoStr);
-            if (loginInfo?.settingId) {
-                return loginInfo.settingId;
-            }
-
-            return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
-        } catch (error) {
-            console.error('Invalid loginInfo JSON', error);
-            return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
-        }
-    };
+        return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+    } catch (error) {
+        console.error('Invalid loginInfo JSON', error);
+        return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+    }
+};
 
 // GET all users from HS5200
 export async function getCustomersApi(params = {}) {
@@ -63,7 +63,8 @@ export async function getCustomersApi(params = {}) {
 // Get customer details from HS5200
 export async function getCustomerDetailsApi(userId) {
     try {
-        const response = await apiReturnCallBack('GET', `/hs5200/user/details?userId=${userId}`);
+        const settingId = getSettingId();
+        const response = await apiReturnCallBack('GET', `/hs5200/users/mapping?settingId=${settingId}&userId=${userId}`);
         const data = await response.json();
 
         if (!response.ok) {
@@ -208,7 +209,7 @@ export async function syncCustomerApi(userId) {
 export async function getAllPlansApi() {
     try {
         const settingId = getSettingId();
-        const response = await getPlanApi({ settingId: settingId });
+        const response = await getActivePlanApi({ settingId: settingId, isActive: true });
         return response;
     } catch (error) {
         console.error('Get All Plans Error:', error);
