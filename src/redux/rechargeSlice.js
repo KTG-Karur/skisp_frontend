@@ -71,6 +71,8 @@ const rechargeSlice = createSlice({
                 state.planDetails = action.payload.data?.results || null;
                 state.getRechargeSuccess = true;
                 state.getRechargeFailed = false;
+                console.log("action.payload.data?.results")
+                console.log(action.payload.data?.results)
             })
             .addCase(getRecharge.rejected, (state, action) => {
                 state.loading = false;

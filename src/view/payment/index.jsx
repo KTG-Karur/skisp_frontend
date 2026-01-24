@@ -15,7 +15,6 @@ import moment from 'moment';
 import { getReport } from '../../redux/reportSlice';
 import { getRecharge, createRecharge, resetRechargeStatus, clearPlanDetails } from '../../redux/rechargeSlice';
 
-// Helper function to get settingId from localStorage
 const getSettingId = () => {
     const loginInfoStr = localStorage.getItem('loginInfo');
     if (!loginInfoStr) {
@@ -32,14 +31,16 @@ const getSettingId = () => {
 const Index = () => {
     const dispatch = useDispatch();
     const { reportData, loading: reportLoading } = useSelector((state) => state.ReportSlice);
-    const { 
-        planDetails, // Use planDetails instead of rechargeData
-        loading: rechargeLoading, 
+    const {
+        planDetails,
+        loading: rechargeLoading,
         createRechargeSuccess,
         createRechargeFailed,
-        error: rechargeError 
+        error: rechargeError,
+        getRechargeSuccess,
+        getRechargeFailed,
     } = useSelector((state) => state.RechargeSlice);
-    
+
     const [customers, setCustomers] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [rechargeModal, setRechargeModal] = useState(false);
@@ -50,8 +51,9 @@ const Index = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [loadingPlanDetails, setLoadingPlanDetails] = useState(false);
     const [processingRecharge, setProcessingRecharge] = useState(false);
+    const [localPlanDetails, setLocalPlanDetails] = useState(null);
+    const [successPlanName, setSuccessPlanName] = useState('');
 
-    // Payment state
     const [paymentState, setPaymentState] = useState({
         customAmount: '',
         agreeToTerms: false,
@@ -59,14 +61,13 @@ const Index = () => {
 
     useEffect(() => {
         dispatch(setPageTitle('Payment & Recharge Management'));
-        
-        // Fetch initial report data
+
         const filters = {
             settingId: getSettingId(),
-            daysThreshold: 30,
+            daysThreshold: 50000,
             accountState: '',
             page: 1,
-            limit: 500,
+            limit: 50000,
             search: '',
             planName: '',
             userId: '',
@@ -74,28 +75,28 @@ const Index = () => {
         dispatch(getReport(filters));
     }, [dispatch]);
 
-    // Reset payment state when modal closes or customer changes
-    useEffect(() => {
-        if (!rechargeModal) {
-            setPaymentState({
-                customAmount: '',
-                agreeToTerms: false,
-            });
-            setSelectedCustomer(null);
-            dispatch(resetRechargeStatus());
-            dispatch(clearPlanDetails());
-        }
-    }, [rechargeModal, dispatch]);
+    const handleCloseModal = () => {
+        setRechargeModal(false);
+        setSelectedCustomer(null);
+        setLocalPlanDetails(null);
+        setPaymentState({
+            customAmount: '',
+            agreeToTerms: false,
+        });
+        setLoadingPlanDetails(false);
+        setProcessingRecharge(false);
+        dispatch(resetRechargeStatus());
+        dispatch(clearPlanDetails());
+    };
 
-    // Handle recharge success/failure
     useEffect(() => {
         if (createRechargeSuccess) {
             showMessage('success', 'Recharge processed successfully!');
             setProcessingRecharge(false);
             setRechargeModal(false);
             setPaymentSuccessModal(true);
-            
-            // Refresh data after successful recharge
+            setSuccessPlanName(localPlanDetails?.plan_name || '');
+
             const filters = {
                 settingId: getSettingId(),
                 daysThreshold: 30,
@@ -107,24 +108,25 @@ const Index = () => {
                 userId: '',
             };
             dispatch(getReport(filters));
+
+            setTimeout(() => {
+                dispatch(resetRechargeStatus());
+            }, 1000);
         }
-        
+
         if (createRechargeFailed && rechargeError) {
-            console.error('Recharge error:', rechargeError);
             showMessage('error', rechargeError || 'Failed to process recharge');
             setProcessingRecharge(false);
         }
-    }, [createRechargeSuccess, createRechargeFailed, rechargeError, dispatch]);
+    }, [createRechargeSuccess, createRechargeFailed, rechargeError, dispatch, localPlanDetails]);
 
-    // Transform API data to match display format
     const transformApiData = (apiData) => {
         if (!apiData || !Array.isArray(apiData)) return [];
 
         return apiData.map((item, index) => {
             const userDetails = item.user_details || {};
             const daysRemaining = item.days_remaining || 0;
-            
-            // Determine status based on days_remaining
+
             let displayStatus = 'active';
             if (daysRemaining < 0) {
                 displayStatus = 'expired';
@@ -174,11 +176,9 @@ const Index = () => {
                         {row.original.last_name?.[0] || ''}
                     </div>
                     <div>
-                        <div className="font-medium text-gray-800 dark:text-gray-200">
-                            {`${row.original.first_name || ''} ${row.original.last_name || ''}`.trim() || 'Unknown Customer'}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{row.original.user_id}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{row.original.mobile_num}</div>
+                        <div className="font-medium text-gray-800 dark:text-gray-200">{`${row.original.first_name || ''} ${row.original.last_name || ''}`.trim() || 'Unknown Customer'}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">ID: {row.original.user_id}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{row.original.mobile_num || 'No phone'}</div>
                     </div>
                 </div>
             ),
@@ -190,14 +190,8 @@ const Index = () => {
                 <div className="flex items-center space-x-2">
                     <IconWifi className="w-5 h-5 text-blue-500" />
                     <div>
-                        <span className="font-medium text-gray-800 dark:text-gray-200">
-                            {row.original.pri_bandwidth_plan_name || 'No Plan'}
-                        </span>
-                        {row.original.originalData?.user_details?.price && (
-                            <div className="text-xs text-gray-500">
-                                ₹{parseFloat(row.original.originalData.user_details.price).toFixed(2)}/month
-                            </div>
-                        )}
+                        <span className="font-medium text-gray-800 dark:text-gray-200">{row.original.pri_bandwidth_plan_name || 'No Plan'}</span>
+                        {row.original.originalData?.user_details?.price && <div className="text-xs text-gray-500">₹{parseFloat(row.original.originalData.user_details.price).toFixed(2)}/month</div>}
                     </div>
                 </div>
             ),
@@ -249,11 +243,7 @@ const Index = () => {
             Cell: ({ row }) => {
                 const accountState = row.original.originalData?.user_details?.account_state || 'Unknown';
                 const isActive = accountState === 'Active';
-                return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {accountState}
-                    </span>
-                );
+                return <span className={`px-2 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{accountState}</span>;
             },
             sort: true,
         },
@@ -268,13 +258,22 @@ const Index = () => {
                 return (
                     <div className="flex items-center space-x-2">
                         <Tippy content="Recharge/Extend Plan">
-                            <button 
-                                onClick={() => handleRechargePlan(customer)} 
+                            <button
+                                onClick={() => handleRechargePlan(customer)}
                                 className="btn btn-sm btn-success hover:scale-105 transition-transform duration-200"
-                                disabled={!isActive}
+                                disabled={!isActive || loadingPlanDetails}
                             >
-                                <IconRefresh className="w-4 h-4 mr-1" />
-                                Recharge
+                                {loadingPlanDetails && selectedCustomer?.user_id === customer.user_id ? (
+                                    <>
+                                        <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                        Loading...
+                                    </>
+                                ) : (
+                                    <>
+                                        <IconRefresh className="w-4 h-4 mr-1" />
+                                        Recharge
+                                    </>
+                                )}
                             </button>
                         </Tippy>
                     </div>
@@ -289,59 +288,86 @@ const Index = () => {
             setLoadingPlanDetails(true);
             const request = {
                 userId: userId,
-                settingId: getSettingId()
+                settingId: getSettingId(),
             };
-            
-            await dispatch(getRecharge(request)).unwrap();
-            
+
+            const result = await dispatch(getRecharge(request)).unwrap();
+
+            if (result?.data?.results) {
+                const apiPlanDetails = result.data.results;
+
+                const mappedPlanDetails = {
+                    ...apiPlanDetails,
+                    first_name: apiPlanDetails.f_name || '',
+                    last_name: apiPlanDetails.l_name || '',
+                    mobile: apiPlanDetails.mobile || '',
+                    email: apiPlanDetails.email || '',
+                    address: apiPlanDetails.address || '',
+                    plan_name: apiPlanDetails.plan_name || '',
+                    plan_price: apiPlanDetails.plan_price || '0',
+                    base_price: apiPlanDetails.base_price || '0',
+                    tax_price: apiPlanDetails.tax_price || '0',
+                    payment_type: apiPlanDetails.payment_type || '',
+                    account_state: apiPlanDetails.account_state || '',
+                    num_days_txt: apiPlanDetails.num_days_txt || 30,
+                    post_ok: apiPlanDetails.post_ok || '',
+                    post_code: apiPlanDetails.post_code || '',
+                };
+
+                setLocalPlanDetails(mappedPlanDetails);
+                return mappedPlanDetails;
+            } else {
+                throw new Error('No plan details found in response');
+            }
         } catch (error) {
-            console.error('Error fetching plan details:', error);
             showMessage('error', 'Failed to fetch plan details');
-            return null;
-        } finally {
             setLoadingPlanDetails(false);
+            return null;
         }
     };
 
     const handleRechargePlan = async (customer) => {
         try {
             setSelectedCustomer(customer);
-            
-            // Reset payment state for new customer
+
             setPaymentState({
                 customAmount: '',
                 agreeToTerms: false,
             });
-            
-            // Fetch plan details using Redux
-            await fetchPlanDetails(customer.user_id);
-            
-            // Wait a bit for state to update
-            setTimeout(() => {
-                if (!planDetails) {
-                    showMessage('error', 'Could not fetch plan details');
-                    return;
-                }
 
-                // Check if post_ok is "ok"
-                if (planDetails.post_ok !== 'ok') {
-                    showMessage('error', 'This account is not eligible for recharge');
-                    return;
-                }
+            setLocalPlanDetails(null);
 
-                // Set payment state with plan details
-                const totalAmount = parseFloat(planDetails.plan_price) || 0;
-                setPaymentState({
-                    customAmount: totalAmount.toFixed(2),
-                    agreeToTerms: false,
-                });
+            const planDetails = await fetchPlanDetails(customer.user_id);
 
-                setRechargeModal(true);
-            }, 100);
-            
+            if (!planDetails) {
+                showMessage('error', 'Could not fetch plan details');
+                setLoadingPlanDetails(false);
+                return;
+            }
+
+            if (planDetails.post_ok !== 'ok') {
+                showMessage('error', 'Account is not enabled for recharge.');
+                setLoadingPlanDetails(false);
+                return;
+            }
+
+            if (planDetails.post_code == '') {
+                showMessage('error', 'Plan activation code is missing.');
+                setLoadingPlanDetails(false);
+                return;
+            }
+
+            const totalAmount = parseFloat(planDetails.plan_price) || 0;
+            setPaymentState({
+                customAmount: totalAmount.toFixed(2),
+                agreeToTerms: false,
+            });
+
+            setRechargeModal(true);
+            setLoadingPlanDetails(false);
         } catch (error) {
-            console.error('Error in recharge plan:', error);
             showMessage('error', 'Failed to load recharge details');
+            setLoadingPlanDetails(false);
         }
     };
 
@@ -358,8 +384,7 @@ const Index = () => {
 
         try {
             setProcessingRecharge(true);
-            
-            // Prepare recharge request according to API structure
+
             const rechargeRequest = {
                 settingId: getSettingId(),
                 userId: selectedCustomer.user_id,
@@ -367,15 +392,11 @@ const Index = () => {
                 renewType: 'normal',
                 orderId: `ORDER-${Date.now()}`,
                 mappingId: selectedCustomer.mapping_id,
-                // Add post_code from planDetails
-                ...(planDetails?.post_code && { postCode: planDetails.post_code })
+                ...(localPlanDetails?.post_code && { postCode: localPlanDetails.post_code }),
             };
 
-            // Dispatch create recharge action
             await dispatch(createRecharge(rechargeRequest)).unwrap();
-
         } catch (error) {
-            console.error('Error processing recharge:', error);
             showMessage('error', error.message || 'Failed to process recharge');
             setProcessingRecharge(false);
         }
@@ -401,7 +422,7 @@ const Index = () => {
                     item.last_name?.toLowerCase().includes(term) ||
                     item.email_addr?.toLowerCase().includes(term) ||
                     item.mobile_num?.includes(term) ||
-                    item.current_plan?.toLowerCase().includes(term)
+                    item.current_plan?.toLowerCase().includes(term),
             );
         }
 
@@ -436,7 +457,6 @@ const Index = () => {
 
     return (
         <div>
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-2xl shadow-lg text-white">
                     <div className="flex items-center justify-between">
@@ -476,7 +496,6 @@ const Index = () => {
                 </div>
             </div>
 
-            {/* Search and Filter Bar */}
             <div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center space-x-4 w-full md:w-auto">
@@ -489,12 +508,14 @@ const Index = () => {
                                 placeholder="Search customers..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="form-input pl-12 pr-4 py-3 w-full md:w-80 rounded-xl 
-                                           border-0 bg-gray-50 dark:bg-gray-700/50 
-                                           text-gray-800 dark:text-gray-200 
-                                           focus:ring-2 focus:ring-primary dark:focus:ring-primary-light 
-                                           focus:bg-white dark:focus:bg-gray-700"
+                                className="form-input pl-12 pr-10 py-3 w-full md:w-80 rounded-xl"
                             />
+
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500" title="Clear search">
+                                    ✕
+                                </button>
+                            )}
                         </div>
 
                         <select
@@ -511,11 +532,23 @@ const Index = () => {
                             <option value="expiring_soon">Expiring Soon</option>
                             <option value="expired">Expired Only</option>
                         </select>
+
+                        {(searchTerm || filterStatus !== 'all') && (
+                            <button
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setFilterStatus('all');
+                                    setCurrentPage(0);
+                                }}
+                                className="btn btn-outline-danger px-4 py-3 rounded-xl"
+                            >
+                                Clear Filters
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Main Table */}
             <div className="datatables">
                 {reportLoading ? (
                     <div className="text-center py-12">
@@ -542,10 +575,9 @@ const Index = () => {
                 )}
             </div>
 
-            {/* Recharge Plan Modal */}
             {rechargeModal && selectedCustomer && (
                 <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={() => setRechargeModal(false)}></div>
+                    <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={handleCloseModal}></div>
                     <div className="flex min-h-screen items-center justify-center p-4">
                         <div className="relative w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
                             <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6">
@@ -555,12 +587,9 @@ const Index = () => {
                                         <p className="text-white/80 mt-1">
                                             Extend current plan for {selectedCustomer.first_name} {selectedCustomer.last_name}
                                         </p>
+                                        <p className="text-white/60 text-sm">Customer ID: {selectedCustomer.user_id}</p>
                                     </div>
-                                    <button 
-                                        onClick={() => setRechargeModal(false)} 
-                                        className="text-white hover:text-gray-200 transition-colors duration-200 text-2xl"
-                                        disabled={processingRecharge}
-                                    >
+                                    <button onClick={handleCloseModal} className="text-white hover:text-gray-200 transition-colors duration-200 text-2xl" disabled={processingRecharge}>
                                         ✕
                                     </button>
                                 </div>
@@ -572,61 +601,52 @@ const Index = () => {
                                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                                         <p className="mt-4 text-gray-600">Loading plan details...</p>
                                     </div>
-                                ) : planDetails ? (
+                                ) : localPlanDetails ? (
                                     <div className="space-y-6">
-                                        {/* Current Plan Info */}
                                         <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-xl">
                                             <h4 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-4">Current Plan Details</h4>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                 <div className="text-center">
-                                                    <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">
-                                                        {planDetails.plan_name}
-                                                    </div>
+                                                    <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{localPlanDetails.plan_name}</div>
                                                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Plan Name</div>
                                                 </div>
                                                 <div className="text-center">
-                                                    <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">
-                                                        ₹{planDetails.plan_price}
-                                                    </div>
+                                                    <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">₹{localPlanDetails.plan_price}</div>
                                                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Monthly Price</div>
                                                 </div>
                                                 <div className="text-center">
-                                                    <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">
-                                                        {planDetails.num_days_txt || 30} days
-                                                    </div>
+                                                    <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{localPlanDetails.num_days_txt || 30} days</div>
                                                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Validity</div>
                                                 </div>
                                             </div>
-                                            
-                                            {/* Additional Plan Info */}
-                                            <div className="mt-4 grid grid-cols-2 gap-4">
+
+                                            <div className="mt-4 grid grid-cols-3 gap-3">
                                                 <div>
                                                     <p className="text-sm text-gray-600 dark:text-gray-300">Payment Type</p>
-                                                    <p className="font-medium">{planDetails.payment_type}</p>
+                                                    <p className="font-medium">{localPlanDetails.payment_type}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-sm text-gray-600 dark:text-gray-300">Account State</p>
-                                                    <p className={`font-medium ${planDetails.account_state === 'Active' ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {planDetails.account_state}
-                                                    </p>
+                                                    <p className={`font-medium ${localPlanDetails.account_state === 'Active' ? 'text-green-600' : 'text-red-600'}`}>{localPlanDetails.account_state}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-sm text-gray-600 dark:text-gray-300">Base Price</p>
-                                                    <p className="font-medium">₹{planDetails.base_price}</p>
+                                                    <p className="font-medium">₹{localPlanDetails.pre_tax_price}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-sm text-gray-600 dark:text-gray-300">Tax</p>
-                                                    <p className="font-medium">₹{planDetails.tax_price}</p>
+                                                    <p className="font-medium">₹{localPlanDetails.tax_price}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300">Total Price</p>
+                                                    <p className="font-medium">₹{localPlanDetails.base_price}</p>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Payment Amount Section */}
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                    Payment Amount *
-                                                </label>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Amount *</label>
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-3 text-gray-500 text-xl">₹</span>
                                                     <input
@@ -642,7 +662,6 @@ const Index = () => {
                                             </div>
                                         </div>
 
-                                        {/* Terms Agreement */}
                                         <div className="flex items-start">
                                             <input
                                                 type="checkbox"
@@ -675,21 +694,15 @@ const Index = () => {
                             <div className="bg-gray-50 dark:bg-gray-900 p-6 flex justify-between items-center">
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-300">Total Amount to Pay</p>
-                                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                                        ₹{parseFloat(paymentState.customAmount).toFixed(2)}
-                                    </p>
+                                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">₹{parseFloat(paymentState.customAmount).toFixed(2)}</p>
                                 </div>
                                 <div className="flex space-x-3">
-                                    <button 
-                                        onClick={() => setRechargeModal(false)} 
-                                        className="btn btn-outline-secondary"
-                                        disabled={processingRecharge}
-                                    >
+                                    <button onClick={handleCloseModal} className="btn btn-outline-secondary" disabled={processingRecharge}>
                                         Cancel
                                     </button>
-                                    <button 
-                                        onClick={handleRechargeSubmit} 
-                                        className="btn btn-success relative overflow-hidden" 
+                                    <button
+                                        onClick={handleRechargeSubmit}
+                                        className="btn btn-success relative overflow-hidden"
                                         disabled={!paymentState.agreeToTerms || processingRecharge || !paymentState.customAmount}
                                     >
                                         {processingRecharge ? (
@@ -713,7 +726,6 @@ const Index = () => {
                 </div>
             )}
 
-            {/* Payment Success Modal */}
             {paymentSuccessModal && (
                 <div className="fixed inset-0 z-50 overflow-y-auto">
                     <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={() => setPaymentSuccessModal(false)}></div>
@@ -741,7 +753,7 @@ const Index = () => {
                                     </div>
                                     <div className="flex justify-between items-center animate-slide-up delay-250">
                                         <span className="text-gray-600 dark:text-gray-300">Plan Name</span>
-                                        <span className="font-medium">{planDetails?.plan_name}</span>
+                                        <span className="font-medium">{successPlanName}</span>
                                     </div>
                                     <div className="border-t border-gray-300 dark:border-gray-600 pt-4 mt-4 animate-slide-up delay-300">
                                         <div className="flex justify-between text-xl font-bold">
@@ -752,16 +764,11 @@ const Index = () => {
                                 </div>
 
                                 <div className="mt-8 animate-slide-up delay-350">
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             setPaymentSuccessModal(false);
-                                            setSelectedCustomer(null);
-                                            setPaymentState({
-                                                customAmount: '',
-                                                agreeToTerms: false,
-                                            });
-                                            dispatch(clearPlanDetails());
-                                        }} 
+                                            handleCloseModal();
+                                        }}
                                         className="btn btn-primary w-full transform transition-transform hover:scale-105"
                                     >
                                         Done
@@ -772,57 +779,71 @@ const Index = () => {
                     </div>
                 </div>
             )}
-            
-            {/* Add CSS animations */}
+
             <style jsx>{`
                 @keyframes fade-in {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
+                    from {
+                        opacity: 0;
+                    }
+                    to {
+                        opacity: 1;
+                    }
                 }
-                
+
                 @keyframes slide-up {
-                    from { transform: translateY(20px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
+                    from {
+                        transform: translateY(20px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
                 }
-                
+
                 @keyframes bounce {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-10px); }
+                    0%,
+                    100% {
+                        transform: translateY(0);
+                    }
+                    50% {
+                        transform: translateY(10px);
+                    }
                 }
-                
+
                 .animate-fade-in {
                     animation: fade-in 0.3s ease-out;
                 }
-                
+
                 .animate-slide-up {
                     animation: slide-up 0.4s ease-out forwards;
                     opacity: 0;
                 }
-                
+
                 .animate-bounce {
                     animation: bounce 1s infinite;
                 }
-                
+
                 .delay-100 {
                     animation-delay: 0.1s;
                 }
-                
+
                 .delay-150 {
                     animation-delay: 0.15s;
                 }
-                
+
                 .delay-200 {
                     animation-delay: 0.2s;
                 }
-                
+
                 .delay-250 {
                     animation-delay: 0.25s;
                 }
-                
+
                 .delay-300 {
                     animation-delay: 0.3s;
                 }
-                
+
                 .delay-350 {
                     animation-delay: 0.35s;
                 }

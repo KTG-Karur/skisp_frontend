@@ -367,11 +367,31 @@ const Index = () => {
                 showMessage('error', error.message || 'Failed to fetch customer details');
             });
     };
+    // Helper function to get settingId from localStorage
+    const getSettingId = () => {
+        const loginInfoStr = localStorage.getItem('loginInfo');
+
+        if (!loginInfoStr) {
+            return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+        }
+
+        try {
+            const loginInfo = JSON.parse(loginInfoStr);
+            if (loginInfo?.settingId) {
+                return loginInfo.settingId;
+            }
+
+            return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+        } catch (error) {
+            console.error('Invalid loginInfo JSON', error);
+            return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
+        }
+    };
 
     const handleSyncCustomer = async (userId) => {
         try {
             setIsSyncing(true);
-
+            const settingId = getSettingId();
             // Sync specific customer with API
             const response = await fetch('http://localhost:5043/hs5200/users/sync/specific', {
                 method: 'POST',
@@ -379,7 +399,7 @@ const Index = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    settingId: '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d',
+                    settingId: settingId,
                     userId: userId,
                 }),
             });
@@ -401,6 +421,7 @@ const Index = () => {
     const handleSyncAllCustomers = async () => {
         try {
             setIsSyncing(true);
+            const settingId = getSettingId();
             // Call sync all API directly
             const response = await fetch('http://localhost:5043/hs5200/users/sync/all', {
                 method: 'POST',
@@ -408,7 +429,7 @@ const Index = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    settingId: '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d',
+                    settingId: settingId,
                     forceSync: false,
                 }),
             });
@@ -936,20 +957,7 @@ const Index = () => {
                                     {customerDetails?.data?.mapping?.full_user_data?.first_name || ''}
                                     {customerDetails?.data?.mapping?.full_user_data?.last_name ? ' ' + customerDetails.data.mapping.full_user_data.last_name : ''}
                                 </h3>
-                                <p className="text-gray-600">ID: {selectedUserId}</p>
                             </div>
-                        </div>
-                        <div className="flex space-x-2">
-                            <button
-                                onClick={() => {
-                                    closeViewModal();
-                                    handleEditCustomer(selectedUserId);
-                                }}
-                                className="btn btn-primary"
-                            >
-                                <IconEdit className="w-4 h-4 mr-2" />
-                                Edit
-                            </button>
                         </div>
                     </div>
                 }
@@ -957,38 +965,6 @@ const Index = () => {
                 <div className="p-6">
                     {customerDetails?.data?.mapping?.full_user_data ? (
                         <div className="space-y-6">
-                            {/* Sync Status & Basic Info */}
-                            <div className="bg-gray-50 p-6 rounded-xl">
-                                <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
-                                    <IconInfoCircle className="w-5 h-5 mr-2" />
-                                    Sync Information
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Sync Status</label>
-                                        <p className={`font-medium ${customerDetails.data.mapping.sync_status === 'synced' ? 'text-green-600' : 'text-yellow-600'}`}>
-                                            {customerDetails.data.mapping.sync_status}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Last Sync</label>
-                                        <p className="font-medium text-gray-800">{new Date(customerDetails.data.mapping.last_sync_at).toLocaleString()}</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Success Rate</label>
-                                        <p className="font-medium text-blue-600">{customerDetails.data.mapping.full_user_data.success_rate}%</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Location</label>
-                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.setting_info?.location_name || 'N/A'}</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">HS5200 IP</label>
-                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.setting_info?.hs5200_ip || 'N/A'}</p>
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Account Information */}
                             <div className="bg-blue-50 p-6 rounded-xl">
                                 <h4 className="text-lg font-semibold mb-4 flex items-center text-blue-800">
