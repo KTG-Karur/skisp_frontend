@@ -86,6 +86,7 @@ const Index = () => {
         email_addr: '',
         postal_addr: '',
         mobile_num: '',
+        createdBy: 'admin',
     });
 
     // Form state for edit customer
@@ -503,7 +504,6 @@ const Index = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
         try {
             await dispatch(createCustomer(formState)).unwrap();
         } catch (error) {
@@ -512,7 +512,6 @@ const Index = () => {
     };
 
     const handleUpdateSubmit = async (e) => {
-        e.preventDefault();
         try {
             // Prepare update request with only allowed fields
             const updateRequest = {
