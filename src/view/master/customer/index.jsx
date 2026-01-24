@@ -57,15 +57,14 @@ const Index = () => {
     } = customerState;
 
     const [modal, setModal] = useState(false);
-    const [customerModal, setCustomerModal] = useState(false);
-    const [isEdit, setIsEdit] = useState(false);
+    const [viewModal, setViewModal] = useState(false);
+    const [editModal, setEditModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [selectedUserId, setSelectedUserId] = useState('');
-    const [activeTab, setActiveTab] = useState('view'); // 'view' or 'edit'
 
-    // Form state
+    // Form state for add customer
     const [formState, setFormState] = useState({
         user_id: '',
         user_pass: '',
@@ -89,12 +88,25 @@ const Index = () => {
         mobile_num: '',
     });
 
+    // Form state for edit customer
+    const [editFormState, setEditFormState] = useState({
+        first_name: '',
+        last_name: '',
+        email_addr: '',
+        new_pass: '',
+        new_pri_bandwidth_plan_name: '',
+        new_ext_bandwidth_plan_name: '',
+        account_validity: 'num_days_from_acct_creation',
+        validity_data: '30',
+    });
+
     // Plan search state
     const [priPlanSearch, setPriPlanSearch] = useState('');
     const [extPlanSearch, setExtPlanSearch] = useState('');
     const [showPriPlanList, setShowPriPlanList] = useState(false);
     const [showExtPlanList, setShowExtPlanList] = useState(false);
     const [allPlans, setAllPlans] = useState([]);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     useEffect(() => {
         dispatch(setPageTitle('Customer Management'));
@@ -109,26 +121,22 @@ const Index = () => {
             fetchCustomers();
             dispatch(resetCustomerStatus());
         }
-
         if (updateCustomerSuccess) {
             showMessage('success', 'Customer updated successfully');
-            closeCustomerModal();
+            closeEditModal();
             fetchCustomers();
             dispatch(resetCustomerStatus());
         }
-
         if (deleteCustomerSuccess) {
             showMessage('success', 'Customer deleted successfully');
             fetchCustomers();
             dispatch(resetCustomerStatus());
         }
-
         if (syncCustomerSuccess) {
             showMessage('success', 'Customer details refreshed');
             fetchCustomers();
             dispatch(resetCustomerStatus());
         }
-
         if (customerError) {
             showMessage('error', customerError);
             dispatch(resetCustomerStatus());
@@ -163,13 +171,9 @@ const Index = () => {
 
     const getFilteredPriPlans = () => {
         let filtered = allPlans.filter((plan) => {
-            // Check if plan has required properties
             if (!plan || typeof plan !== 'object') return false;
-
             const profileType = plan.profile_type || '';
             const ruleName = plan.rule_name || '';
-
-            // Include primary and both profile types
             return profileType === 'primary' || profileType === 'both' || !profileType;
         });
 
@@ -180,23 +184,17 @@ const Index = () => {
                 const planPrice = (plan.plan_price || '').toString();
                 const bwUp = (plan.bw_up_kbps || '').toString();
                 const bwDown = (plan.bw_dn_kbps || '').toString();
-
                 return ruleName.includes(term) || planPrice.includes(term) || bwUp.includes(term) || bwDown.includes(term);
             });
         }
-
         return filtered;
     };
 
     const getFilteredExtPlans = () => {
         let filtered = allPlans.filter((plan) => {
-            // Check if plan has required properties
             if (!plan || typeof plan !== 'object') return false;
-
             const profileType = plan.profile_type || '';
             const ruleName = plan.rule_name || '';
-
-            // Include external and both profile types
             return profileType === 'external' || profileType === 'both' || !profileType;
         });
 
@@ -207,11 +205,9 @@ const Index = () => {
                 const planPrice = (plan.plan_price || '').toString();
                 const bwUp = (plan.bw_up_kbps || '').toString();
                 const bwDown = (plan.bw_dn_kbps || '').toString();
-
                 return ruleName.includes(term) || planPrice.includes(term) || bwUp.includes(term) || bwDown.includes(term);
             });
         }
-
         return filtered;
     };
 
@@ -293,13 +289,26 @@ const Index = () => {
             accessor: 'actions',
             Cell: ({ row }) => {
                 const customer = row.original;
-
                 return (
                     <div className="flex items-center space-x-2">
-                        {/* View/Edit Customer */}
-                        <Tippy content="View/Edit Details">
-                            <button onClick={() => handleCustomerDetails(customer.user_id)} className="btn btn-sm btn-outline-primary hover:scale-105 transition-transform">
+                        {/* View Customer */}
+                        <Tippy content="View Customer">
+                            <button onClick={() => handleViewCustomer(customer.user_id)} className="btn btn-sm btn-outline-info hover:scale-105 transition-transform">
                                 <IconEye className="w-4 h-4" />
+                            </button>
+                        </Tippy>
+
+                        {/* Edit Customer */}
+                        <Tippy content="Edit Customer">
+                            <button onClick={() => handleEditCustomer(customer.user_id)} className="btn btn-sm btn-outline-primary hover:scale-105 transition-transform">
+                                <IconPencil className="w-4 h-4" />
+                            </button>
+                        </Tippy>
+
+                        {/* Sync Customer */}
+                        <Tippy content="Sync Customer">
+                            <button onClick={() => handleSyncCustomer(customer.user_id)} className="btn btn-sm btn-outline-secondary hover:scale-105 transition-transform">
+                                <IconRefresh className="w-4 h-4" />
                             </button>
                         </Tippy>
 
@@ -312,17 +321,26 @@ const Index = () => {
                     </div>
                 );
             },
-            width: 120,
+            width: 180,
         },
     ];
 
-    const handleCustomerDetails = (userId) => {
+    const handleViewCustomer = (userId) => {
         setSelectedUserId(userId);
         dispatch(getCustomerDetails(userId))
             .then(() => {
-                console.log("customerDetails")
-                console.log(customerDetails)
-                // Set form state from customer details if available
+                setViewModal(true);
+            })
+            .catch((error) => {
+                showMessage('error', error.message || 'Failed to fetch customer details');
+            });
+    };
+
+    const handleEditCustomer = (userId) => {
+        setSelectedUserId(userId);
+        dispatch(getCustomerDetails(userId))
+            .then(() => {
+                // Set edit form state from customer details
                 if (customerDetails?.data?.mapping?.full_user_data) {
                     const userData = customerDetails.data.mapping.full_user_data;
                     const detailsArray = userData.details || [];
@@ -333,25 +351,80 @@ const Index = () => {
                         return detail?.value || '';
                     };
 
-                    setFormState((prev) => ({
+                    setEditFormState((prev) => ({
                         ...prev,
-                        user_id: userData.user_id || '',
-                        pri_bandwidth_plan_name: getDetailValue('q1_plan_name') || '',
-                        ext_bandwidth_plan_name: getDetailValue('q2_plan_name') || '',
-                        acct_ref: getDetailValue('acct_ref'),
                         first_name: userData.first_name || '',
                         last_name: userData.last_name || '',
                         email_addr: userData.email || '',
-                        postal_addr: userData.address || '',
-                        mobile_num: userData.mobile || '',
+                        new_pri_bandwidth_plan_name: getDetailValue('q1_plan_name') || '',
+                        new_ext_bandwidth_plan_name: getDetailValue('q2_plan_name') || '',
+                        new_pass: '', // Reset password field for safety
                     }));
                 }
-                setCustomerModal(true);
-                setActiveTab('view');
+                setEditModal(true);
             })
             .catch((error) => {
                 showMessage('error', error.message || 'Failed to fetch customer details');
             });
+    };
+
+    const handleSyncCustomer = async (userId) => {
+        try {
+            setIsSyncing(true);
+
+            // Sync specific customer with API
+            const response = await fetch('http://localhost:5043/hs5200/users/sync/specific', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    settingId: '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d',
+                    userId: userId,
+                }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                showMessage('success', `Customer ${userId} synced successfully`);
+                fetchCustomers(); // Refresh the list
+            } else {
+                throw new Error(data.message || 'Sync failed');
+            }
+        } catch (error) {
+            showMessage('error', error.message || 'Failed to sync customer');
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const handleSyncAllCustomers = async () => {
+        try {
+            setIsSyncing(true);
+            // Call sync all API directly
+            const response = await fetch('http://localhost:5043/hs5200/users/sync/all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    settingId: '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d',
+                    forceSync: false,
+                }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                showMessage('success', 'All customers synced successfully');
+                fetchCustomers(); // Refresh the list
+            } else {
+                throw new Error(data.message || 'Sync failed');
+            }
+        } catch (error) {
+            showMessage('error', error.message || 'Failed to sync all customers');
+        } finally {
+            setIsSyncing(false);
+        }
     };
 
     const handleDeleteCustomer = (userId) => {
@@ -392,10 +465,15 @@ const Index = () => {
         setShowExtPlanList(false);
     };
 
-    const closeCustomerModal = () => {
-        setCustomerModal(false);
+    const closeViewModal = () => {
+        setViewModal(false);
         setSelectedUserId('');
-        setActiveTab('view');
+        dispatch(clearSelectedCustomer());
+    };
+
+    const closeEditModal = () => {
+        setEditModal(false);
+        setSelectedUserId('');
         setPriPlanSearch('');
         setExtPlanSearch('');
         setShowPriPlanList(false);
@@ -404,17 +482,9 @@ const Index = () => {
     };
 
     const handleSubmit = async (e) => {
+        e.preventDefault();
         try {
-            if (isEdit) {
-                await dispatch(
-                    updateCustomer({
-                        request: formState,
-                        userId: formState.user_id,
-                    }),
-                ).unwrap();
-            } else {
-                await dispatch(createCustomer(formState)).unwrap();
-            }
+            await dispatch(createCustomer(formState)).unwrap();
         } catch (error) {
             showMessage('error', error.message || 'Failed to save customer');
         }
@@ -422,11 +492,26 @@ const Index = () => {
 
     const handleUpdateSubmit = async (e) => {
         e.preventDefault();
-
         try {
+            // Prepare update request with only allowed fields
+            const updateRequest = {
+                first_name: editFormState.first_name,
+                last_name: editFormState.last_name,
+                email_addr: editFormState.email_addr,
+                new_pri_bandwidth_plan_name: editFormState.new_pri_bandwidth_plan_name,
+                new_ext_bandwidth_plan_name: editFormState.new_ext_bandwidth_plan_name,
+                account_validity: editFormState.account_validity,
+                validity_data: editFormState.validity_data,
+            };
+
+            // Only include password if provided
+            if (editFormState.new_pass) {
+                updateRequest.new_pass = editFormState.new_pass;
+            }
+
             await dispatch(
                 updateCustomer({
-                    request: formState,
+                    request: updateRequest,
                     userId: selectedUserId,
                 }),
             ).unwrap();
@@ -437,7 +522,6 @@ const Index = () => {
 
     const getFilteredData = () => {
         let filtered = customers;
-
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter((customer) => {
@@ -451,7 +535,6 @@ const Index = () => {
                 );
             });
         }
-
         return filtered;
     };
 
@@ -462,11 +545,8 @@ const Index = () => {
         return dataArray.slice(startIndex, endIndex);
     };
 
-    // Plan select component - Debug version
+    // Plan select component
     const PlanSelect = ({ value, onChange, placeholder, searchValue, onSearchChange, showList, onShowList, onHideList, plans, required = false, disabled = false, label = '' }) => {
-        // Debug log
-        console.log('PlanSelect Debug:', { label, plansCount: plans.length, plans });
-
         return (
             <div className="relative">
                 <label className="block text-sm font-medium mb-2">
@@ -501,39 +581,34 @@ const Index = () => {
                         </button>
                     )}
                 </div>
-
                 {showList && plans.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {plans.map((plan, index) => {
-                            console.log('Plan item:', plan); // Debug log
-                            return (
-                                <div
-                                    key={plan.id || plan.plan_id || index}
-                                    onClick={() => {
-                                        onChange(plan.rule_name || '');
-                                        onSearchChange(plan.rule_name || '');
-                                        onHideList();
-                                    }}
-                                    className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                >
-                                    <div className="font-medium text-gray-800">{plan.rule_name || 'Unnamed Plan'}</div>
-                                    <div className="text-sm text-gray-600">
-                                        {plan.bw_up_kbps ? `${plan.bw_up_kbps} Kbps Up` : ''}
-                                        {plan.bw_dn_kbps ? ` / ${plan.bw_dn_kbps} Kbps Down` : ''}
-                                        {plan.plan_price ? ` • ₹${plan.plan_price}` : ''}
-                                        {plan.data_limit ? ` • ${plan.data_limit} ${plan.data_limit_type || ''}` : ''}
-                                        {plan.time_limit ? ` • ${plan.time_limit} ${plan.time_limit_type || ''}` : ''}
-                                    </div>
-                                    <div className="text-xs text-gray-500 mt-1">
-                                        {plan.profile_type ? `Profile: ${plan.profile_type}` : 'No profile type'}
-                                        {plan.is_active !== undefined ? ` • ${plan.is_active ? 'Active' : 'Inactive'}` : ''}
-                                    </div>
+                        {plans.map((plan, index) => (
+                            <div
+                                key={plan.id || plan.plan_id || index}
+                                onClick={() => {
+                                    onChange(plan.rule_name || '');
+                                    onSearchChange(plan.rule_name || '');
+                                    onHideList();
+                                }}
+                                className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            >
+                                <div className="font-medium text-gray-800">{plan.rule_name || 'Unnamed Plan'}</div>
+                                <div className="text-sm text-gray-600">
+                                    {plan.bw_up_kbps ? `${plan.bw_up_kbps} Kbps Up` : ''}
+                                    {plan.bw_dn_kbps ? ` / ${plan.bw_dn_kbps} Kbps Down` : ''}
+                                    {plan.plan_price ? ` • ₹${plan.plan_price}` : ''}
+                                    {plan.data_limit ? ` • ${plan.data_limit} ${plan.data_limit_type || ''}` : ''}
+                                    {plan.time_limit ? ` • ${plan.time_limit} ${plan.time_limit_type || ''}` : ''}
                                 </div>
-                            );
-                        })}
+                                <div className="text-xs text-gray-500 mt-1">
+                                    {plan.profile_type ? `Profile: ${plan.profile_type}` : 'No profile type'}
+                                    {plan.is_active !== undefined ? ` • ${plan.is_active ? 'Active' : 'Inactive'}` : ''}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
-
                 {showList && plans.length === 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
                         <div className="px-4 py-3 text-gray-500 text-center">{plansLoading ? 'Loading plans...' : 'No plans found'}</div>
@@ -561,16 +636,17 @@ const Index = () => {
                                 className="form-input pl-12 pr-4 py-3 w-full md:w-80"
                             />
                         </div>
-
                         <button onClick={fetchCustomers} className="btn btn-secondary" disabled={customerLoading}>
                             <IconRefresh className={`w-5 h-5 ${customerLoading ? 'animate-spin' : ''}`} />
                             <span>Refresh</span>
                         </button>
+                        <button onClick={handleSyncAllCustomers} className="btn btn-info" disabled={customerLoading || isSyncing}>
+                            <IconSync className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`} />
+                            <span>Sync All Customers</span>
+                        </button>
                     </div>
-
                     <button
                         onClick={() => {
-                            setIsEdit(false);
                             setModal(true);
                         }}
                         className="btn btn-success"
@@ -595,7 +671,6 @@ const Index = () => {
                             <IconUserPlus className="w-8 h-8 text-blue-400" />
                         </div>
                     </div>
-
                     <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
                         <div className="flex items-center justify-between">
                             <div>
@@ -605,7 +680,6 @@ const Index = () => {
                             <IconCheckCircle className="w-8 h-8 text-green-400" />
                         </div>
                     </div>
-
                     <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-xl border border-red-200">
                         <div className="flex items-center justify-between">
                             <div>
@@ -615,7 +689,6 @@ const Index = () => {
                             <IconXCircle className="w-8 h-8 text-red-400" />
                         </div>
                     </div>
-
                     <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
                         <div className="flex items-center justify-between">
                             <div>
@@ -693,7 +766,6 @@ const Index = () => {
                                             required
                                         />
                                     </div>
-
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Password *</label>
                                         <input
@@ -706,7 +778,6 @@ const Index = () => {
                                         />
                                     </div>
                                 </div>
-
                                 {/* Personal Information */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
@@ -720,7 +791,6 @@ const Index = () => {
                                             required
                                         />
                                     </div>
-
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Last Name</label>
                                         <input
@@ -731,7 +801,6 @@ const Index = () => {
                                             className="form-input"
                                         />
                                     </div>
-
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Email *</label>
                                         <input
@@ -743,7 +812,6 @@ const Index = () => {
                                             required
                                         />
                                     </div>
-
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Mobile Number *</label>
                                         <input
@@ -756,7 +824,6 @@ const Index = () => {
                                         />
                                     </div>
                                 </div>
-
                                 {/* Account Reference */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Account Reference</label>
@@ -768,7 +835,6 @@ const Index = () => {
                                         className="form-input"
                                     />
                                 </div>
-
                                 {/* Bandwidth Plans */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <PlanSelect
@@ -786,7 +852,6 @@ const Index = () => {
                                         required
                                         label="Primary Bandwidth Plan"
                                     />
-
                                     <PlanSelect
                                         value={formState.ext_bandwidth_plan_name}
                                         onChange={(value) => setFormState({ ...formState, ext_bandwidth_plan_name: value })}
@@ -802,7 +867,6 @@ const Index = () => {
                                         label="External Bandwidth Plan"
                                     />
                                 </div>
-
                                 {/* Network Settings */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
@@ -815,7 +879,6 @@ const Index = () => {
                                             ))}
                                         </select>
                                     </div>
-
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Concurrent Logins</label>
                                         <select value={formState.num_conc_logins} onChange={(e) => setFormState({ ...formState, num_conc_logins: e.target.value })} className="form-select" required>
@@ -826,7 +889,6 @@ const Index = () => {
                                             ))}
                                         </select>
                                     </div>
-
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Login Protocol</label>
                                         <select value={formState.login_proto} onChange={(e) => setFormState({ ...formState, login_proto: e.target.value })} className="form-select" required>
@@ -835,7 +897,6 @@ const Index = () => {
                                         </select>
                                     </div>
                                 </div>
-
                                 {/* Address */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Address</label>
@@ -853,16 +914,14 @@ const Index = () => {
                 </div>
             </ModelViewBox>
 
-            {/* Customer View/Edit Modal */}
+            {/* View Customer Modal */}
             <ModelViewBox
-                modal={customerModal}
-                modelHeader={`Customer - ${selectedUserId}`}
-                setModel={closeCustomerModal}
+                modal={viewModal}
+                modelHeader={`Customer Details - ${selectedUserId}`}
+                setModel={closeViewModal}
                 modelSize="xl"
-                showSubmit={activeTab === 'edit'}
-                submitBtnText="Update Customer"
-                handleSubmit={handleUpdateSubmit}
-                loadings={customerLoading || plansLoading}
+                showSubmit={false}
+                loadings={customerLoading}
                 customHeader={
                     <div className="flex items-center justify-between w-full">
                         <div className="flex items-center space-x-3">
@@ -877,385 +936,376 @@ const Index = () => {
                                     {customerDetails?.data?.mapping?.full_user_data?.first_name || ''}
                                     {customerDetails?.data?.mapping?.full_user_data?.last_name ? ' ' + customerDetails.data.mapping.full_user_data.last_name : ''}
                                 </h3>
+                                <p className="text-gray-600">ID: {selectedUserId}</p>
                             </div>
                         </div>
-
                         <div className="flex space-x-2">
                             <button
-                                onClick={() => setActiveTab('view')}
-                                className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${activeTab === 'view' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                onClick={() => {
+                                    closeViewModal();
+                                    handleEditCustomer(selectedUserId);
+                                }}
+                                className="btn btn-primary"
                             >
-                                <IconEye className="w-4 h-4" />
-                                <span>View</span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('edit')}
-                                className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${activeTab === 'edit' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                            >
-                                <IconEdit className="w-4 h-4" />
-                                <span>Edit</span>
+                                <IconEdit className="w-4 h-4 mr-2" />
+                                Edit
                             </button>
                         </div>
                     </div>
                 }
             >
                 <div className="p-6">
-                    {activeTab === 'view' ? (
-                        // View Tab
+                    {customerDetails?.data?.mapping?.full_user_data ? (
                         <div className="space-y-6">
-                            {customerDetails?.data?.mapping?.full_user_data ? (
-                                <>
-                                    {/* Sync Status & Basic Info */}
-                                    <div className="bg-gray-50 p-6 rounded-xl">
-                                        <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
-                                            <IconInfoCircle className="w-5 h-5 mr-2" />
-                                            Sync Information
-                                        </h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">Sync Status</label>
-                                                <p className={`font-medium ${customerDetails.data.mapping.sync_status === 'synced' ? 'text-green-600' : 'text-yellow-600'}`}>
-                                                    {customerDetails.data.mapping.sync_status}
+                            {/* Sync Status & Basic Info */}
+                            <div className="bg-gray-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                                    <IconInfoCircle className="w-5 h-5 mr-2" />
+                                    Sync Information
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Sync Status</label>
+                                        <p className={`font-medium ${customerDetails.data.mapping.sync_status === 'synced' ? 'text-green-600' : 'text-yellow-600'}`}>
+                                            {customerDetails.data.mapping.sync_status}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Last Sync</label>
+                                        <p className="font-medium text-gray-800">{new Date(customerDetails.data.mapping.last_sync_at).toLocaleString()}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Success Rate</label>
+                                        <p className="font-medium text-blue-600">{customerDetails.data.mapping.full_user_data.success_rate}%</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Location</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.setting_info?.location_name || 'N/A'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">HS5200 IP</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.setting_info?.hs5200_ip || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Account Information */}
+                            <div className="bg-blue-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-blue-800">
+                                    <IconInfoCircle className="w-5 h-5 mr-2" />
+                                    Account Information
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {customerDetails.data.mapping.full_user_data.details
+                                        .filter((item) => ['user_id', 'rule_enable', 'acct_ref', 'account_state', 'active_plan', 'expire_time'].includes(item.fid))
+                                        .map((item) => (
+                                            <div key={item.fid} className="space-y-1">
+                                                <label className="text-sm text-gray-500">{item.label}</label>
+                                                <p
+                                                    className={`font-medium ${
+                                                        item.fid === 'account_state' && item.value === 'Active'
+                                                            ? 'text-green-600'
+                                                            : item.fid === 'account_state' && item.value === 'Inactive'
+                                                              ? 'text-red-600'
+                                                              : item.fid === 'rule_enable' && item.value === 'Enable'
+                                                                ? 'text-green-600'
+                                                                : item.fid === 'rule_enable' && item.value === 'Disable'
+                                                                  ? 'text-red-600'
+                                                                  : 'text-gray-800'
+                                                    }`}
+                                                >
+                                                    {item.value}
                                                 </p>
                                             </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">Last Sync</label>
-                                                <p className="font-medium text-gray-800">{new Date(customerDetails.data.mapping.last_sync_at).toLocaleString()}</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">Location</label>
-                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.setting_info?.location_name || 'N/A'}</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">HS5200 IP</label>
-                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.setting_info?.hs5200_ip || 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        ))}
+                                </div>
+                            </div>
 
-                                    {/* Account Information */}
-                                    <div className="bg-blue-50 p-6 rounded-xl">
-                                        <h4 className="text-lg font-semibold mb-4 flex items-center text-blue-800">
-                                            <IconInfoCircle className="w-5 h-5 mr-2" />
-                                            Account Information
-                                        </h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Network Plans */}
+                            <div className="bg-green-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-green-800">
+                                    <IconWifi className="w-5 h-5 mr-2" />
+                                    Network Plans
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Primary Plan */}
+                                    <div className="bg-white p-4 rounded-lg border border-green-200">
+                                        <h5 className="font-semibold text-green-700 mb-3">Primary Plan</h5>
+                                        <div className="space-y-2">
                                             {customerDetails.data.mapping.full_user_data.details
-                                                .filter((item) => ['user_id', 'rule_enable', 'acct_ref', 'account_state', 'active_plan', 'expire_time'].includes(item.fid))
+                                                .filter((item) => item.fid.startsWith('q1_'))
                                                 .map((item) => (
-                                                    <div key={item.fid} className="space-y-1">
-                                                        <label className="text-sm text-gray-500">{item.label}</label>
-                                                        <p
-                                                            className={`font-medium ${
-                                                                item.fid === 'account_state' && item.value === 'Active'
-                                                                    ? 'text-green-600'
-                                                                    : item.fid === 'account_state' && item.value === 'Inactive'
-                                                                      ? 'text-red-600'
-                                                                      : item.fid === 'rule_enable' && item.value === 'Enable'
-                                                                        ? 'text-green-600'
-                                                                        : item.fid === 'rule_enable' && item.value === 'Disable'
-                                                                          ? 'text-red-600'
-                                                                          : 'text-gray-800'
-                                                            }`}
-                                                        >
-                                                            {item.value}
-                                                        </p>
+                                                    <div key={item.fid} className="flex justify-between">
+                                                        <span className="text-sm text-gray-600">{item.label}:</span>
+                                                        <span className="text-sm font-medium text-gray-800">{item.value}</span>
                                                     </div>
                                                 ))}
                                         </div>
                                     </div>
 
-                                    {/* Network Plans */}
-                                    <div className="bg-green-50 p-6 rounded-xl">
-                                        <h4 className="text-lg font-semibold mb-4 flex items-center text-green-800">
-                                            <IconWifi className="w-5 h-5 mr-2" />
-                                            Network Plans
-                                        </h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {/* Primary Plan */}
-                                            <div className="bg-white p-4 rounded-lg border border-green-200">
-                                                <h5 className="font-semibold text-green-700 mb-3">Primary Plan</h5>
-                                                <div className="space-y-2">
-                                                    {customerDetails.data.mapping.full_user_data.details
-                                                        .filter((item) => item.fid.startsWith('q1_'))
-                                                        .map((item) => (
-                                                            <div key={item.fid} className="flex justify-between">
-                                                                <span className="text-sm text-gray-600">{item.label}:</span>
-                                                                <span className="text-sm font-medium text-gray-800">{item.value}</span>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            </div>
-
-                                            {/* External Plan */}
-                                            {customerDetails.data.mapping.full_user_data.ext_bw_plan_name !== 'disable' && (
-                                                <div className="bg-white p-4 rounded-lg border border-blue-200">
-                                                    <h5 className="font-semibold text-blue-700 mb-3">External Plan</h5>
-                                                    <div className="space-y-2">
-                                                        {customerDetails.data.mapping.full_user_data.details
-                                                            .filter((item) => item.fid.startsWith('q2_'))
-                                                            .map((item) => (
-                                                                <div key={item.fid} className="flex justify-between">
-                                                                    <span className="text-sm text-gray-600">{item.label}:</span>
-                                                                    <span className="text-sm font-medium text-gray-800">{item.value}</span>
-                                                                </div>
-                                                            ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Personal Information */}
-                                    <div className="bg-purple-50 p-6 rounded-xl">
-                                        <h4 className="text-lg font-semibold mb-4 flex items-center text-purple-800">
-                                            <IconUserPlus className="w-5 h-5 mr-2" />
-                                            Personal Information
-                                        </h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">First Name</label>
-                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.first_name || 'N/A'}</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">Last Name</label>
-                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.last_name || 'N/A'}</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">Email</label>
-                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.email || 'N/A'}</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">Mobile</label>
-                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.mobile || 'N/A'}</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">GSTIN</label>
-                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.gstin_no || 'N/A'}</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm text-gray-500">Address</label>
-                                                <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.address || 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Usage Statistics */}
-                                    <div className="bg-amber-50 p-6 rounded-xl">
-                                        <h4 className="text-lg font-semibold mb-4 flex items-center text-amber-800">
-                                            <IconRefresh className="w-5 h-5 mr-2" />
-                                            Usage Statistics
-                                        </h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {/* Data Usage */}
-                                            <div className="bg-white p-4 rounded-lg border border-amber-200">
-                                                <h5 className="font-semibold text-amber-700 mb-3">Data Usage</h5>
-                                                <div className="space-y-2">
-                                                    {customerDetails.data.mapping.full_user_data.details
-                                                        .filter((item) => item.fid.includes('dq_usage') || item.fid === 'monthly_dq_sts')
-                                                        .map((item) => (
-                                                            <div key={item.fid} className="flex justify-between">
-                                                                <span className="text-sm text-gray-600">{item.label}:</span>
-                                                                <span className="text-sm font-medium text-gray-800">{item.value}</span>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Time Usage */}
-                                            <div className="bg-white p-4 rounded-lg border border-amber-200">
-                                                <h5 className="font-semibold text-amber-700 mb-3">Time Usage</h5>
-                                                <div className="space-y-2">
-                                                    {customerDetails.data.mapping.full_user_data.details
-                                                        .filter((item) => item.fid.includes('tq_usage') || item.fid === 'monthly_tq_sts')
-                                                        .map((item) => (
-                                                            <div key={item.fid} className="flex justify-between">
-                                                                <span className="text-sm text-gray-600">{item.label}:</span>
-                                                                <span className="text-sm font-medium text-gray-800">{item.value}</span>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* MAC Addresses */}
-                                    {customerDetails.data.mapping.full_user_data.mac_1 && (
-                                        <div className="bg-gray-50 p-6 rounded-xl">
-                                            <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
-                                                <IconWifi className="w-5 h-5 mr-2" />
-                                                MAC Address Binding
-                                            </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                {['mac_1', 'mac_2', 'mac_3', 'mac_4', 'mac_5']
-                                                    .map((macField) => {
-                                                        const macValue = customerDetails.data.mapping.full_user_data[macField];
-                                                        if (macValue) {
-                                                            return (
-                                                                <div key={macField} className="space-y-1">
-                                                                    <label className="text-sm text-gray-500">MAC {macField.split('_')[1]}</label>
-                                                                    <p className="font-medium text-gray-800 font-mono">{macValue}</p>
-                                                                </div>
-                                                            );
-                                                        }
-                                                        return null;
-                                                    })
-                                                    .filter(Boolean)}
+                                    {/* External Plan */}
+                                    {customerDetails.data.mapping.full_user_data.ext_bw_plan_name !== 'disable' && (
+                                        <div className="bg-white p-4 rounded-lg border border-blue-200">
+                                            <h5 className="font-semibold text-blue-700 mb-3">External Plan</h5>
+                                            <div className="space-y-2">
+                                                {customerDetails.data.mapping.full_user_data.details
+                                                    .filter((item) => item.fid.startsWith('q2_'))
+                                                    .map((item) => (
+                                                        <div key={item.fid} className="flex justify-between">
+                                                            <span className="text-sm text-gray-600">{item.label}:</span>
+                                                            <span className="text-sm font-medium text-gray-800">{item.value}</span>
+                                                        </div>
+                                                    ))}
                                             </div>
                                         </div>
                                     )}
-                                </>
-                            ) : (
-                                <div className="text-center py-12">
-                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                                    <p className="text-gray-600">Loading customer details...</p>
+                                </div>
+                            </div>
+
+                            {/* Personal Information */}
+                            <div className="bg-purple-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-purple-800">
+                                    <IconUserPlus className="w-5 h-5 mr-2" />
+                                    Personal Information
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">First Name</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.first_name || 'N/A'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Last Name</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.last_name || 'N/A'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Email</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.email || 'N/A'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Mobile</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.mobile || 'N/A'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">GSTIN</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.gstin_no || 'N/A'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Address</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.address || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Usage Statistics */}
+                            <div className="bg-amber-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-amber-800">
+                                    <IconRefresh className="w-5 h-5 mr-2" />
+                                    Usage Statistics
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Data Usage */}
+                                    <div className="bg-white p-4 rounded-lg border border-amber-200">
+                                        <h5 className="font-semibold text-amber-700 mb-3">Data Usage</h5>
+                                        <div className="space-y-2">
+                                            {customerDetails.data.mapping.full_user_data.details
+                                                .filter((item) => item.fid.includes('dq_usage') || item.fid === 'monthly_dq_sts')
+                                                .map((item) => (
+                                                    <div key={item.fid} className="flex justify-between">
+                                                        <span className="text-sm text-gray-600">{item.label}:</span>
+                                                        <span className="text-sm font-medium text-gray-800">{item.value}</span>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Time Usage */}
+                                    <div className="bg-white p-4 rounded-lg border border-amber-200">
+                                        <h5 className="font-semibold text-amber-700 mb-3">Time Usage</h5>
+                                        <div className="space-y-2">
+                                            {customerDetails.data.mapping.full_user_data.details
+                                                .filter((item) => item.fid.includes('tq_usage') || item.fid === 'monthly_tq_sts')
+                                                .map((item) => (
+                                                    <div key={item.fid} className="flex justify-between">
+                                                        <span className="text-sm text-gray-600">{item.label}:</span>
+                                                        <span className="text-sm font-medium text-gray-800">{item.value}</span>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* MAC Addresses */}
+                            {customerDetails.data.mapping.full_user_data.mac_1 && (
+                                <div className="bg-gray-50 p-6 rounded-xl">
+                                    <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                                        <IconWifi className="w-5 h-5 mr-2" />
+                                        MAC Address Binding
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {['mac_1', 'mac_2', 'mac_3', 'mac_4', 'mac_5']
+                                            .map((macField) => {
+                                                const macValue = customerDetails.data.mapping.full_user_data[macField];
+                                                if (macValue) {
+                                                    return (
+                                                        <div key={macField} className="space-y-1">
+                                                            <label className="text-sm text-gray-500">MAC {macField.split('_')[1]}</label>
+                                                            <p className="font-medium text-gray-800 font-mono">{macValue}</p>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })
+                                            .filter(Boolean)}
+                                    </div>
                                 </div>
                             )}
                         </div>
                     ) : (
-                        // Edit Tab (same as before)
-                        <div>
-                            {plansLoading ? (
-                                <div className="text-center py-12">
-                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                                    <p className="text-gray-600">Loading plans data...</p>
-                                </div>
-                            ) : (
-                                <form onSubmit={handleUpdateSubmit}>
-                                    <div className="space-y-6">
-                                        {/* Personal Information */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">First Name *</label>
-                                                <input
-                                                    type="text"
-                                                    value={formState.first_name}
-                                                    onChange={(e) => setFormState({ ...formState, first_name: e.target.value })}
-                                                    placeholder="Enter first name"
-                                                    className="form-input"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Last Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={formState.last_name}
-                                                    onChange={(e) => setFormState({ ...formState, last_name: e.target.value })}
-                                                    placeholder="Enter last name"
-                                                    className="form-input"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Email *</label>
-                                                <input
-                                                    type="email"
-                                                    value={formState.email_addr}
-                                                    onChange={(e) => setFormState({ ...formState, email_addr: e.target.value })}
-                                                    placeholder="Enter email"
-                                                    className="form-input"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Mobile Number *</label>
-                                                <input
-                                                    type="tel"
-                                                    value={formState.mobile_num}
-                                                    onChange={(e) => setFormState({ ...formState, mobile_num: e.target.value })}
-                                                    placeholder="Enter mobile number"
-                                                    className="form-input"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Account Reference */}
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Account Reference</label>
-                                            <input
-                                                type="text"
-                                                value={formState.acct_ref}
-                                                onChange={(e) => setFormState({ ...formState, acct_ref: e.target.value })}
-                                                placeholder="Enter account reference"
-                                                className="form-input"
-                                            />
-                                        </div>
-
-                                        {/* Bandwidth Plans */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <PlanSelect
-                                                value={formState.pri_bandwidth_plan_name}
-                                                onChange={(value) => setFormState({ ...formState, pri_bandwidth_plan_name: value })}
-                                                placeholder="Search and select primary plan..."
-                                                searchValue={priPlanSearch}
-                                                onSearchChange={setPriPlanSearch}
-                                                showList={showPriPlanList}
-                                                onShowList={() => setShowPriPlanList(true)}
-                                                onHideList={() => {
-                                                    setTimeout(() => setShowPriPlanList(false), 200);
-                                                }}
-                                                plans={getFilteredPriPlans()}
-                                                required
-                                                label="Primary Bandwidth Plan"
-                                            />
-
-                                            <PlanSelect
-                                                value={formState.ext_bandwidth_plan_name}
-                                                onChange={(value) => setFormState({ ...formState, ext_bandwidth_plan_name: value })}
-                                                placeholder="Search and select external plan..."
-                                                searchValue={extPlanSearch}
-                                                onSearchChange={setExtPlanSearch}
-                                                showList={showExtPlanList}
-                                                onShowList={() => setShowExtPlanList(true)}
-                                                onHideList={() => {
-                                                    setTimeout(() => setShowExtPlanList(false), 200);
-                                                }}
-                                                plans={getFilteredExtPlans()}
-                                                label="External Bandwidth Plan"
-                                            />
-                                        </div>
-
-                                        {/* Address */}
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Address</label>
-                                            <textarea
-                                                value={formState.postal_addr}
-                                                onChange={(e) => setFormState({ ...formState, postal_addr: e.target.value })}
-                                                placeholder="Enter address"
-                                                className="form-input"
-                                                rows="3"
-                                            />
-                                        </div>
-
-                                        {/* Password Update (Optional) */}
-                                        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                            <h4 className="text-lg font-semibold mb-2 text-yellow-800">Password Update</h4>
-                                            <p className="text-sm text-yellow-600 mb-4">Leave password fields empty if you don't want to change the password.</p>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">New Password</label>
-                                                    <input
-                                                        type="password"
-                                                        value={formState.user_pass}
-                                                        onChange={(e) => setFormState({ ...formState, user_pass: e.target.value })}
-                                                        placeholder="Enter new password (optional)"
-                                                        className="form-input"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">Confirm Password</label>
-                                                    <input type="password" placeholder="Confirm new password" className="form-input" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            )}
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading customer details...</p>
                         </div>
+                    )}
+                </div>
+            </ModelViewBox>
+
+            {/* Edit Customer Modal */}
+            <ModelViewBox
+                modal={editModal}
+                modelHeader={`Edit Customer - ${selectedUserId}`}
+                setModel={closeEditModal}
+                modelSize="lg"
+                showSubmit={true}
+                submitBtnText="Update Customer"
+                handleSubmit={handleUpdateSubmit}
+                loadings={customerLoading || plansLoading}
+            >
+                <div className="p-6">
+                    {plansLoading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading plans data...</p>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleUpdateSubmit}>
+                            <div className="space-y-6">
+                                {/* Personal Information */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">First Name *</label>
+                                        <input
+                                            type="text"
+                                            value={editFormState.first_name}
+                                            onChange={(e) => setEditFormState({ ...editFormState, first_name: e.target.value })}
+                                            placeholder="Enter first name"
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Last Name</label>
+                                        <input
+                                            type="text"
+                                            value={editFormState.last_name}
+                                            onChange={(e) => setEditFormState({ ...editFormState, last_name: e.target.value })}
+                                            placeholder="Enter last name"
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Email *</label>
+                                        <input
+                                            type="email"
+                                            value={editFormState.email_addr}
+                                            onChange={(e) => setEditFormState({ ...editFormState, email_addr: e.target.value })}
+                                            placeholder="Enter email"
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Bandwidth Plans */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <PlanSelect
+                                        value={editFormState.new_pri_bandwidth_plan_name}
+                                        onChange={(value) => setEditFormState({ ...editFormState, new_pri_bandwidth_plan_name: value })}
+                                        placeholder="Search and select primary plan..."
+                                        searchValue={priPlanSearch}
+                                        onSearchChange={setPriPlanSearch}
+                                        showList={showPriPlanList}
+                                        onShowList={() => setShowPriPlanList(true)}
+                                        onHideList={() => {
+                                            setTimeout(() => setShowPriPlanList(false), 200);
+                                        }}
+                                        plans={getFilteredPriPlans()}
+                                        required
+                                        label="Primary Bandwidth Plan"
+                                    />
+                                    <PlanSelect
+                                        value={editFormState.new_ext_bandwidth_plan_name}
+                                        onChange={(value) => setEditFormState({ ...editFormState, new_ext_bandwidth_plan_name: value })}
+                                        placeholder="Search and select external plan..."
+                                        searchValue={extPlanSearch}
+                                        onSearchChange={setExtPlanSearch}
+                                        showList={showExtPlanList}
+                                        onShowList={() => setShowExtPlanList(true)}
+                                        onHideList={() => {
+                                            setTimeout(() => setShowExtPlanList(false), 200);
+                                        }}
+                                        plans={getFilteredExtPlans()}
+                                        label="External Bandwidth Plan"
+                                    />
+                                </div>
+
+                                {/* Account Validity */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Account Validity Type</label>
+                                        <select
+                                            value={editFormState.account_validity}
+                                            onChange={(e) => setEditFormState({ ...editFormState, account_validity: e.target.value })}
+                                            className="form-select"
+                                        >
+                                            <option value="num_days_from_acct_creation">Days from Account Creation</option>
+                                            <option value="absolute_expiry_ts">Absolute Expiry Timestamp</option>
+                                            <option value="num_days_from_each_login">Days from Each Login</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Validity Data</label>
+                                        <input
+                                            type="text"
+                                            value={editFormState.validity_data}
+                                            onChange={(e) => setEditFormState({ ...editFormState, validity_data: e.target.value })}
+                                            placeholder="e.g., 30 or timestamp"
+                                            className="form-input"
+                                            required
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {editFormState.account_validity === 'absolute_expiry_ts' ? 'Enter Unix timestamp (e.g., 1735689600)' : 'Enter number of days'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Password Update (Optional) */}
+                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                    <h4 className="text-lg font-semibold mb-2 text-yellow-800">Password Update</h4>
+                                    <p className="text-sm text-yellow-600 mb-4">Leave empty if you don't want to change the password.</p>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">New Password</label>
+                                        <input
+                                            type="password"
+                                            value={editFormState.new_pass}
+                                            onChange={(e) => setEditFormState({ ...editFormState, new_pass: e.target.value })}
+                                            placeholder="Enter new password (optional)"
+                                            className="form-input"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     )}
                 </div>
             </ModelViewBox>
