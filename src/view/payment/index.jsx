@@ -99,10 +99,10 @@ const Index = () => {
 
             const filters = {
                 settingId: getSettingId(),
-                daysThreshold: 30,
+                daysThreshold: 50000,
                 accountState: '',
                 page: 1,
-                limit: 500,
+                limit: 50000,
                 search: '',
                 planName: '',
                 userId: '',
