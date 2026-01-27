@@ -28,6 +28,7 @@ import IconPhone from '../../../components/Icon/IconPhone';
 import IconWifi from '../../../components/Icon/IconWifi';
 import IconEdit from '../../../components/Icon/IconEdit';
 import IconInfoCircle from '../../../components/Icon/IconInfoCircle';
+import IconEyeOff from '../../../components/Icon/IconEyeOff'; // Add this import
 import Table from '../../../util/Table';
 import Tippy from '@tippyjs/react';
 import ModelViewBox from '../../../util/ModelViewBox';
@@ -63,13 +64,18 @@ const Index = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [selectedUserId, setSelectedUserId] = useState('');
+    const [showPassword, setShowPassword] = useState(false); // For password visibility toggle
 
-    // Form state for add customer
+    // Form state for add customer - ALL FIELDS EMPTY
     const [formState, setFormState] = useState({
+        settingId: '',
+        localUserId: '',
         user_id: '',
+        user_pass_type: 'specify',
         user_pass: '',
         account_validity: 'num_days_from_acct_creation',
         validity_data: '30',
+        first_login_before_ts: '0',
         delete_expired_acct: 'enable',
         del_q_exceeded_acct: 'enable',
         pri_bandwidth_plan_name: '',
@@ -78,27 +84,38 @@ const Index = () => {
         num_conc_logins: '1',
         login_control: 'default',
         login_proto: 'plogin',
-        first_login_before_ts: '0',
-        user_pass_type: 'specify',
         acct_ref: '',
         first_name: '',
         last_name: '',
         email_addr: '',
-        postal_addr: '',
         mobile_num: '',
-        createdBy: 'admin',
+        postal_addr: '',
     });
 
-    // Form state for edit customer
+    // Form state for edit customer - COMPLETE FIELDS FROM API
     const [editFormState, setEditFormState] = useState({
+        settingId: '',
+        localUserId: '',
+        user_id: '',
+        user_pass_type: 'specify',
+        user_pass: '',
+        account_validity: 'num_days_from_acct_creation',
+        validity_data: '30',
+        first_login_before_ts: '0',
+        delete_expired_acct: 'enable',
+        del_q_exceeded_acct: 'enable',
+        pri_bandwidth_plan_name: '',
+        ext_bandwidth_plan_name: '',
+        num_mac_binding: '1',
+        num_conc_logins: '1',
+        login_control: 'default',
+        login_proto: 'plogin',
+        acct_ref: '',
         first_name: '',
         last_name: '',
         email_addr: '',
-        new_pass: '',
-        new_pri_bandwidth_plan_name: '',
-        new_ext_bandwidth_plan_name: '',
-        account_validity: 'num_days_from_acct_creation',
-        validity_data: '30',
+        mobile_num: '',
+        postal_addr: '',
     });
 
     // Plan search state
@@ -210,6 +227,38 @@ const Index = () => {
             });
         }
         return filtered;
+    };
+
+    // Password input component with show/hide toggle
+    const PasswordInput = ({ value, onChange, placeholder, required = false, label = '', showPasswordToggle = true }) => {
+        const [show, setShow] = useState(false);
+
+        return (
+            <div>
+                <label className="block text-sm font-medium mb-2">
+                    {label} {required && <span className="text-red-500">*</span>}
+                </label>
+                <div className="relative">
+                    <input
+                        type={show ? "text" : "password"}
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        className="form-input pr-10 w-full"
+                        required={required}
+                    />
+                    {showPasswordToggle && (
+                        <button
+                            type="button"
+                            onClick={() => setShow(!show)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                            {show ? <IconEyeOff className="w-5 h-5" /> : <IconEye className="w-5 h-5" />}
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
     };
 
     const columns = [
@@ -341,10 +390,11 @@ const Index = () => {
         setSelectedUserId(userId);
         dispatch(getCustomerDetails(userId))
             .then(() => {
-                // Set edit form state from customer details
+                // Set edit form state from customer details - ALL FIELDS
                 if (customerDetails?.data?.mapping?.full_user_data) {
                     const userData = customerDetails.data.mapping.full_user_data;
                     const detailsArray = userData.details || [];
+                    const mappingData = customerDetails.data.mapping;
 
                     // Helper function to get value from details array
                     const getDetailValue = (fid) => {
@@ -354,12 +404,29 @@ const Index = () => {
 
                     setEditFormState((prev) => ({
                         ...prev,
+                        settingId: mappingData?.setting_id || '',
+                        localUserId: mappingData?.local_user_id || '',
+                        user_id: userData.user_id || '',
+                        user_pass_type: 'specify', // Default
+                        user_pass: '', // Password won't be available from API for security
+                        account_validity: userData.validity_end_type === 'never' ? 'num_days_from_acct_creation' : 'absolute_expiry_ts',
+                        validity_data: userData.validity_end_type === 'never' ? '0' : userData.validity_end_ts?.toString() || '30',
+                        first_login_before_ts: userData.first_login_ts?.toString() || '0',
+                        delete_expired_acct: userData.del_expired_acct || 'enable',
+                        del_q_exceeded_acct: userData.del_quota_exceed_acct || 'enable',
+                        pri_bandwidth_plan_name: getDetailValue('q1_plan_name') || userData.pri_bw_plan_name || '',
+                        ext_bandwidth_plan_name: getDetailValue('q2_plan_name') || userData.ext_bw_plan_name || '',
+                        num_mac_binding: userData.mac_bind || '1',
+                        num_conc_logins: userData.conc_logins || '1',
+                        login_control: userData.login_control || 'default',
+                        login_proto: userData.login_proto || 'plogin',
+                        acct_ref: userData.acct_ref || '',
                         first_name: userData.first_name || '',
                         last_name: userData.last_name || '',
                         email_addr: userData.email || '',
-                        new_pri_bandwidth_plan_name: getDetailValue('q1_plan_name') || '',
-                        new_ext_bandwidth_plan_name: getDetailValue('q2_plan_name') || '',
-                        new_pass: '', // Reset password field for safety
+                        mobile_num: userData.mobile || '',
+                        postal_addr: userData.address || '',
+                        createdBy: 'admin'
                     }));
                 }
                 setEditModal(true);
@@ -368,20 +435,18 @@ const Index = () => {
                 showMessage('error', error.message || 'Failed to fetch customer details');
             });
     };
+
     // Helper function to get settingId from localStorage
     const getSettingId = () => {
         const loginInfoStr = localStorage.getItem('loginInfo');
-
         if (!loginInfoStr) {
             return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
         }
-
         try {
             const loginInfo = JSON.parse(loginInfoStr);
             if (loginInfo?.settingId) {
                 return loginInfo.settingId;
             }
-
             return '25c1c6c1-3ea7-439c-bf0b-b03e42f21a5d';
         } catch (error) {
             console.error('Invalid loginInfo JSON', error);
@@ -461,11 +526,16 @@ const Index = () => {
 
     const closeModal = () => {
         setModal(false);
+        // Reset form to empty values
         setFormState({
+            settingId: '',
+            localUserId: '',
             user_id: '',
+            user_pass_type: 'specify',
             user_pass: '',
             account_validity: 'num_days_from_acct_creation',
             validity_data: '30',
+            first_login_before_ts: '0',
             delete_expired_acct: 'enable',
             del_q_exceeded_acct: 'enable',
             pri_bandwidth_plan_name: '',
@@ -478,8 +548,9 @@ const Index = () => {
             first_name: '',
             last_name: '',
             email_addr: '',
-            postal_addr: '',
             mobile_num: '',
+            postal_addr: '',
+            createdBy: 'admin'
         });
         setPriPlanSearch('');
         setExtPlanSearch('');
@@ -504,30 +575,32 @@ const Index = () => {
     };
 
     const handleSubmit = async (e) => {
+        // e.preventDefault();
         try {
-            await dispatch(createCustomer(formState)).unwrap();
+            // Add settingId from localStorage before submitting
+            const settingId = getSettingId();
+            const submitData = {
+                ...formState,
+                settingId: settingId,
+                createdBy: 'admin'
+            };
+            await dispatch(createCustomer(submitData)).unwrap();
         } catch (error) {
             showMessage('error', error.message || 'Failed to save customer');
         }
     };
 
     const handleUpdateSubmit = async (e) => {
+        // e.preventDefault();
         try {
-            // Prepare update request with only allowed fields
+            // Prepare update request with all fields
+            const settingId = getSettingId();
             const updateRequest = {
-                first_name: editFormState.first_name,
-                last_name: editFormState.last_name,
-                email_addr: editFormState.email_addr,
-                new_pri_bandwidth_plan_name: editFormState.new_pri_bandwidth_plan_name,
-                new_ext_bandwidth_plan_name: editFormState.new_ext_bandwidth_plan_name,
-                account_validity: editFormState.account_validity,
-                validity_data: editFormState.validity_data,
+                ...editFormState,
+                settingId: settingId,
+                // Only include password if provided (not empty)
+                ...(editFormState.user_pass && { user_pass: editFormState.user_pass })
             };
-
-            // Only include password if provided
-            if (editFormState.new_pass) {
-                updateRequest.new_pass = editFormState.new_pass;
-            }
 
             await dispatch(
                 updateCustomer({
@@ -787,14 +860,12 @@ const Index = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Password *</label>
-                                        <input
-                                            type="password"
+                                        <PasswordInput
                                             value={formState.user_pass}
                                             onChange={(e) => setFormState({ ...formState, user_pass: e.target.value })}
                                             placeholder="Enter password"
-                                            className="form-input"
-                                            required
+                                            required={true}
+                                            label="Password *"
                                         />
                                     </div>
                                 </div>
@@ -917,6 +988,35 @@ const Index = () => {
                                         </select>
                                     </div>
                                 </div>
+                                {/* Account Settings */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Account Validity Type</label>
+                                        <select value={formState.account_validity} onChange={(e) => setFormState({ ...formState, account_validity: e.target.value })} className="form-select">
+                                            <option value="num_days_from_acct_creation">Days from Account Creation</option>
+                                            <option value="absolute_expiry_ts">Absolute Expiry Timestamp</option>
+                                            <option value="num_days_from_each_login">Days from Each Login</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Validity Data</label>
+                                        <input
+                                            type="text"
+                                            value={formState.validity_data}
+                                            onChange={(e) => setFormState({ ...formState, validity_data: e.target.value })}
+                                            placeholder="e.g., 30 or timestamp"
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Password Type</label>
+                                        <select value={formState.user_pass_type} onChange={(e) => setFormState({ ...formState, user_pass_type: e.target.value })} className="form-select">
+                                            <option value="specify">Specify Password</option>
+                                            <option value="generate">Generate Random</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 {/* Address */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Address</label>
@@ -934,7 +1034,7 @@ const Index = () => {
                 </div>
             </ModelViewBox>
 
-            {/* View Customer Modal */}
+            {/* View Customer Modal - Add password display */}
             <ModelViewBox
                 modal={viewModal}
                 modelHeader={`Customer Details - ${selectedUserId}`}
@@ -956,7 +1056,20 @@ const Index = () => {
                                     {customerDetails?.data?.mapping?.full_user_data?.first_name || ''}
                                     {customerDetails?.data?.mapping?.full_user_data?.last_name ? ' ' + customerDetails.data.mapping.full_user_data.last_name : ''}
                                 </h3>
+                                <p className="text-gray-600">ID: {selectedUserId}</p>
                             </div>
+                        </div>
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={() => {
+                                    closeViewModal();
+                                    handleEditCustomer(selectedUserId);
+                                }}
+                                className="btn btn-primary"
+                            >
+                                <IconEdit className="w-4 h-4 mr-2" />
+                                Edit
+                            </button>
                         </div>
                     </div>
                 }
@@ -964,9 +1077,72 @@ const Index = () => {
                 <div className="p-6">
                     {customerDetails?.data?.mapping?.full_user_data ? (
                         <div className="space-y-6">
-                            {/* Account Information */}
+                            {/* Basic Information - Include Password */}
+                            <div className="bg-gray-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                                    <IconInfoCircle className="w-5 h-5 mr-2" />
+                                    Basic Information
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">User ID</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.user_id}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Password</label>
+                                        <div className="flex items-center">
+                                            <p className="font-medium text-gray-800 font-mono mr-2">
+                                                {showPassword ? '••••••••' : '••••••••'}
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="text-gray-400 hover:text-gray-600"
+                                            >
+                                                {showPassword ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Status</label>
+                                        <p className={`font-medium ${customerDetails.data.mapping.full_user_data.rule_enable === 'Enable' ? 'text-green-600' : 'text-red-600'}`}>
+                                            {customerDetails.data.mapping.full_user_data.rule_enable}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sync Status & Basic Info */}
                             <div className="bg-blue-50 p-6 rounded-xl">
                                 <h4 className="text-lg font-semibold mb-4 flex items-center text-blue-800">
+                                    <IconInfoCircle className="w-5 h-5 mr-2" />
+                                    Sync Information
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Sync Status</label>
+                                        <p className={`font-medium ${customerDetails.data.mapping.sync_status === 'synced' ? 'text-green-600' : 'text-yellow-600'}`}>
+                                            {customerDetails.data.mapping.sync_status}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Last Sync</label>
+                                        <p className="font-medium text-gray-800">
+                                            {new Date(customerDetails.data.mapping.last_sync_at).toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Success Rate</label>
+                                        <p className="font-medium text-blue-600">
+                                            {customerDetails.data.mapping.full_user_data.success_rate}%
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Account Information */}
+                            <div className="bg-green-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-green-800">
                                     <IconInfoCircle className="w-5 h-5 mr-2" />
                                     Account Information
                                 </h4>
@@ -981,12 +1157,12 @@ const Index = () => {
                                                         item.fid === 'account_state' && item.value === 'Active'
                                                             ? 'text-green-600'
                                                             : item.fid === 'account_state' && item.value === 'Inactive'
-                                                              ? 'text-red-600'
-                                                              : item.fid === 'rule_enable' && item.value === 'Enable'
-                                                                ? 'text-green-600'
-                                                                : item.fid === 'rule_enable' && item.value === 'Disable'
-                                                                  ? 'text-red-600'
-                                                                  : 'text-gray-800'
+                                                            ? 'text-red-600'
+                                                            : item.fid === 'rule_enable' && item.value === 'Enable'
+                                                            ? 'text-green-600'
+                                                            : item.fid === 'rule_enable' && item.value === 'Disable'
+                                                            ? 'text-red-600'
+                                                            : 'text-gray-800'
                                                     }`}
                                                 >
                                                     {item.value}
@@ -997,15 +1173,15 @@ const Index = () => {
                             </div>
 
                             {/* Network Plans */}
-                            <div className="bg-green-50 p-6 rounded-xl">
-                                <h4 className="text-lg font-semibold mb-4 flex items-center text-green-800">
+                            <div className="bg-purple-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-purple-800">
                                     <IconWifi className="w-5 h-5 mr-2" />
                                     Network Plans
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Primary Plan */}
-                                    <div className="bg-white p-4 rounded-lg border border-green-200">
-                                        <h5 className="font-semibold text-green-700 mb-3">Primary Plan</h5>
+                                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                                        <h5 className="font-semibold text-purple-700 mb-3">Primary Plan</h5>
                                         <div className="space-y-2">
                                             {customerDetails.data.mapping.full_user_data.details
                                                 .filter((item) => item.fid.startsWith('q1_'))
@@ -1038,49 +1214,61 @@ const Index = () => {
                             </div>
 
                             {/* Personal Information */}
-                            <div className="bg-purple-50 p-6 rounded-xl">
-                                <h4 className="text-lg font-semibold mb-4 flex items-center text-purple-800">
+                            <div className="bg-amber-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-amber-800">
                                     <IconUserPlus className="w-5 h-5 mr-2" />
                                     Personal Information
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-sm text-gray-500">First Name</label>
-                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.first_name || 'N/A'}</p>
+                                        <p className="font-medium text-gray-800">
+                                            {customerDetails.data.mapping.full_user_data.first_name || 'N/A'}
+                                        </p>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-sm text-gray-500">Last Name</label>
-                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.last_name || 'N/A'}</p>
+                                        <p className="font-medium text-gray-800">
+                                            {customerDetails.data.mapping.full_user_data.last_name || 'N/A'}
+                                        </p>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-sm text-gray-500">Email</label>
-                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.email || 'N/A'}</p>
+                                        <p className="font-medium text-gray-800">
+                                            {customerDetails.data.mapping.full_user_data.email || 'N/A'}
+                                        </p>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-sm text-gray-500">Mobile</label>
-                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.mobile || 'N/A'}</p>
+                                        <p className="font-medium text-gray-800">
+                                            {customerDetails.data.mapping.full_user_data.mobile || 'N/A'}
+                                        </p>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-sm text-gray-500">GSTIN</label>
-                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.gstin_no || 'N/A'}</p>
+                                        <p className="font-medium text-gray-800">
+                                            {customerDetails.data.mapping.full_user_data.gstin_no || 'N/A'}
+                                        </p>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-sm text-gray-500">Address</label>
-                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.address || 'N/A'}</p>
+                                        <p className="font-medium text-gray-800">
+                                            {customerDetails.data.mapping.full_user_data.address || 'N/A'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Usage Statistics */}
-                            <div className="bg-amber-50 p-6 rounded-xl">
-                                <h4 className="text-lg font-semibold mb-4 flex items-center text-amber-800">
+                            <div className="bg-teal-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-teal-800">
                                     <IconRefresh className="w-5 h-5 mr-2" />
                                     Usage Statistics
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Data Usage */}
-                                    <div className="bg-white p-4 rounded-lg border border-amber-200">
-                                        <h5 className="font-semibold text-amber-700 mb-3">Data Usage</h5>
+                                    <div className="bg-white p-4 rounded-lg border border-teal-200">
+                                        <h5 className="font-semibold text-teal-700 mb-3">Data Usage</h5>
                                         <div className="space-y-2">
                                             {customerDetails.data.mapping.full_user_data.details
                                                 .filter((item) => item.fid.includes('dq_usage') || item.fid === 'monthly_dq_sts')
@@ -1094,8 +1282,8 @@ const Index = () => {
                                     </div>
 
                                     {/* Time Usage */}
-                                    <div className="bg-white p-4 rounded-lg border border-amber-200">
-                                        <h5 className="font-semibold text-amber-700 mb-3">Time Usage</h5>
+                                    <div className="bg-white p-4 rounded-lg border border-teal-200">
+                                        <h5 className="font-semibold text-teal-700 mb-3">Time Usage</h5>
                                         <div className="space-y-2">
                                             {customerDetails.data.mapping.full_user_data.details
                                                 .filter((item) => item.fid.includes('tq_usage') || item.fid === 'monthly_tq_sts')
@@ -1118,20 +1306,18 @@ const Index = () => {
                                         MAC Address Binding
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {['mac_1', 'mac_2', 'mac_3', 'mac_4', 'mac_5']
-                                            .map((macField) => {
-                                                const macValue = customerDetails.data.mapping.full_user_data[macField];
-                                                if (macValue) {
-                                                    return (
-                                                        <div key={macField} className="space-y-1">
-                                                            <label className="text-sm text-gray-500">MAC {macField.split('_')[1]}</label>
-                                                            <p className="font-medium text-gray-800 font-mono">{macValue}</p>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            })
-                                            .filter(Boolean)}
+                                        {['mac_1', 'mac_2', 'mac_3', 'mac_4', 'mac_5'].map((macField) => {
+                                            const macValue = customerDetails.data.mapping.full_user_data[macField];
+                                            if (macValue) {
+                                                return (
+                                                    <div key={macField} className="space-y-1">
+                                                        <label className="text-sm text-gray-500">MAC {macField.split('_')[1]}</label>
+                                                        <p className="font-medium text-gray-800 font-mono">{macValue}</p>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }).filter(Boolean)}
                                     </div>
                                 </div>
                             )}
@@ -1145,12 +1331,12 @@ const Index = () => {
                 </div>
             </ModelViewBox>
 
-            {/* Edit Customer Modal */}
+            {/* Edit Customer Modal - COMPLETE FORM */}
             <ModelViewBox
                 modal={editModal}
                 modelHeader={`Edit Customer - ${selectedUserId}`}
                 setModel={closeEditModal}
-                modelSize="lg"
+                modelSize="xl"
                 showSubmit={true}
                 submitBtnText="Update Customer"
                 handleSubmit={handleUpdateSubmit}
@@ -1165,6 +1351,32 @@ const Index = () => {
                     ) : (
                         <form onSubmit={handleUpdateSubmit}>
                             <div className="space-y-6">
+                                {/* Basic Information */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">User ID *</label>
+                                        <input
+                                            type="text"
+                                            value={editFormState.user_id}
+                                            onChange={(e) => setEditFormState({ ...editFormState, user_id: e.target.value })}
+                                            placeholder="Enter user ID"
+                                            className="form-input"
+                                            required
+                                            readOnly
+                                        />
+                                    </div>
+                                    <div>
+                                        <PasswordInput
+                                            value={editFormState.user_pass}
+                                            onChange={(e) => setEditFormState({ ...editFormState, user_pass: e.target.value })}
+                                            placeholder="Enter new password (leave empty to keep current)"
+                                            required={false}
+                                            label="New Password"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Leave empty to keep current password</p>
+                                    </div>
+                                </div>
+
                                 {/* Personal Information */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
@@ -1199,13 +1411,36 @@ const Index = () => {
                                             required
                                         />
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Mobile Number *</label>
+                                        <input
+                                            type="tel"
+                                            value={editFormState.mobile_num}
+                                            onChange={(e) => setEditFormState({ ...editFormState, mobile_num: e.target.value })}
+                                            placeholder="Enter mobile number"
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Account Reference */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Account Reference</label>
+                                    <input
+                                        type="text"
+                                        value={editFormState.acct_ref}
+                                        onChange={(e) => setEditFormState({ ...editFormState, acct_ref: e.target.value })}
+                                        placeholder="Enter account reference"
+                                        className="form-input"
+                                    />
                                 </div>
 
                                 {/* Bandwidth Plans */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <PlanSelect
-                                        value={editFormState.new_pri_bandwidth_plan_name}
-                                        onChange={(value) => setEditFormState({ ...editFormState, new_pri_bandwidth_plan_name: value })}
+                                        value={editFormState.pri_bandwidth_plan_name}
+                                        onChange={(value) => setEditFormState({ ...editFormState, pri_bandwidth_plan_name: value })}
                                         placeholder="Search and select primary plan..."
                                         searchValue={priPlanSearch}
                                         onSearchChange={setPriPlanSearch}
@@ -1219,8 +1454,8 @@ const Index = () => {
                                         label="Primary Bandwidth Plan"
                                     />
                                     <PlanSelect
-                                        value={editFormState.new_ext_bandwidth_plan_name}
-                                        onChange={(value) => setEditFormState({ ...editFormState, new_ext_bandwidth_plan_name: value })}
+                                        value={editFormState.ext_bandwidth_plan_name}
+                                        onChange={(value) => setEditFormState({ ...editFormState, ext_bandwidth_plan_name: value })}
                                         placeholder="Search and select external plan..."
                                         searchValue={extPlanSearch}
                                         onSearchChange={setExtPlanSearch}
@@ -1234,15 +1469,42 @@ const Index = () => {
                                     />
                                 </div>
 
-                                {/* Account Validity */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Network Settings */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">MAC Binding Limit</label>
+                                        <select value={editFormState.num_mac_binding} onChange={(e) => setEditFormState({ ...editFormState, num_mac_binding: e.target.value })} className="form-select" required>
+                                            {[0, 1, 2, 3, 4, 5].map((num) => (
+                                                <option key={num} value={num}>
+                                                    {num}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Concurrent Logins</label>
+                                        <select value={editFormState.num_conc_logins} onChange={(e) => setEditFormState({ ...editFormState, num_conc_logins: e.target.value })} className="form-select" required>
+                                            {[1, 2, 3, 4, 5].map((num) => (
+                                                <option key={num} value={num}>
+                                                    {num}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Login Protocol</label>
+                                        <select value={editFormState.login_proto} onChange={(e) => setEditFormState({ ...editFormState, login_proto: e.target.value })} className="form-select" required>
+                                            <option value="plogin">Portal Login</option>
+                                            <option value="auto">Auto</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Account Settings */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Account Validity Type</label>
-                                        <select
-                                            value={editFormState.account_validity}
-                                            onChange={(e) => setEditFormState({ ...editFormState, account_validity: e.target.value })}
-                                            className="form-select"
-                                        >
+                                        <select value={editFormState.account_validity} onChange={(e) => setEditFormState({ ...editFormState, account_validity: e.target.value })} className="form-select">
                                             <option value="num_days_from_acct_creation">Days from Account Creation</option>
                                             <option value="absolute_expiry_ts">Absolute Expiry Timestamp</option>
                                             <option value="num_days_from_each_login">Days from Each Login</option>
@@ -1262,22 +1524,65 @@ const Index = () => {
                                             {editFormState.account_validity === 'absolute_expiry_ts' ? 'Enter Unix timestamp (e.g., 1735689600)' : 'Enter number of days'}
                                         </p>
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Password Type</label>
+                                        <select value={editFormState.user_pass_type} onChange={(e) => setEditFormState({ ...editFormState, user_pass_type: e.target.value })} className="form-select">
+                                            <option value="specify">Specify Password</option>
+                                            <option value="generate">Generate Random</option>
+                                        </select>
+                                    </div>
                                 </div>
 
-                                {/* Password Update (Optional) */}
-                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                    <h4 className="text-lg font-semibold mb-2 text-yellow-800">Password Update</h4>
-                                    <p className="text-sm text-yellow-600 mb-4">Leave empty if you don't want to change the password.</p>
+                                {/* Additional Settings */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">New Password</label>
+                                        <label className="block text-sm font-medium mb-2">Delete Expired Account</label>
+                                        <select value={editFormState.delete_expired_acct} onChange={(e) => setEditFormState({ ...editFormState, delete_expired_acct: e.target.value })} className="form-select">
+                                            <option value="enable">Enable</option>
+                                            <option value="disable">Disable</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Delete Quota Exceeded Account</label>
+                                        <select value={editFormState.del_q_exceeded_acct} onChange={(e) => setEditFormState({ ...editFormState, del_q_exceeded_acct: e.target.value })} className="form-select">
+                                            <option value="enable">Enable</option>
+                                            <option value="disable">Disable</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Login Control */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Login Control</label>
+                                        <select value={editFormState.login_control} onChange={(e) => setEditFormState({ ...editFormState, login_control: e.target.value })} className="form-select">
+                                            <option value="default">Default</option>
+                                            <option value="mip">MIP</option>
+                                            <option value="strict">Strict</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">First Login Before Timestamp</label>
                                         <input
-                                            type="password"
-                                            value={editFormState.new_pass}
-                                            onChange={(e) => setEditFormState({ ...editFormState, new_pass: e.target.value })}
-                                            placeholder="Enter new password (optional)"
+                                            type="text"
+                                            value={editFormState.first_login_before_ts}
+                                            onChange={(e) => setEditFormState({ ...editFormState, first_login_before_ts: e.target.value })}
+                                            placeholder="Enter timestamp (0 for none)"
                                             className="form-input"
                                         />
                                     </div>
+                                </div>
+
+                                {/* Address */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Address</label>
+                                    <textarea
+                                        value={editFormState.postal_addr}
+                                        onChange={(e) => setEditFormState({ ...editFormState, postal_addr: e.target.value })}
+                                        placeholder="Enter address"
+                                        className="form-input"
+                                        rows="3"
+                                    />
                                 </div>
                             </div>
                         </form>
