@@ -1,5 +1,6 @@
 import { useState, Fragment, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { setPageTitle } from '../../../redux/themeStore/themeConfigSlice';
 import { getCustomers, createCustomer, updateCustomer, getCustomerDetails, getAllPlans, resetCustomerStatus, clearSelectedCustomer } from '../../../redux/customerSlice';
 import IconPencil from '../../../components/Icon/IconPencil';
@@ -18,6 +19,7 @@ import IconWifi from '../../../components/Icon/IconWifi';
 import IconEdit from '../../../components/Icon/IconEdit';
 import IconInfoCircle from '../../../components/Icon/IconInfoCircle';
 import IconEyeOff from '../../../components/Icon/IconEyeOff';
+import IconFileText from '../../../components/Icon/IconFile';
 import Table from '../../../util/Table';
 import Tippy from '@tippyjs/react';
 import ModelViewBox from '../../../util/ModelViewBox';
@@ -27,6 +29,7 @@ import { baseURL } from '../../../api/ApiConfig';
 const Index = () => {
     const dispatch = useDispatch();
     const customerState = useSelector((state) => state.CustomerSlice || {});
+    const navigate = useNavigate()
     const {
         customers = [],
         loading: customerLoading = false,
@@ -358,17 +361,23 @@ const Index = () => {
                     <div className="flex items-center space-x-2">
                         {/* View Customer */}
                         <Tippy content="View Customer">
-                            <button onClick={() => handleViewCustomer(customer.user_id)} className="btn btn-sm btn-outline-info hover:scale-105 transition-transform">
+                            <button onClick={() => handleViewCustomer(customer.user_id)} className="btn btn-sm btn-outline-info">
                                 <IconEye className="w-4 h-4" />
                             </button>
                         </Tippy>
 
+                        <Tippy content="View Invoices">
+                            <button onClick={() => navigate(`/customers/invoices/${customer.user_id}`)} className="btn btn-sm btn-outline-warning">
+                                <IconFileText className="w-4 h-4" />
+                            </button>
+                        </Tippy>
+
                         {/* Edit Customer */}
-                        <Tippy content="Edit Customer">
+                        {/* <Tippy content="Edit Customer">
                             <button onClick={() => handleEditCustomer(customer.user_id)} className="btn btn-sm btn-outline-primary hover:scale-105 transition-transform">
                                 <IconPencil className="w-4 h-4" />
                             </button>
-                        </Tippy>
+                        </Tippy> */}
 
                         {/* Sync Customer */}
                         <Tippy content="Sync Customer">

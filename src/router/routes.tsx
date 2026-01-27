@@ -280,7 +280,7 @@ const routes = [
         element: <Payment />,
     },
     {
-        path: '/join/invoice',
+        path: '/customers/invoices/:userId',
         element: <Invoice />,
     },
     {
