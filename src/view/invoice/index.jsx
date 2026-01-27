@@ -24,12 +24,14 @@ import Table from '../../util/Table';
 import Tippy from '@tippyjs/react';
 import { showMessage } from '../../util/AllFunction';
 import { baseURL } from '../../api/ApiConfig';
+import { useSearchParams } from 'react-router-dom';
 
 const Index = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
+    const [searchParams] = useSearchParams();
+    const invoiceId = searchParams.get('invoiceId');
     const paymentInvoicesState = useSelector((state) => state.PaymentInvoicesSlice || {});
     const customerState = useSelector((state) => state.CustomerSlice || {});
 
@@ -82,14 +84,14 @@ const Index = () => {
 
     const fetchInvoices = () => {
         if (userId) {
-            dispatch(getPaymentInvoices(userId))
+            dispatch(
+                getPaymentInvoices({
+                    userId,
+                    invoiceId,
+                }),
+            )
                 .then((response) => {
-                    // Debug: Log the response to see what's coming
                     console.log('Invoice response:', response);
-                    if (response && response.payload && response.payload.data) {
-                        console.log('Invoice data structure:', response.payload.data);
-                        setRawData(response.payload); // Store raw data for debugging
-                    }
                 })
                 .catch((error) => {
                     console.error('Error fetching invoices:', error);
@@ -149,6 +151,12 @@ const Index = () => {
         setSelectedInvoice(invoice);
         setViewInvoiceModal(true);
     };
+
+    useEffect(() => {
+        if (invoiceId && getInvoiceData().length === 1) {
+            handleViewInvoice(getInvoiceData()[0]);
+        }
+    }, [invoiceId, invoices]);
 
     const handleDownloadInvoice = async (invoiceId) => {
         try {

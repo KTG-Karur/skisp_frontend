@@ -1,9 +1,19 @@
 import { apiReturnCallBack } from './ApiConfig';
 
 // GET paymentInvoices for a specific user
-export async function getPaymentInvoicesApi(userId) {
+export async function getPaymentInvoicesApi({ userId, invoiceId } = {}) {
     try {
-        const response = await apiReturnCallBack('GET', `/payments/invoices?userId=${userId}`);
+        const params = new URLSearchParams();
+
+        if (userId) params.append('userId', userId);
+        if (invoiceId) params.append('invoiceId', invoiceId);
+
+        const queryString = params.toString();
+        const url = queryString
+            ? `/payments/invoices?${queryString}`
+            : `/payments/invoices`;
+
+        const response = await apiReturnCallBack('GET', url);
         const data = await response.json();
         if (!response.ok) {
             if (data.code == 401) {

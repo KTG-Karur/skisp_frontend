@@ -13,6 +13,9 @@ import moment from 'moment';
 import { findArrObj } from '../../../util/AllFunction';
 import { getPaymentHistory } from '../../../redux/PaymentHistorySlice';
 import { getCustomers } from '../../../redux/customerSlice';
+import Tippy from '@tippyjs/react';
+import 'tippy.js/dist/tippy.css';
+import IconFileText from '../../../components/Icon/IconFile';
 
 const Index = () => {
     const loginInfo = localStorage.getItem('loginInfo');
@@ -209,8 +212,10 @@ const Index = () => {
         {
             Header: 'Actions',
             accessor: 'actions',
-            width: 80,
+            width: 100,
             Cell: ({ row }) => {
+                const hasInvoice = row.original.invoiceId && row.original.invoiceId !== 'N/A';
+
                 return (
                     <div className="flex items-center justify-center space-x-2">
                         <button
@@ -221,6 +226,17 @@ const Index = () => {
                         >
                             <IconEye className="w-4 h-4" />
                         </button>
+
+                        {hasInvoice && (
+                            <Tippy content="View Invoice">
+                                <button
+                                    onClick={() => navigate(`/customers/invoices/${row.original.userId}?invoiceId=${row.original.invoiceId}`)}
+                                    className="btn btn-sm btn-outline-warning flex items-center justify-center w-8 h-8"
+                                >
+                                    <IconFileText className="w-4 h-4" />
+                                </button>
+                            </Tippy>
+                        )}
                     </div>
                 );
             },

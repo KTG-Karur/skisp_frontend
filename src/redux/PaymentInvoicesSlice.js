@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getPaymentInvoicesApi, generateInvoiceApi, updateInvoiceStatusApi } from '../api/PaymentInvoicesApi';
 
-export const getPaymentInvoices = createAsyncThunk('paymentInvoices/getPaymentInvoices', async (userId) => {
-    return await getPaymentInvoicesApi(userId);
+export const getPaymentInvoices = createAsyncThunk('paymentInvoices/getPaymentInvoices', async ({ userId, invoiceId } = {}) => {
+    return await getPaymentInvoicesApi({ userId, invoiceId });
 });
 
 export const generateInvoice = createAsyncThunk('paymentInvoices/generateInvoice', async (request) => {
