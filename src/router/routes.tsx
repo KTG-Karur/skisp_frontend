@@ -33,6 +33,7 @@ import {
     PaymentReport,
     PlanReport,
     PlanReportpdf,
+    PaymentHistory,
 } from './Route_Menu';
 
 const loading = () => <div className=""></div>;
@@ -250,6 +251,10 @@ const routes = [
     {
         path: '/reports/payment-report',
         element: <PaymentReport/>,
+    },
+    {
+        path: '/reports/payment-history',
+        element: <PaymentHistory/>,
     },
     {
         path: '/invoice/customer-invoice',
