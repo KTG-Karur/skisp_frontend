@@ -26,6 +26,7 @@ import syncSlice from '../syncSlice';
 import PlanSlice from '../planSlice';
 import RechargeSlice from '../rechargeSlice';
 import PaymentHistorySlice from '../PaymentHistorySlice';
+import PaymentInvoicesSlice from '../PaymentInvoicesSlice';
 
 const rootReducer = combineReducers({
     themeConfig: themeConfigSlice,
@@ -54,6 +55,7 @@ const rootReducer = combineReducers({
     UserSyncSlice,
     RechargeSlice,
     PaymentHistorySlice,
+    PaymentInvoicesSlice,
     PaymentReportSlice: paymentReportSlice,
 });
 

@@ -161,12 +161,12 @@ const Index = () => {
                 );
             },
         },
-        {
-            Header: 'Payment ID',
-            accessor: 'paymentId',
-            sort: true,
-            Cell: ({ value }) => <div className="font-medium text-gray-900">{value}</div>,
-        },
+        // {
+        //     Header: 'Payment ID',
+        //     accessor: 'paymentId',
+        //     sort: true,
+        //     Cell: ({ value }) => <div className="font-medium text-gray-900">{value}</div>,
+        // },
         {
             Header: 'Amount',
             accessor: 'amount',
