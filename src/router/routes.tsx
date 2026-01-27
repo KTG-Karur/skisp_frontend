@@ -29,6 +29,8 @@ import {
     Maintenence,
     LoginBoxed,
     Payment,
+    Invoice,
+    Bill,
     PrintTask,
     PaymentReport,
     PlanReport,
@@ -231,52 +233,61 @@ const routes = [
         path: '/',
         element: <Index />,
     },
-    //new asf ev  
+    //new asf ev
     {
         path: '/master/provider',
-        element: <Provider/>,
+        element: <Provider />,
     },
     {
         path: '/master/category',
-        element: <Category/>,
+        element: <Category />,
     },
     {
         path: '/master/customer',
-        element: <Customer/>,
+        element: <Customer />,
     },
     {
         path: '/master/plan',
-        element: <Plan/>,
+        element: <Plan />,
     },
     {
         path: '/reports/payment-report',
-        element: <PaymentReport/>,
+        element: <PaymentReport />,
     },
     {
         path: '/reports/payment-history',
-        element: <PaymentHistory/>,
+        element: <PaymentHistory />,
     },
     {
         path: '/invoice/customer-invoice',
-        element: <CustomerInvoice/>,
+        element: <CustomerInvoice />,
     },
     {
         path: '/reports/plan-report',
-        element: <PlanReport/>,
+        element: <PlanReport />,
     },
     //old
     {
         path: '/master/staff',
-        element: <Staff/>,
+        element: <Staff />,
     },
     {
         path: '/master/department',
-        element: <Department/>,
+        element: <Department />,
     },
-     {
+    {
         path: '/join/payment',
         element: <Payment />,
     },
+    {
+        path: '/join/invoice',
+        element: <Invoice />,
+    },
+    {
+        path: '/join/bill',
+        element: <Bill />,
+    },
+
     //old
     {
         path: '/master/employee',
@@ -286,10 +297,10 @@ const routes = [
         path: '/master/role',
         element: <Role />,
     },
-     //new VMS public
+    //new VMS public
     {
         path: '/master/products',
-        element: <Plan/>,
+        element: <Plan />,
     },
     {
         path: '/settings/company-info',
@@ -301,7 +312,7 @@ const routes = [
     },
     {
         path: '/documents/PlanReportpdf',
-        element: <PlanReportpdf/>
+        element: <PlanReportpdf />,
     },
     // pages
 
@@ -367,7 +378,7 @@ const dontCkeckRouts = [
     },
     {
         path: '/invoice/customer-invoice',
-        element: <CustomerInvoice/>,
+        element: <CustomerInvoice />,
     },
     {
         path: '/pages/contact-us-boxed',

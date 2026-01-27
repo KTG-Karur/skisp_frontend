@@ -60,11 +60,10 @@ export async function getCustomersApi(params = {}) {
     }
 }
 
-// Get customer details from HS5200
+// Get customer details from HS5200 - UPDATED
 export async function getCustomerDetailsApi(userId) {
     try {
-        const settingId = getSettingId();
-        const response = await apiReturnCallBack('GET', `/hs5200/users/mapping?settingId=${settingId}&userId=${userId}`);
+        const response = await apiReturnCallBack('GET', `/hs5200/user/details?userId=${userId}`);
         const data = await response.json();
 
         if (!response.ok) {
@@ -127,7 +126,7 @@ export async function updateCustomerApi(request, userId) {
             ...request,
         };
 
-        const hs5200Response = await apiReturnCallBack('PUT', '/hs5200/user-management/modify-user', hs5200Request);
+        const hs5200Response = await apiReturnCallBack('PUT', '/hs5200/user-management/modify-user-comprehensive', hs5200Request);
         const hs5200Data = await hs5200Response.json();
 
         if (!hs5200Response.ok) {

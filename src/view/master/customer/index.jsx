@@ -1,18 +1,7 @@
 import { useState, Fragment, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setPageTitle } from '../../../redux/themeStore/themeConfigSlice';
-import {
-    getCustomers,
-    createCustomer,
-    updateCustomer,
-    deleteCustomer,
-    syncCustomer,
-    getCustomerDetails,
-    getAllPlans,
-    resetCustomerStatus,
-    setSelectedCustomer,
-    clearSelectedCustomer,
-} from '../../../redux/customerSlice';
+import { getCustomers, createCustomer, updateCustomer, getCustomerDetails, getAllPlans, resetCustomerStatus, clearSelectedCustomer } from '../../../redux/customerSlice';
 import IconPencil from '../../../components/Icon/IconPencil';
 import IconTrashLines from '../../../components/Icon/IconTrashLines';
 import IconEye from '../../../components/Icon/IconEye';
@@ -28,15 +17,15 @@ import IconPhone from '../../../components/Icon/IconPhone';
 import IconWifi from '../../../components/Icon/IconWifi';
 import IconEdit from '../../../components/Icon/IconEdit';
 import IconInfoCircle from '../../../components/Icon/IconInfoCircle';
-import IconEyeOff from '../../../components/Icon/IconEyeOff'; // Add this import
+import IconEyeOff from '../../../components/Icon/IconEyeOff';
 import Table from '../../../util/Table';
 import Tippy from '@tippyjs/react';
 import ModelViewBox from '../../../util/ModelViewBox';
 import { showMessage } from '../../../util/AllFunction';
+import { baseURL } from '../../../api/ApiConfig';
 
 const Index = () => {
     const dispatch = useDispatch();
-
     const customerState = useSelector((state) => state.CustomerSlice || {});
     const {
         customers = [],
@@ -44,11 +33,7 @@ const Index = () => {
         error: customerError = null,
         createCustomerSuccess = false,
         updateCustomerSuccess = false,
-        deleteCustomerSuccess = false,
-        syncCustomerSuccess = false,
-        selectedCustomer = null,
         customerDetails = null,
-
         plans = [],
         plansLoading = false,
         total = 0,
@@ -64,9 +49,12 @@ const Index = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [selectedUserId, setSelectedUserId] = useState('');
-    const [showPassword, setShowPassword] = useState(false); // For password visibility toggle
+    const [showPassword, setShowPassword] = useState(false);
 
-    // Form state for add customer - ALL FIELDS EMPTY
+    // FIX: Add state for form field focus
+    const [focusedField, setFocusedField] = useState(null);
+
+    // Form state for add customer - EMPTY INITIAL VALUES
     const [formState, setFormState] = useState({
         settingId: '',
         localUserId: '',
@@ -92,30 +80,19 @@ const Index = () => {
         postal_addr: '',
     });
 
-    // Form state for edit customer - COMPLETE FIELDS FROM API
+    // Form state for edit customer
     const [editFormState, setEditFormState] = useState({
         settingId: '',
         localUserId: '',
         user_id: '',
-        user_pass_type: 'specify',
         user_pass: '',
-        account_validity: 'num_days_from_acct_creation',
-        validity_data: '30',
-        first_login_before_ts: '0',
-        delete_expired_acct: 'enable',
-        del_q_exceeded_acct: 'enable',
         pri_bandwidth_plan_name: '',
-        ext_bandwidth_plan_name: '',
-        num_mac_binding: '1',
-        num_conc_logins: '1',
-        login_control: 'default',
-        login_proto: 'plogin',
-        acct_ref: '',
         first_name: '',
         last_name: '',
         email_addr: '',
         mobile_num: '',
         postal_addr: '',
+        acct_ref: '',
     });
 
     // Plan search state
@@ -145,24 +122,13 @@ const Index = () => {
             fetchCustomers();
             dispatch(resetCustomerStatus());
         }
-        if (deleteCustomerSuccess) {
-            showMessage('success', 'Customer deleted successfully');
-            fetchCustomers();
-            dispatch(resetCustomerStatus());
-        }
-        if (syncCustomerSuccess) {
-            showMessage('success', 'Customer details refreshed');
-            fetchCustomers();
-            dispatch(resetCustomerStatus());
-        }
         if (customerError) {
             showMessage('error', customerError);
             dispatch(resetCustomerStatus());
         }
-    }, [createCustomerSuccess, updateCustomerSuccess, deleteCustomerSuccess, syncCustomerSuccess, customerError]);
+    }, [createCustomerSuccess, updateCustomerSuccess, customerError]);
 
     useEffect(() => {
-        // Extract plans data from API response
         if (plans && Array.isArray(plans)) {
             setAllPlans(plans);
         } else if (plans && plans.data && Array.isArray(plans.data)) {
@@ -229,9 +195,30 @@ const Index = () => {
         return filtered;
     };
 
-    // Password input component with show/hide toggle
-    const PasswordInput = ({ value, onChange, placeholder, required = false, label = '', showPasswordToggle = true }) => {
+    // Fixed PasswordInput component
+    const PasswordInput = ({ value, onChange, placeholder, required = false, label = '', showPasswordToggle = true, fieldName }) => {
         const [show, setShow] = useState(false);
+        const [localValue, setLocalValue] = useState(value);
+
+        // Handle focus to clear field
+        const handleFocus = () => {
+            if (focusedField !== fieldName) {
+                setLocalValue('');
+                setFocusedField(fieldName);
+            }
+        };
+
+        // Handle change
+        const handleChange = (e) => {
+            const newValue = e.target.value;
+            setLocalValue(newValue);
+            onChange(e);
+        };
+
+        // Sync local value with parent value
+        useEffect(() => {
+            setLocalValue(value);
+        }, [value]);
 
         return (
             <div>
@@ -240,23 +227,51 @@ const Index = () => {
                 </label>
                 <div className="relative">
                     <input
-                        type={show ? "text" : "password"}
-                        value={value}
-                        onChange={onChange}
+                        type={show ? 'text' : 'password'}
+                        value={localValue}
+                        onChange={handleChange}
+                        onFocus={handleFocus}
                         placeholder={placeholder}
                         className="form-input pr-10 w-full"
                         required={required}
                     />
                     {showPasswordToggle && (
-                        <button
-                            type="button"
-                            onClick={() => setShow(!show)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
+                        <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             {show ? <IconEyeOff className="w-5 h-5" /> : <IconEye className="w-5 h-5" />}
                         </button>
                     )}
                 </div>
+            </div>
+        );
+    };
+
+    // FIX: Regular input component that clears on focus
+    const ClearableInput = ({ value, onChange, placeholder, required = false, label = '', type = 'text', fieldName, readOnly = false }) => {
+        const [localValue, setLocalValue] = useState(value);
+
+        const handleFocus = () => {
+            if (focusedField !== fieldName && !readOnly) {
+                setLocalValue('');
+                setFocusedField(fieldName);
+            }
+        };
+
+        const handleChange = (e) => {
+            const newValue = e.target.value;
+            setLocalValue(newValue);
+            onChange(e);
+        };
+
+        useEffect(() => {
+            setLocalValue(value);
+        }, [value]);
+
+        return (
+            <div>
+                <label className="block text-sm font-medium mb-2">
+                    {label} {required && <span className="text-red-500">*</span>}
+                </label>
+                <input type={type} value={localValue} onChange={handleChange} onFocus={handleFocus} placeholder={placeholder} className="form-input w-full" required={required} readOnly={readOnly} />
             </div>
         );
     };
@@ -362,16 +377,11 @@ const Index = () => {
                             </button>
                         </Tippy>
 
-                        {/* Delete */}
-                        <Tippy content="Delete">
-                            <button onClick={() => handleDeleteCustomer(customer.user_id)} className="btn btn-sm btn-outline-danger hover:scale-105 transition-transform">
-                                <IconTrashLines className="w-4 h-4" />
-                            </button>
-                        </Tippy>
+                        {/* REMOVED DELETE BUTTON */}
                     </div>
                 );
             },
-            width: 180,
+            width: 140,
         },
     ];
 
@@ -390,44 +400,29 @@ const Index = () => {
         setSelectedUserId(userId);
         dispatch(getCustomerDetails(userId))
             .then(() => {
-                // Set edit form state from customer details - ALL FIELDS
-                if (customerDetails?.data?.mapping?.full_user_data) {
-                    const userData = customerDetails.data.mapping.full_user_data;
-                    const detailsArray = userData.details || [];
-                    const mappingData = customerDetails.data.mapping;
+                // Extract data from API response
+                if (customerDetails?.data?.results) {
+                    const results = customerDetails.data.results;
 
-                    // Helper function to get value from details array
-                    const getDetailValue = (fid) => {
-                        const detail = detailsArray.find((item) => item.fid === fid);
-                        return detail?.value || '';
+                    // Helper function to get value from results array
+                    const getValue = (fid) => {
+                        const item = results.find((r) => r.fid === fid);
+                        return item ? item.value : '';
                     };
 
-                    setEditFormState((prev) => ({
-                        ...prev,
-                        settingId: mappingData?.setting_id || '',
-                        localUserId: mappingData?.local_user_id || '',
-                        user_id: userData.user_id || '',
-                        user_pass_type: 'specify', // Default
-                        user_pass: '', // Password won't be available from API for security
-                        account_validity: userData.validity_end_type === 'never' ? 'num_days_from_acct_creation' : 'absolute_expiry_ts',
-                        validity_data: userData.validity_end_type === 'never' ? '0' : userData.validity_end_ts?.toString() || '30',
-                        first_login_before_ts: userData.first_login_ts?.toString() || '0',
-                        delete_expired_acct: userData.del_expired_acct || 'enable',
-                        del_q_exceeded_acct: userData.del_quota_exceed_acct || 'enable',
-                        pri_bandwidth_plan_name: getDetailValue('q1_plan_name') || userData.pri_bw_plan_name || '',
-                        ext_bandwidth_plan_name: getDetailValue('q2_plan_name') || userData.ext_bw_plan_name || '',
-                        num_mac_binding: userData.mac_bind || '1',
-                        num_conc_logins: userData.conc_logins || '1',
-                        login_control: userData.login_control || 'default',
-                        login_proto: userData.login_proto || 'plogin',
-                        acct_ref: userData.acct_ref || '',
-                        first_name: userData.first_name || '',
-                        last_name: userData.last_name || '',
-                        email_addr: userData.email || '',
-                        mobile_num: userData.mobile || '',
-                        postal_addr: userData.address || '',
-                        createdBy: 'admin'
-                    }));
+                    // Extract values from API response
+                    setEditFormState({
+                        user_id: getValue('user_id') || userId,
+                        first_name: getValue('first_name') || '',
+                        last_name: getValue('last_name') || '',
+                        email_addr: getValue('user_email') || '',
+                        mobile_num: getValue('user_mobile') || '',
+                        postal_addr: getValue('user_address') || '',
+                        acct_ref: getValue('acct_ref') || '',
+                        pri_bandwidth_plan_name: getValue('q1_plan_name') || '',
+                        ext_bandwidth_plan_name: getValue('q2_plan_name') || '',
+                        user_pass: '', // Password field empty by default
+                    });
                 }
                 setEditModal(true);
             })
@@ -436,7 +431,6 @@ const Index = () => {
             });
     };
 
-    // Helper function to get settingId from localStorage
     const getSettingId = () => {
         const loginInfoStr = localStorage.getItem('loginInfo');
         if (!loginInfoStr) {
@@ -457,26 +451,28 @@ const Index = () => {
     const handleSyncCustomer = async (userId) => {
         try {
             setIsSyncing(true);
+
             const settingId = getSettingId();
-            // Sync specific customer with API
-            const response = await fetch('http://localhost:5043/hs5200/users/sync/specific', {
+
+            const response = await fetch(`${baseURL}/hs5200/users/sync/specific`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    settingId: settingId,
-                    userId: userId,
+                    settingId,
+                    userId,
                 }),
             });
 
             const data = await response.json();
-            if (response.ok) {
-                showMessage('success', `Customer ${userId} synced successfully`);
-                fetchCustomers(); // Refresh the list
-            } else {
+
+            if (!response.ok) {
                 throw new Error(data.message || 'Sync failed');
             }
+
+            showMessage('success', `Customer ${userId} synced successfully`);
+            fetchCustomers(); // Refresh the list
         } catch (error) {
             showMessage('error', error.message || 'Failed to sync customer');
         } finally {
@@ -488,8 +484,9 @@ const Index = () => {
         try {
             setIsSyncing(true);
             const settingId = getSettingId();
+
             // Call sync all API directly
-            const response = await fetch('http://localhost:5043/hs5200/users/sync/all', {
+            const response = await fetch(`${baseURL}/hs5200/users/sync/all`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -512,16 +509,6 @@ const Index = () => {
         } finally {
             setIsSyncing(false);
         }
-    };
-
-    const handleDeleteCustomer = (userId) => {
-        showMessage('warning', `Delete user ${userId}? This action cannot be undone.`, async () => {
-            try {
-                await dispatch(deleteCustomer(userId)).unwrap();
-            } catch (error) {
-                showMessage('error', error.message || 'Failed to delete customer');
-            }
-        });
     };
 
     const closeModal = () => {
@@ -550,12 +537,12 @@ const Index = () => {
             email_addr: '',
             mobile_num: '',
             postal_addr: '',
-            createdBy: 'admin'
         });
         setPriPlanSearch('');
         setExtPlanSearch('');
         setShowPriPlanList(false);
         setShowExtPlanList(false);
+        setFocusedField(null); // Reset focus state
     };
 
     const closeViewModal = () => {
@@ -572,17 +559,16 @@ const Index = () => {
         setShowPriPlanList(false);
         setShowExtPlanList(false);
         dispatch(clearSelectedCustomer());
+        setFocusedField(null); // Reset focus state
     };
 
     const handleSubmit = async (e) => {
-        // e.preventDefault();
         try {
-            // Add settingId from localStorage before submitting
             const settingId = getSettingId();
             const submitData = {
                 ...formState,
                 settingId: settingId,
-                createdBy: 'admin'
+                createdBy: 'admin',
             };
             await dispatch(createCustomer(submitData)).unwrap();
         } catch (error) {
@@ -591,23 +577,15 @@ const Index = () => {
     };
 
     const handleUpdateSubmit = async (e) => {
-        // e.preventDefault();
         try {
-            // Prepare update request with all fields
             const settingId = getSettingId();
             const updateRequest = {
                 ...editFormState,
                 settingId: settingId,
-                // Only include password if provided (not empty)
-                ...(editFormState.user_pass && { user_pass: editFormState.user_pass })
+                userId: selectedUserId,
             };
 
-            await dispatch(
-                updateCustomer({
-                    request: updateRequest,
-                    userId: selectedUserId,
-                }),
-            ).unwrap();
+            await dispatch(updateCustomer({ request: updateRequest, userId: selectedUserId })).unwrap();
         } catch (error) {
             showMessage('error', error.message || 'Failed to update customer');
         }
@@ -738,13 +716,7 @@ const Index = () => {
                             <span>Sync All Customers</span>
                         </button>
                     </div>
-                    <button
-                        onClick={() => {
-                            setModal(true);
-                        }}
-                        className="btn btn-success"
-                        disabled={plansLoading}
-                    >
+                    <button onClick={() => setModal(true)} className="btn btn-success" disabled={plansLoading}>
                         <IconUserPlus className="w-5 h-5" />
                         <span>Add New Customer</span>
                         {plansLoading && <span className="ml-2">(Loading Plans...)</span>}
@@ -848,84 +820,70 @@ const Index = () => {
                             <div className="space-y-6">
                                 {/* Basic Information */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">User ID *</label>
-                                        <input
-                                            type="text"
-                                            value={formState.user_id}
-                                            onChange={(e) => setFormState({ ...formState, user_id: e.target.value })}
-                                            placeholder="Enter user ID"
-                                            className="form-input"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <PasswordInput
-                                            value={formState.user_pass}
-                                            onChange={(e) => setFormState({ ...formState, user_pass: e.target.value })}
-                                            placeholder="Enter password"
-                                            required={true}
-                                            label="Password *"
-                                        />
-                                    </div>
-                                </div>
-                                {/* Personal Information */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">First Name *</label>
-                                        <input
-                                            type="text"
-                                            value={formState.first_name}
-                                            onChange={(e) => setFormState({ ...formState, first_name: e.target.value })}
-                                            placeholder="Enter first name"
-                                            className="form-input"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Last Name</label>
-                                        <input
-                                            type="text"
-                                            value={formState.last_name}
-                                            onChange={(e) => setFormState({ ...formState, last_name: e.target.value })}
-                                            placeholder="Enter last name"
-                                            className="form-input"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Email *</label>
-                                        <input
-                                            type="email"
-                                            value={formState.email_addr}
-                                            onChange={(e) => setFormState({ ...formState, email_addr: e.target.value })}
-                                            placeholder="Enter email"
-                                            className="form-input"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Mobile Number *</label>
-                                        <input
-                                            type="tel"
-                                            value={formState.mobile_num}
-                                            onChange={(e) => setFormState({ ...formState, mobile_num: e.target.value })}
-                                            placeholder="Enter mobile number"
-                                            className="form-input"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                {/* Account Reference */}
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Account Reference</label>
-                                    <input
-                                        type="text"
-                                        value={formState.acct_ref}
-                                        onChange={(e) => setFormState({ ...formState, acct_ref: e.target.value })}
-                                        placeholder="Enter account reference (optional)"
-                                        className="form-input"
+                                    <ClearableInput
+                                        value={formState.user_id}
+                                        onChange={(e) => setFormState({ ...formState, user_id: e.target.value })}
+                                        placeholder="Enter user ID"
+                                        required={true}
+                                        label="User ID *"
+                                        fieldName="user_id"
+                                    />
+                                    <PasswordInput
+                                        value={formState.user_pass}
+                                        onChange={(e) => setFormState({ ...formState, user_pass: e.target.value })}
+                                        placeholder="Enter password"
+                                        required={true}
+                                        label="Password *"
+                                        fieldName="user_pass"
                                     />
                                 </div>
+
+                                {/* Personal Information */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <ClearableInput
+                                        value={formState.first_name}
+                                        onChange={(e) => setFormState({ ...formState, first_name: e.target.value })}
+                                        placeholder="Enter first name"
+                                        required={true}
+                                        label="First Name *"
+                                        fieldName="first_name"
+                                    />
+                                    <ClearableInput
+                                        value={formState.last_name}
+                                        onChange={(e) => setFormState({ ...formState, last_name: e.target.value })}
+                                        placeholder="Enter last name"
+                                        label="Last Name"
+                                        fieldName="last_name"
+                                    />
+                                    <ClearableInput
+                                        value={formState.email_addr}
+                                        onChange={(e) => setFormState({ ...formState, email_addr: e.target.value })}
+                                        placeholder="Enter email"
+                                        required={true}
+                                        label="Email *"
+                                        type="email"
+                                        fieldName="email_addr"
+                                    />
+                                    <ClearableInput
+                                        value={formState.mobile_num}
+                                        onChange={(e) => setFormState({ ...formState, mobile_num: e.target.value })}
+                                        placeholder="Enter mobile number"
+                                        required={true}
+                                        label="Mobile Number *"
+                                        type="tel"
+                                        fieldName="mobile_num"
+                                    />
+                                </div>
+
+                                {/* Account Reference */}
+                                <ClearableInput
+                                    value={formState.acct_ref}
+                                    onChange={(e) => setFormState({ ...formState, acct_ref: e.target.value })}
+                                    placeholder="Enter account reference (optional)"
+                                    label="Account Reference"
+                                    fieldName="acct_ref"
+                                />
+
                                 {/* Bandwidth Plans */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <PlanSelect
@@ -958,6 +916,7 @@ const Index = () => {
                                         label="External Bandwidth Plan"
                                     />
                                 </div>
+
                                 {/* Network Settings */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
@@ -988,6 +947,7 @@ const Index = () => {
                                         </select>
                                     </div>
                                 </div>
+
                                 {/* Account Settings */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
@@ -1017,6 +977,7 @@ const Index = () => {
                                         </select>
                                     </div>
                                 </div>
+
                                 {/* Address */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Address</label>
@@ -1034,7 +995,7 @@ const Index = () => {
                 </div>
             </ModelViewBox>
 
-            {/* View Customer Modal - Add password display */}
+            {/* View Customer Modal - Complete Information */}
             <ModelViewBox
                 modal={viewModal}
                 modelHeader={`Customer Details - ${selectedUserId}`}
@@ -1046,15 +1007,11 @@ const Index = () => {
                     <div className="flex items-center justify-between w-full">
                         <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                                <span className="text-xl text-white font-bold">
-                                    {customerDetails?.data?.mapping?.full_user_data?.first_name?.[0] || selectedUserId?.[0] || '?'}
-                                    {customerDetails?.data?.mapping?.full_user_data?.last_name?.[0] || ''}
-                                </span>
+                                <span className="text-xl text-white font-bold">{customerDetails?.data?.results?.find((r) => r.fid === 'first_name')?.value?.[0] || selectedUserId?.[0] || '?'}</span>
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold">
-                                    {customerDetails?.data?.mapping?.full_user_data?.first_name || ''}
-                                    {customerDetails?.data?.mapping?.full_user_data?.last_name ? ' ' + customerDetails.data.mapping.full_user_data.last_name : ''}
+                                    {customerDetails?.data?.results?.find((r) => r.fid === 'first_name')?.value || ''} {customerDetails?.data?.results?.find((r) => r.fid === 'last_name')?.value || ''}
                                 </h3>
                                 <p className="text-gray-600">ID: {selectedUserId}</p>
                             </div>
@@ -1075,71 +1032,8 @@ const Index = () => {
                 }
             >
                 <div className="p-6">
-                    {customerDetails?.data?.mapping?.full_user_data ? (
+                    {customerDetails?.data?.results ? (
                         <div className="space-y-6">
-                            {/* Basic Information - Include Password */}
-                            <div className="bg-gray-50 p-6 rounded-xl">
-                                <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
-                                    <IconInfoCircle className="w-5 h-5 mr-2" />
-                                    Basic Information
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">User ID</label>
-                                        <p className="font-medium text-gray-800">{customerDetails.data.mapping.full_user_data.user_id}</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Password</label>
-                                        <div className="flex items-center">
-                                            <p className="font-medium text-gray-800 font-mono mr-2">
-                                                {showPassword ? '••••••••' : '••••••••'}
-                                            </p>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="text-gray-400 hover:text-gray-600"
-                                            >
-                                                {showPassword ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Status</label>
-                                        <p className={`font-medium ${customerDetails.data.mapping.full_user_data.rule_enable === 'Enable' ? 'text-green-600' : 'text-red-600'}`}>
-                                            {customerDetails.data.mapping.full_user_data.rule_enable}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Sync Status & Basic Info */}
-                            <div className="bg-blue-50 p-6 rounded-xl">
-                                <h4 className="text-lg font-semibold mb-4 flex items-center text-blue-800">
-                                    <IconInfoCircle className="w-5 h-5 mr-2" />
-                                    Sync Information
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Sync Status</label>
-                                        <p className={`font-medium ${customerDetails.data.mapping.sync_status === 'synced' ? 'text-green-600' : 'text-yellow-600'}`}>
-                                            {customerDetails.data.mapping.sync_status}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Last Sync</label>
-                                        <p className="font-medium text-gray-800">
-                                            {new Date(customerDetails.data.mapping.last_sync_at).toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Success Rate</label>
-                                        <p className="font-medium text-blue-600">
-                                            {customerDetails.data.mapping.full_user_data.success_rate}%
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Account Information */}
                             <div className="bg-green-50 p-6 rounded-xl">
                                 <h4 className="text-lg font-semibold mb-4 flex items-center text-green-800">
@@ -1147,28 +1041,69 @@ const Index = () => {
                                     Account Information
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {customerDetails.data.mapping.full_user_data.details
-                                        .filter((item) => ['user_id', 'rule_enable', 'acct_ref', 'account_state', 'active_plan', 'expire_time'].includes(item.fid))
-                                        .map((item) => (
-                                            <div key={item.fid} className="space-y-1">
-                                                <label className="text-sm text-gray-500">{item.label}</label>
-                                                <p
-                                                    className={`font-medium ${
-                                                        item.fid === 'account_state' && item.value === 'Active'
-                                                            ? 'text-green-600'
-                                                            : item.fid === 'account_state' && item.value === 'Inactive'
-                                                            ? 'text-red-600'
-                                                            : item.fid === 'rule_enable' && item.value === 'Enable'
-                                                            ? 'text-green-600'
-                                                            : item.fid === 'rule_enable' && item.value === 'Disable'
-                                                            ? 'text-red-600'
-                                                            : 'text-gray-800'
-                                                    }`}
-                                                >
-                                                    {item.value}
-                                                </p>
-                                            </div>
-                                        ))}
+                                    {/* User ID */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">User ID</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'user_id')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Status */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Status</label>
+                                        <p className={`font-medium ${customerDetails.data.results.find((r) => r.fid === 'rule_enable')?.value === 'Enable' ? 'text-green-600' : 'text-red-600'}`}>
+                                            {customerDetails.data.results.find((r) => r.fid === 'rule_enable')?.value || 'N/A'}
+                                        </p>
+                                    </div>
+
+                                    {/* Account Reference */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Account Reference</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'acct_ref')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Account State */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Account State</label>
+                                        <p className={`font-medium ${customerDetails.data.results.find((r) => r.fid === 'account_state')?.value === 'Active' ? 'text-green-600' : 'text-red-600'}`}>
+                                            {customerDetails.data.results.find((r) => r.fid === 'account_state')?.value || 'N/A'}
+                                        </p>
+                                    </div>
+
+                                    {/* Active Plan */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Active Plan</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'active_plan')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Account Expiry */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Account Expiry</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'expire_time')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Circuit ID */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Circuit ID</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'circuit_id')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Uniq ID */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Unique ID</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'uniq_id')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Site ID */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Site ID</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'site_uid')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Monthly Billing Day */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Monthly Billing Day</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'monthly_bill_day')?.value || 'N/A'}</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1183,7 +1118,7 @@ const Index = () => {
                                     <div className="bg-white p-4 rounded-lg border border-purple-200">
                                         <h5 className="font-semibold text-purple-700 mb-3">Primary Plan</h5>
                                         <div className="space-y-2">
-                                            {customerDetails.data.mapping.full_user_data.details
+                                            {customerDetails.data.results
                                                 .filter((item) => item.fid.startsWith('q1_'))
                                                 .map((item) => (
                                                     <div key={item.fid} className="flex justify-between">
@@ -1194,12 +1129,12 @@ const Index = () => {
                                         </div>
                                     </div>
 
-                                    {/* External Plan */}
-                                    {customerDetails.data.mapping.full_user_data.ext_bw_plan_name !== 'disable' && (
+                                    {/* External Plan if not Disable */}
+                                    {customerDetails.data.results.find((r) => r.fid === 'q2_plan_name')?.value !== 'Disable' && (
                                         <div className="bg-white p-4 rounded-lg border border-blue-200">
                                             <h5 className="font-semibold text-blue-700 mb-3">External Plan</h5>
                                             <div className="space-y-2">
-                                                {customerDetails.data.mapping.full_user_data.details
+                                                {customerDetails.data.results
                                                     .filter((item) => item.fid.startsWith('q2_'))
                                                     .map((item) => (
                                                         <div key={item.fid} className="flex justify-between">
@@ -1222,40 +1157,42 @@ const Index = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-sm text-gray-500">First Name</label>
-                                        <p className="font-medium text-gray-800">
-                                            {customerDetails.data.mapping.full_user_data.first_name || 'N/A'}
-                                        </p>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'first_name')?.value || 'N/A'}</p>
                                     </div>
+
                                     <div className="space-y-1">
                                         <label className="text-sm text-gray-500">Last Name</label>
-                                        <p className="font-medium text-gray-800">
-                                            {customerDetails.data.mapping.full_user_data.last_name || 'N/A'}
-                                        </p>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'last_name')?.value || 'N/A'}</p>
                                     </div>
+
                                     <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Email</label>
-                                        <p className="font-medium text-gray-800">
-                                            {customerDetails.data.mapping.full_user_data.email || 'N/A'}
-                                        </p>
+                                        <label className="text-sm text-gray-500">Email Address</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'user_email')?.value || 'N/A'}</p>
                                     </div>
+
                                     <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">Mobile</label>
-                                        <p className="font-medium text-gray-800">
-                                            {customerDetails.data.mapping.full_user_data.mobile || 'N/A'}
-                                        </p>
+                                        <label className="text-sm text-gray-500">Mobile Number</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'user_mobile')?.value || 'N/A'}</p>
                                     </div>
+
                                     <div className="space-y-1">
-                                        <label className="text-sm text-gray-500">GSTIN</label>
-                                        <p className="font-medium text-gray-800">
-                                            {customerDetails.data.mapping.full_user_data.gstin_no || 'N/A'}
-                                        </p>
+                                        <label className="text-sm text-gray-500">Phone Number</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'user_phone')?.value || 'N/A'}</p>
                                     </div>
+
                                     <div className="space-y-1">
                                         <label className="text-sm text-gray-500">Address</label>
-                                        <p className="font-medium text-gray-800">
-                                            {customerDetails.data.mapping.full_user_data.address || 'N/A'}
-                                        </p>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'user_address')?.value || 'N/A'}</p>
                                     </div>
+
+                                    {/* Show GSTIN if available in your API response */}
+                                    {/* If GSTIN is not in your API, you might need to check the actual field name */}
+                                    {customerDetails.data.results.find((r) => r.fid === 'gstin_no') && (
+                                        <div className="space-y-1">
+                                            <label className="text-sm text-gray-500">GSTIN</label>
+                                            <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'gstin_no')?.value || 'N/A'}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -1270,14 +1207,29 @@ const Index = () => {
                                     <div className="bg-white p-4 rounded-lg border border-teal-200">
                                         <h5 className="font-semibold text-teal-700 mb-3">Data Usage</h5>
                                         <div className="space-y-2">
-                                            {customerDetails.data.mapping.full_user_data.details
-                                                .filter((item) => item.fid.includes('dq_usage') || item.fid === 'monthly_dq_sts')
-                                                .map((item) => (
-                                                    <div key={item.fid} className="flex justify-between">
-                                                        <span className="text-sm text-gray-600">{item.label}:</span>
-                                                        <span className="text-sm font-medium text-gray-800">{item.value}</span>
-                                                    </div>
-                                                ))}
+                                            {/* Today's Data Usage */}
+                                            <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Today's Usage:</span>
+                                                <span className="text-sm font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'daily_dq_usage')?.value || 'N/A'}</span>
+                                            </div>
+
+                                            {/* Weekly Data Usage */}
+                                            <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Weekly Usage:</span>
+                                                <span className="text-sm font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'weekly_dq_usage')?.value || 'N/A'}</span>
+                                            </div>
+
+                                            {/* Monthly Data Usage */}
+                                            <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Monthly Usage:</span>
+                                                <span className="text-sm font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'monthly_dq_usage')?.value || 'N/A'}</span>
+                                            </div>
+
+                                            {/* Monthly Usage From */}
+                                            <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Monthly Usage From:</span>
+                                                <span className="text-sm font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'monthly_dq_sts')?.value || 'N/A'}</span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1285,42 +1237,85 @@ const Index = () => {
                                     <div className="bg-white p-4 rounded-lg border border-teal-200">
                                         <h5 className="font-semibold text-teal-700 mb-3">Time Usage</h5>
                                         <div className="space-y-2">
-                                            {customerDetails.data.mapping.full_user_data.details
-                                                .filter((item) => item.fid.includes('tq_usage') || item.fid === 'monthly_tq_sts')
-                                                .map((item) => (
-                                                    <div key={item.fid} className="flex justify-between">
-                                                        <span className="text-sm text-gray-600">{item.label}:</span>
-                                                        <span className="text-sm font-medium text-gray-800">{item.value}</span>
-                                                    </div>
-                                                ))}
+                                            {/* Today's Time Usage */}
+                                            <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Today's Usage:</span>
+                                                <span className="text-sm font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'daily_tq_usage')?.value || 'N/A'}</span>
+                                            </div>
+
+                                            {/* Weekly Time Usage */}
+                                            <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Weekly Usage:</span>
+                                                <span className="text-sm font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'weekly_tq_usage')?.value || 'N/A'}</span>
+                                            </div>
+
+                                            {/* Monthly Time Usage */}
+                                            <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Monthly Usage:</span>
+                                                <span className="text-sm font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'monthly_tq_usage')?.value || 'N/A'}</span>
+                                            </div>
+
+                                            {/* Monthly Time Usage From */}
+                                            <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Monthly Usage From:</span>
+                                                <span className="text-sm font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'monthly_tq_sts')?.value || 'N/A'}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* MAC Addresses */}
-                            {customerDetails.data.mapping.full_user_data.mac_1 && (
-                                <div className="bg-gray-50 p-6 rounded-xl">
-                                    <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
-                                        <IconWifi className="w-5 h-5 mr-2" />
-                                        MAC Address Binding
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {['mac_1', 'mac_2', 'mac_3', 'mac_4', 'mac_5'].map((macField) => {
-                                            const macValue = customerDetails.data.mapping.full_user_data[macField];
-                                            if (macValue) {
-                                                return (
-                                                    <div key={macField} className="space-y-1">
-                                                        <label className="text-sm text-gray-500">MAC {macField.split('_')[1]}</label>
-                                                        <p className="font-medium text-gray-800 font-mono">{macValue}</p>
-                                                    </div>
-                                                );
-                                            }
-                                            return null;
-                                        }).filter(Boolean)}
+                            {/* Payment Information */}
+                            <div className="bg-blue-50 p-6 rounded-xl">
+                                <h4 className="text-lg font-semibold mb-4 flex items-center text-blue-800">
+                                    <IconInfoCircle className="w-5 h-5 mr-2" />
+                                    Payment Information
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {/* Primary Plan Price */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Plan Price</label>
+                                        <p className="font-medium text-gray-800">₹{customerDetails.data.results.find((r) => r.fid === 'q1_price')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Price Type */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Price Type</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'q1_price_type')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Payment Type */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Payment Type</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'q1_payment_type')?.value || 'N/A'}</p>
+                                    </div>
+
+                                    {/* Currency Type */}
+                                    <div className="space-y-1">
+                                        <label className="text-sm text-gray-500">Currency</label>
+                                        <p className="font-medium text-gray-800">{customerDetails.data.results.find((r) => r.fid === 'q1_currency_type')?.value?.toUpperCase() || 'N/A'}</p>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+
+                            {/* Show MAC addresses if available in your API response */}
+                            {/* Note: Your new API response might not have MAC addresses. If needed, you'll need to fetch from another endpoint */}
+                            {/* 
+        <div className="bg-gray-50 p-6 rounded-xl">
+          <h4 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
+            <IconWifi className="w-5 h-5 mr-2" />
+            MAC Address Binding
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm text-gray-500">MAC Address 1</label>
+              <p className="font-medium text-gray-800 font-mono">
+                {customerDetails.data.mac_address_1 || 'Not configured'}
+              </p>
+            </div>
+          </div>
+        </div>
+        */}
                         </div>
                     ) : (
                         <div className="text-center py-12">
@@ -1331,7 +1326,7 @@ const Index = () => {
                 </div>
             </ModelViewBox>
 
-            {/* Edit Customer Modal - COMPLETE FORM */}
+            {/* Edit Customer Modal - Simplified */}
             <ModelViewBox
                 modal={editModal}
                 modelHeader={`Edit Customer - ${selectedUserId}`}
@@ -1353,91 +1348,73 @@ const Index = () => {
                             <div className="space-y-6">
                                 {/* Basic Information */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">User ID *</label>
-                                        <input
-                                            type="text"
-                                            value={editFormState.user_id}
-                                            onChange={(e) => setEditFormState({ ...editFormState, user_id: e.target.value })}
-                                            placeholder="Enter user ID"
-                                            className="form-input"
-                                            required
-                                            readOnly
-                                        />
-                                    </div>
-                                    <div>
-                                        <PasswordInput
-                                            value={editFormState.user_pass}
-                                            onChange={(e) => setEditFormState({ ...editFormState, user_pass: e.target.value })}
-                                            placeholder="Enter new password (leave empty to keep current)"
-                                            required={false}
-                                            label="New Password"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">Leave empty to keep current password</p>
-                                    </div>
+                                    <ClearableInput
+                                        value={editFormState.user_id}
+                                        onChange={(e) => setEditFormState({ ...editFormState, user_id: e.target.value })}
+                                        placeholder="User ID"
+                                        required={true}
+                                        label="User ID *"
+                                        fieldName="edit_user_id"
+                                        readOnly={true}
+                                    />
+                                    <PasswordInput
+                                        value={editFormState.user_pass}
+                                        onChange={(e) => setEditFormState({ ...editFormState, user_pass: e.target.value })}
+                                        placeholder="Enter new password (leave empty to keep current)"
+                                        required={false}
+                                        label="New Password"
+                                        fieldName="edit_user_pass"
+                                    />
                                 </div>
 
                                 {/* Personal Information */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">First Name *</label>
-                                        <input
-                                            type="text"
-                                            value={editFormState.first_name}
-                                            onChange={(e) => setEditFormState({ ...editFormState, first_name: e.target.value })}
-                                            placeholder="Enter first name"
-                                            className="form-input"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Last Name</label>
-                                        <input
-                                            type="text"
-                                            value={editFormState.last_name}
-                                            onChange={(e) => setEditFormState({ ...editFormState, last_name: e.target.value })}
-                                            placeholder="Enter last name"
-                                            className="form-input"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Email *</label>
-                                        <input
-                                            type="email"
-                                            value={editFormState.email_addr}
-                                            onChange={(e) => setEditFormState({ ...editFormState, email_addr: e.target.value })}
-                                            placeholder="Enter email"
-                                            className="form-input"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Mobile Number *</label>
-                                        <input
-                                            type="tel"
-                                            value={editFormState.mobile_num}
-                                            onChange={(e) => setEditFormState({ ...editFormState, mobile_num: e.target.value })}
-                                            placeholder="Enter mobile number"
-                                            className="form-input"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Account Reference */}
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Account Reference</label>
-                                    <input
-                                        type="text"
-                                        value={editFormState.acct_ref}
-                                        onChange={(e) => setEditFormState({ ...editFormState, acct_ref: e.target.value })}
-                                        placeholder="Enter account reference"
-                                        className="form-input"
+                                    <ClearableInput
+                                        value={editFormState.first_name}
+                                        onChange={(e) => setEditFormState({ ...editFormState, first_name: e.target.value })}
+                                        placeholder="Enter first name"
+                                        required={true}
+                                        label="First Name *"
+                                        fieldName="edit_first_name"
+                                    />
+                                    <ClearableInput
+                                        value={editFormState.last_name}
+                                        onChange={(e) => setEditFormState({ ...editFormState, last_name: e.target.value })}
+                                        placeholder="Enter last name"
+                                        label="Last Name"
+                                        fieldName="edit_last_name"
+                                    />
+                                    <ClearableInput
+                                        value={editFormState.email_addr}
+                                        onChange={(e) => setEditFormState({ ...editFormState, email_addr: e.target.value })}
+                                        placeholder="Enter email"
+                                        required={true}
+                                        label="Email *"
+                                        type="email"
+                                        fieldName="edit_email_addr"
+                                    />
+                                    <ClearableInput
+                                        value={editFormState.mobile_num}
+                                        onChange={(e) => setEditFormState({ ...editFormState, mobile_num: e.target.value })}
+                                        placeholder="Enter mobile number"
+                                        required={true}
+                                        label="Mobile Number *"
+                                        type="tel"
+                                        fieldName="edit_mobile_num"
                                     />
                                 </div>
 
-                                {/* Bandwidth Plans */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Account Reference */}
+                                <ClearableInput
+                                    value={editFormState.acct_ref}
+                                    onChange={(e) => setEditFormState({ ...editFormState, acct_ref: e.target.value })}
+                                    placeholder="Enter account reference"
+                                    label="Account Reference"
+                                    fieldName="edit_acct_ref"
+                                />
+
+                                {/* Bandwidth Plans - Only Primary Plan in edit */}
+                                <div className="grid grid-cols-1 gap-6">
                                     <PlanSelect
                                         value={editFormState.pri_bandwidth_plan_name}
                                         onChange={(value) => setEditFormState({ ...editFormState, pri_bandwidth_plan_name: value })}
@@ -1451,126 +1428,8 @@ const Index = () => {
                                         }}
                                         plans={getFilteredPriPlans()}
                                         required
-                                        label="Primary Bandwidth Plan"
+                                        label="Primary Bandwidth Plan *"
                                     />
-                                    <PlanSelect
-                                        value={editFormState.ext_bandwidth_plan_name}
-                                        onChange={(value) => setEditFormState({ ...editFormState, ext_bandwidth_plan_name: value })}
-                                        placeholder="Search and select external plan..."
-                                        searchValue={extPlanSearch}
-                                        onSearchChange={setExtPlanSearch}
-                                        showList={showExtPlanList}
-                                        onShowList={() => setShowExtPlanList(true)}
-                                        onHideList={() => {
-                                            setTimeout(() => setShowExtPlanList(false), 200);
-                                        }}
-                                        plans={getFilteredExtPlans()}
-                                        label="External Bandwidth Plan"
-                                    />
-                                </div>
-
-                                {/* Network Settings */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">MAC Binding Limit</label>
-                                        <select value={editFormState.num_mac_binding} onChange={(e) => setEditFormState({ ...editFormState, num_mac_binding: e.target.value })} className="form-select" required>
-                                            {[0, 1, 2, 3, 4, 5].map((num) => (
-                                                <option key={num} value={num}>
-                                                    {num}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Concurrent Logins</label>
-                                        <select value={editFormState.num_conc_logins} onChange={(e) => setEditFormState({ ...editFormState, num_conc_logins: e.target.value })} className="form-select" required>
-                                            {[1, 2, 3, 4, 5].map((num) => (
-                                                <option key={num} value={num}>
-                                                    {num}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Login Protocol</label>
-                                        <select value={editFormState.login_proto} onChange={(e) => setEditFormState({ ...editFormState, login_proto: e.target.value })} className="form-select" required>
-                                            <option value="plogin">Portal Login</option>
-                                            <option value="auto">Auto</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* Account Settings */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Account Validity Type</label>
-                                        <select value={editFormState.account_validity} onChange={(e) => setEditFormState({ ...editFormState, account_validity: e.target.value })} className="form-select">
-                                            <option value="num_days_from_acct_creation">Days from Account Creation</option>
-                                            <option value="absolute_expiry_ts">Absolute Expiry Timestamp</option>
-                                            <option value="num_days_from_each_login">Days from Each Login</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Validity Data</label>
-                                        <input
-                                            type="text"
-                                            value={editFormState.validity_data}
-                                            onChange={(e) => setEditFormState({ ...editFormState, validity_data: e.target.value })}
-                                            placeholder="e.g., 30 or timestamp"
-                                            className="form-input"
-                                            required
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {editFormState.account_validity === 'absolute_expiry_ts' ? 'Enter Unix timestamp (e.g., 1735689600)' : 'Enter number of days'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Password Type</label>
-                                        <select value={editFormState.user_pass_type} onChange={(e) => setEditFormState({ ...editFormState, user_pass_type: e.target.value })} className="form-select">
-                                            <option value="specify">Specify Password</option>
-                                            <option value="generate">Generate Random</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* Additional Settings */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Delete Expired Account</label>
-                                        <select value={editFormState.delete_expired_acct} onChange={(e) => setEditFormState({ ...editFormState, delete_expired_acct: e.target.value })} className="form-select">
-                                            <option value="enable">Enable</option>
-                                            <option value="disable">Disable</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Delete Quota Exceeded Account</label>
-                                        <select value={editFormState.del_q_exceeded_acct} onChange={(e) => setEditFormState({ ...editFormState, del_q_exceeded_acct: e.target.value })} className="form-select">
-                                            <option value="enable">Enable</option>
-                                            <option value="disable">Disable</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* Login Control */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Login Control</label>
-                                        <select value={editFormState.login_control} onChange={(e) => setEditFormState({ ...editFormState, login_control: e.target.value })} className="form-select">
-                                            <option value="default">Default</option>
-                                            <option value="mip">MIP</option>
-                                            <option value="strict">Strict</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">First Login Before Timestamp</label>
-                                        <input
-                                            type="text"
-                                            value={editFormState.first_login_before_ts}
-                                            onChange={(e) => setEditFormState({ ...editFormState, first_login_before_ts: e.target.value })}
-                                            placeholder="Enter timestamp (0 for none)"
-                                            className="form-input"
-                                        />
-                                    </div>
                                 </div>
 
                                 {/* Address */}

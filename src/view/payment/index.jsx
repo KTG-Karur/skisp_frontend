@@ -260,8 +260,8 @@ const Index = () => {
                         <Tippy content="Recharge/Extend Plan">
                             <button
                                 onClick={() => handleRechargePlan(customer)}
-                                className="btn btn-sm btn-success hover:scale-105 transition-transform duration-200"
-                                disabled={!isActive || loadingPlanDetails}
+                                className="btn btn-sm btn-success hover:scale-105  duration-200"
+                            
                             >
                                 {loadingPlanDetails && selectedCustomer?.user_id === customer.user_id ? (
                                     <>
