@@ -378,6 +378,11 @@ const routes = [
         element: <LoginBoxed />,
         layout: 'blank',
     },
+    {
+        path: '/join/razorpay',
+        element: <Razorpay />,
+        layout: 'blank',
+    },
 ];
 
 const dontCkeckRouts = [
