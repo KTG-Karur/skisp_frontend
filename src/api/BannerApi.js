@@ -39,7 +39,6 @@ export async function createBannerApi(request) {
             console.log("Request (non-FormData):", request);
         }
         
-        // Use 'FORMPOST' instead of 'POST' for FormData
         const response = await apiReturnCallBack('FORMPOST', '/banners', request);
         const data = await response.json();
         
@@ -64,10 +63,8 @@ export async function updateBannerApi(request, bannerId) {
     try {
         console.log("Update banner API called for:", bannerId);
         
-        // Check if request is FormData
         if (request instanceof FormData) {
             console.log("Update request is FormData, using FORMPUT");
-            // Use FORMPUT for FormData updates
             const response = await apiReturnCallBack('FORMPUT', `/banners/${bannerId}`, request);
             const data = await response.json();
             if (!response.ok) {
@@ -81,7 +78,6 @@ export async function updateBannerApi(request, bannerId) {
             return data;
         } else {
             console.log("Update request is JSON, using regular PUT");
-            // Use regular PUT for JSON updates
             const response = await apiReturnCallBack('PUT', `/banners/${bannerId}`, request);
             const data = await response.json();
             if (!response.ok) {

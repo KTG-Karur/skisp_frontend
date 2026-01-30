@@ -213,7 +213,6 @@ const Index = () => {
 
         console.log('Form submitted:', { isEdit, imageFile, description, isActive });
 
-        // For create, image is required
         if (!isEdit && !imageFile) {
             showMessage('error', 'Please select an image');
             return;
@@ -222,19 +221,15 @@ const Index = () => {
         try {
             const formData = new FormData();
 
-            // Add image file if exists (required for create, optional for update)
             if (imageFile) {
                 console.log('Adding image to formData:', imageFile.name, imageFile.type);
                 formData.append('files', imageFile);
             }
 
-            // Add description
             formData.append('description', description || '');
 
-            // Add isActive status
             formData.append('isActive', isActive.toString());
 
-            // Log FormData contents
             console.log('FormData contents before sending:');
             for (let [key, value] of formData.entries()) {
                 if (value instanceof File) {
@@ -265,14 +260,12 @@ const Index = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Validate file type
             const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
             if (!validTypes.includes(file.type)) {
                 showMessage('error', 'Please select a valid image file (JPEG, PNG, GIF, WebP)');
                 return;
             }
 
-            // Validate file size (10MB max)
             if (file.size > 10 * 1024 * 1024) {
                 showMessage('error', 'File size should be less than 10MB');
                 return;
@@ -280,7 +273,6 @@ const Index = () => {
 
             setImageFile(file);
 
-            // Create preview URL
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreviewUrl(reader.result);
@@ -296,17 +288,16 @@ const Index = () => {
     };
 
     const handleStatusToggle = (bannerId, newStatus) => {
-        // For simple status updates without files, we can use JSON
         const updateData = {
             isActive: newStatus,
-            description: '', // Empty description
+            description: '',
         };
 
         console.log('Status toggle:', { bannerId, newStatus, updateData });
 
         dispatch(
             updateBanner({
-                request: updateData, // Plain object, not FormData
+                request: updateData, 
                 bannerId: bannerId,
             }),
         ).then(() => {
@@ -360,12 +351,10 @@ const Index = () => {
                 loading={loading}
             >
                 <form onSubmit={onFormSubmit} className="space-y-4">
-                    {/* Image Upload Section */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Banner Image {!isEdit && <span className="text-red-500">*</span>}</label>
 
                         <div className="space-y-2">
-                            {/* File Input */}
                             <div className="relative">
                                 <input type="file" id="banner-image" className="hidden" accept="image/*" onChange={handleFileChange} />
                                 <label

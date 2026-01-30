@@ -12,11 +12,9 @@ export const createBanner = createAsyncThunk('banner/createBanner', async (reque
 });
 
 export const updateBanner = createAsyncThunk('banner/updateBanner', async ({ request, bannerId }) => {
-    // Check if request is FormData or plain object
     if (request instanceof FormData) {
         return await updateBannerApi(request, bannerId);
     } else {
-        // For simple status updates without files
         return await updateBannerApi(request, bannerId);
     }
 });
@@ -87,11 +85,9 @@ const bannerSlice = createSlice({
                 state.loading = false;
                 const newBanner = action.payload.data || action.payload;
                 if (newBanner) {
-                    // If we have single banner object, add it to array
                     if (!Array.isArray(newBanner)) {
                         state.bannerData.unshift(newBanner);
                     } else if (newBanner.length > 0) {
-                        // If we have array, add the first one
                         state.bannerData.unshift(newBanner[0]);
                     }
                 }
