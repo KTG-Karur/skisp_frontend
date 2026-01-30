@@ -25,6 +25,7 @@ import Tippy from '@tippyjs/react';
 import { showMessage } from '../../util/AllFunction';
 import { baseURL } from '../../api/ApiConfig';
 import { useSearchParams } from 'react-router-dom';
+import SkispLogo from '../../../public/assets/images/skisp-new-logo copy.png';
 
 const Index = () => {
     const { userId } = useParams();
@@ -168,89 +169,355 @@ const Index = () => {
 
     const handlePrintInvoice = (invoice) => {
         const printWindow = window.open('', '_blank');
+
         printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice ${invoice.invoice_id}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 40px; }
-            .invoice-header { text-align: center; margin-bottom: 30px; }
-            .invoice-details { margin-bottom: 20px; }
-            .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .invoice-table th, .invoice-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            .invoice-table th { background-color: #f4f4f4; }
-            .invoice-total { text-align: right; font-weight: bold; }
-            .invoice-status { padding: 5px 10px; border-radius: 4px; }
-            .status-pending { background-color: #fff3cd; color: #856404; }
-            .status-paid { background-color: #d4edda; color: #155724; }
-            .status-generated { background-color: #cce5ff; color: #004085; }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-header">
-            <h1>INVOICE</h1>
-            <p>Invoice #: ${invoice.invoice_id}</p>
-          </div>
-          <div class="invoice-details">
-            <p><strong>Customer:</strong> ${userId}</p>
-            <p><strong>Bill Date:</strong> ${new Date(invoice.bill_date).toLocaleDateString()}</p>
-            <p><strong>Due Date:</strong> ${new Date(invoice.due_date).toLocaleDateString()}</p>
-            <p><strong>Status:</strong> <span class="invoice-status status-${invoice.status}">${invoice.status.toUpperCase()}</span></p>
-          </div>
-          <table class="invoice-table">
-            <thead>
-              <tr>
-                <th>Item Description</th>
-                <th>Quantity</th>
-                <th>Unit Price</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${
-                  invoice.items &&
-                  invoice.items
-                      .map(
-                          (item) => `
-                <tr>
-                  <td>${item.item_description || item.item_name}</td>
-                  <td>${item.quantity || 1}</td>
-                  <td>₹${item.unit_price || '0.00'}</td>
-                  <td>₹${item.amount || '0.00'}</td>
-                </tr>
-              `,
-                      )
-                      .join('')
-              }
-              <tr>
-                <td colspan="3" style="text-align: right;"><strong>Subtotal:</strong></td>
-                <td>₹${invoice.total_amount}</td>
-              </tr>
-              <tr>
-                <td colspan="3" style="text-align: right;"><strong>Tax:</strong></td>
-                <td>₹${invoice.tax_amount}</td>
-              </tr>
-              ${
-                  invoice.discount_amount > 0
-                      ? `
-                <tr>
-                  <td colspan="3" style="text-align: right;"><strong>Discount:</strong></td>
-                  <td>-₹${invoice.discount_amount}</td>
-                </tr>
-              `
-                      : ''
-              }
-            </tbody>
-          </table>
-          <div class="invoice-total">
-            <p><strong>Payable Amount:</strong> ₹${invoice.payable_amount}</p>
-          </div>
-        </body>
-      </html>
+        <html>
+            <head>
+                <title>Invoice ${invoice.invoice_id}</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 20px; 
+                        font-size: 14px; 
+                        color: #000;
+                    }
+                    .invoice-container {
+                        width: 800px;
+                        margin: 0 auto;
+                    }
+                    .logo {
+                        height: 60px;
+                        margin-bottom: 10px;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 20px;
+                    }
+                    .invoice-title {
+                        font-size: 24px;
+                        font-weight: bold;
+                        margin: 10px 0;
+                    }
+                    .invoice-info {
+                        width: 100%;
+                        margin-bottom: 20px;
+                        border-collapse: collapse;
+                    }
+                    .invoice-info td {
+                        padding: 5px;
+                        vertical-align: top;
+                    }
+                    .section {
+                        margin-bottom: 20px;
+                    }
+                    .section-title {
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                        border-bottom: 1px solid #000;
+                        padding-bottom: 3px;
+                    }
+                    .invoice-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 15px 0;
+                    }
+                    .invoice-table th {
+                        background-color: #f2f2f2;
+                        border: 1px solid #000;
+                        padding: 8px;
+                        text-align: left;
+                        font-weight: bold;
+                    }
+                    .invoice-table td {
+                        border: 1px solid #000;
+                        padding: 8px;
+                    }
+                    .amount-section {
+                        width: 300px;
+                        margin-left: auto;
+                        margin-top: 20px;
+                    }
+                    .amount-row {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 5px;
+                        padding: 3px 0;
+                    }
+                    .total-row {
+                        border-top: 2px solid #000;
+                        padding-top: 10px;
+                        margin-top: 10px;
+                        font-weight: bold;
+                        font-size: 16px;
+                    }
+                    .bank-details {
+                        margin: 20px 0;
+                        padding: 10px;
+                        border: 1px dashed #000;
+                        background-color: #f9f9f9;
+                    }
+                    .terms {
+                        margin-top: 30px;
+                        font-size: 12px;
+                        line-height: 1.4;
+                    }
+                    .footer {
+                        text-align: center;
+                        margin-top: 30px;
+                        padding-top: 20px;
+                        border-top: 1px solid #000;
+                        font-size: 12px;
+                    }
+                    .no-print {
+                        display: none;
+                    }
+                    @media print {
+                        body {
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .no-print {
+                            display: none !important;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="invoice-container">
+                    <!-- Logo and Company Name -->
+                    <div class="header">
+                    <img 
+    src="${window.location.origin}/assets/images/skisp-new-logo copy.png"
+    class="logo"
+/>
+
+                        <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                            SRI KRISHNA INTERNET SERVICE PRIVATE LIMITED
+                        </div>
+                    </div>
+                    
+                    <!-- Invoice Title -->
+                    <div class="invoice-title">INVOICE / RECEIPT</div>
+                    
+                    <!-- Invoice Info -->
+                    <table class="invoice-info">
+                        <tr>
+                            <td style="width: 50%;">
+                                <div><strong>Invoice No:</strong> ${invoice.invoice_id}</div>
+                                <div><strong>Invoice Date:</strong> ${new Date(invoice.bill_date).toLocaleDateString()}</div>
+                                <div><strong>Due Date:</strong> ${new Date(invoice.due_date).toLocaleDateString()}</div>
+                            </td>
+                            <td style="width: 50%; text-align: right;">
+                                <div><strong>Customer:</strong> ${userId}</div>
+                                ${
+                                    customerDetails?.data?.results?.find((r) => r.fid === 'first_name')?.value
+                                        ? `
+                                    <div><strong>Name:</strong> ${customerDetails.data.results.find((r) => r.fid === 'first_name').value} ${customerDetails.data.results.find((r) => r.fid === 'last_name')?.value || ''}</div>
+                                `
+                                        : ''
+                                }
+                                ${
+                                    customerDetails?.data?.results?.find((r) => r.fid === 'user_mobile')?.value
+                                        ? `
+                                    <div><strong>Mobile:</strong> ${customerDetails.data.results.find((r) => r.fid === 'user_mobile').value}</div>
+                                `
+                                        : ''
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <!-- Bank Details -->
+                    <div class="bank-details">
+                        <div><strong>Amount to be paid by Online/Cheque/DD</strong></div>
+                        <div>SRI KRISHNA INTERNET SERVICE PRIVATE LIMITED</div>
+                        <div>KVB BANK (Current account)</div>
+                        <div>A/C: 1152135000012440</div>
+                        <div>KVB Ins branch</div>
+                        <div>IFSC: KVBLO001152 (used for RTGS and NEFT)</div>
+                    </div>
+                    
+                    <!-- Invoice Items -->
+                    <table class="invoice-table">
+                        <thead>
+                            <tr>
+                                <th>Sl. No.</th>
+                                <th>Description</th>
+                                <th>HSN/SAC</th>
+                                <th>Quantity</th>
+                                <th>Amount (¥)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${
+                                invoice.items && invoice.items.length > 0
+                                    ? invoice.items
+                                          .map(
+                                              (item, index) => `
+                                        <tr>
+                                            <td>${index + 1}</td>
+                                            <td>${item.item_name || ''}<br><small>${item.item_description || ''}</small></td>
+                                            <td>${item.hsn_sac || 'N/A'}</td>
+                                            <td>${item.quantity || 1}</td>
+                                            <td>₹${parseFloat(item.amount || 0).toFixed(2)}</td>
+                                        </tr>
+                                    `,
+                                          )
+                                          .join('')
+                                    : `<tr><td colspan="5" style="text-align: center;">No items found</td></tr>`
+                            }
+                        </tbody>
+                    </table>
+                    
+                    <!-- Amount Summary -->
+                    <div class="amount-section">
+                        ${
+                            invoice.items && invoice.items.some((item) => item.item_description?.includes('Broadband'))
+                                ? `
+                            <div class="amount-row">
+                                <span>Broadband usage charges:</span>
+                                <span>${invoice.items.find((item) => item.item_description?.includes('Broadband'))?.hsn_sac || '998422'}</span>
+                                <span>${invoice.items.find((item) => item.item_description?.includes('Broadband'))?.quantity || 1}</span>
+                                <span>₹${parseFloat(invoice.total_amount || 0).toFixed(2)}</span>
+                            </div>
+                        `
+                                : ''
+                        }
+                        
+                        ${
+                            invoice.tax_amount > 0
+                                ? `
+                            <div class="amount-row">
+                                <span>CGST @ 9.00%:</span>
+                                <span>₹${(parseFloat(invoice.tax_amount || 0) / 2).toFixed(2)}</span>
+                            </div>
+                            <div class="amount-row">
+                                <span>SGST @ 9.00%:</span>
+                                <span>₹${(parseFloat(invoice.tax_amount || 0) / 2).toFixed(2)}</span>
+                            </div>
+                        `
+                                : ''
+                        }
+                        
+                        <div class="amount-row">
+                            <span>Sub Total:</span>
+                            <span>₹${parseFloat(invoice.total_amount || 0).toFixed(2)}</span>
+                        </div>
+                        
+                        ${
+                            invoice.discount_amount > 0
+                                ? `
+                            <div class="amount-row">
+                                <span>Discount:</span>
+                                <span>-₹${parseFloat(invoice.discount_amount || 0).toFixed(2)}</span>
+                            </div>
+                        `
+                                : ''
+                        }
+                        
+                        <div class="amount-row">
+                            <span>Round Off:</span>
+                            <span>₹${(parseFloat(invoice.payable_amount || 0) - Math.round(parseFloat(invoice.payable_amount || 0))).toFixed(2)}</span>
+                        </div>
+                        
+                        <div class="amount-row total-row">
+                            <span>Total:</span>
+                            <span>₹${parseFloat(invoice.payable_amount || 0).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Total in Words -->
+                    <div style="margin-top: 10px; padding: 5px; background-color: #f5f5f5;">
+                        <strong>Total in words:</strong> Rupees ${numberToWords(parseFloat(invoice.payable_amount || 0))}
+                    </div>
+                    
+                    <!-- Terms & Conditions -->
+                    <div class="terms">
+                        <div><strong>Terms & Conditions:</strong></div>
+                        <div>1. Amount to be paid by Online/Cheque/DD</div>
+                        <div>2. While using the Service you must comply with applicable laws at all times.</div>
+                        <div>3. You assume total responsibility and risk for your and your authorized users' use of the Service.</div>
+                        <div><strong>Declaration:</strong> We declare that this invoice shows the actual price of the subscription and that all particulars are true and correct.</div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="footer">
+                        <div>Thank you for your business!</div>
+                        <div>Email: info@skisp.in</div>
+                        <div>Invoice generated on ${new Date().toLocaleDateString()}</div>
+                    </div>
+                </div>
+                
+                <script>
+                    // Auto print
+                    window.onload = function() {
+                        window.print();
+                        window.onafterprint = function() {
+                            window.close();
+                        };
+                    };
+                </script>
+            </body>
+        </html>
     `);
+
         printWindow.document.close();
-        printWindow.print();
     };
+
+    // Simple number to words function
+    const numberToWords = (num) => {
+        const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+        const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+        function convertHundreds(n) {
+            let word = '';
+            if (n > 99) {
+                word += units[Math.floor(n / 100)] + ' Hundred ';
+                n %= 100;
+            }
+            if (n > 19) {
+                word += tens[Math.floor(n / 10)] + ' ';
+                n %= 10;
+            } else if (n > 9) {
+                word += teens[n - 10] + ' ';
+                n = 0;
+            }
+            if (n > 0) {
+                word += units[n] + ' ';
+            }
+            return word.trim();
+        }
+
+        let rupees = Math.floor(num);
+        let paise = Math.round((num - rupees) * 100);
+
+        let words = '';
+
+        if (rupees === 0) {
+            words = 'Zero';
+        } else {
+            // Handle lakhs
+            if (rupees >= 100000) {
+                words += convertHundreds(Math.floor(rupees / 100000)) + ' Lakh ';
+                rupees %= 100000;
+            }
+
+            // Handle thousands
+            if (rupees >= 1000) {
+                words += convertHundreds(Math.floor(rupees / 1000)) + ' Thousand ';
+                rupees %= 1000;
+            }
+
+            // Handle hundreds
+            words += convertHundreds(rupees);
+        }
+
+        words = words.trim() + ' Only';
+
+        return words;
+    };
+    // Helper function for number to words conversion (can be imported from a utility file)
 
     const handleGenerateInvoice = () => {
         showMessage('info', 'Invoice generation functionality will be implemented soon');

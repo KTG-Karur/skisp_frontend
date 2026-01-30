@@ -29,6 +29,7 @@ import {
     Maintenence,
     LoginBoxed,
     Payment,
+    RazorPay,
     Invoice,
     Bill,
     PrintTask,
@@ -280,6 +281,11 @@ const routes = [
         element: <Payment />,
     },
     {
+        path: '/join/razor-pay',
+        element: <RazorPay />,
+    },
+
+    { 
         path: '/customers/invoices/:userId',
         element: <Invoice />,
     },
