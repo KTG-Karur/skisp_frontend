@@ -40,6 +40,8 @@ const LivePaymentTest = () => {
     const [userData, setUserData] = useState(null);
     const [userLoading, setUserLoading] = useState(true);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    // Add this with your other state declarations
+    const [showPaymentConfirmModal, setShowPaymentConfirmModal] = useState(false);
 
     // New state for expiry check and modal
     const [canMakePayment, setCanMakePayment] = useState(false);
@@ -194,7 +196,18 @@ const LivePaymentTest = () => {
             return true;
         }
     };
+    const confirmAndProceedPayment = async () => {
+        setShowPaymentConfirmModal(false);
 
+        try {
+            const orderData = await createOrder();
+            if (orderData) {
+                await openRazorpayCheckout(orderData);
+            }
+        } catch (error) {
+            console.log('Live payment flow error:', error);
+        }
+    };
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(window.innerWidth < 768);
@@ -399,18 +412,8 @@ const LivePaymentTest = () => {
             return;
         }
 
-        if (!window.confirm(`⚠️ LIVE PAYMENT WARNING!\n\nYou are about to make a REAL payment of ₹${paymentData.amount}.\n\nAre you sure you want to proceed?`)) {
-            return;
-        }
-
-        try {
-            const orderData = await createOrder();
-            if (orderData) {
-                await openRazorpayCheckout(orderData);
-            }
-        } catch (error) {
-            console.log('Live payment flow error:', error);
-        }
+        // Show custom confirmation modal instead of window.confirm
+        setShowPaymentConfirmModal(true);
     };
 
     // Responsive styles
@@ -774,6 +777,73 @@ const LivePaymentTest = () => {
                             <p className="text-sm text-blue-700">
                                 <strong>Contact Support:</strong> info@skisp.in | +91-9965699903
                             </p>
+                        </div>
+                    </div>
+                </div>
+            </ModelViewBox>
+
+            {/* Payment Confirmation Modal */}
+            <ModelViewBox
+                modal={showPaymentConfirmModal}
+                setModel={setShowPaymentConfirmModal}
+                modelHeader="Live Payment Confirmation"
+                cancelBtn={true}
+                modelSize="md"
+                saveBtn={true}
+                handleSubmit={confirmAndProceedPayment}
+                btnName="Proceed with Payment"
+                backgroundColor="bg-white"
+                headerBg="bg-gradient-to-r from-[#ef4444] to-[#f87171]"
+                closeIconColor="text-white"
+                showBackdropBlur={true}
+            >
+                <div className="p-4">
+                    <div className="flex items-center justify-center mb-4">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                            <IconInfoCircle size={24} className="text-red-600" />
+                        </div>
+                    </div>
+
+                    <h3 className="text-lg font-semibold text-center text-gray-800 mb-3">⚠️ LIVE PAYMENT WARNING!</h3>
+
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <p className="text-sm text-red-700 mb-2">
+                            <strong>You are about to make a REAL payment of ₹{paymentData.amount}.</strong>
+                        </p>
+                        <p className="text-sm text-red-700">This is a LIVE transaction using real money. Please ensure you want to proceed.</p>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <p className="text-sm text-yellow-700">
+                                <strong>Important Notes:</strong>
+                            </p>
+                            <ul className="text-sm text-yellow-700 mt-2 space-y-1">
+                                <li>• Real money will be deducted from your account</li>
+                                <li>• Use only valid payment methods</li>
+                                <li>• Save transaction ID for reference</li>
+                                <li>• Refunds are subject to company policy</li>
+                            </ul>
+                        </div>
+
+                        <div className="border-t pt-3">
+                            <p className="text-sm text-gray-600">
+                                <strong>Payment Details:</strong>
+                            </p>
+                            <div className="mt-2 space-y-1">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">User ID:</span>
+                                    <span className="font-medium">{paymentData.userId}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Amount:</span>
+                                    <span className="font-medium text-red-600">₹{paymentData.amount}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Service:</span>
+                                    <span className="font-medium">{paymentData.description}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
