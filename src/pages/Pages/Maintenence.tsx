@@ -1,14 +1,17 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { setPageTitle } from '../../redux/themeStore/themeConfigSlice';
 import { IRootState } from '../../redux/themeStore';
 
 const Maintenence = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate(); // ✅ hook inside component
+
     useEffect(() => {
         dispatch(setPageTitle('Maintenance'));
-    });
+    }, [dispatch]);
+
     const isDark = useSelector((state: IRootState) => state.themeConfig.theme === 'dark' || state.themeConfig.isDarkMode);
 
     return (
@@ -17,22 +20,19 @@ const Maintenence = () => {
                 <div className="relative">
                     <img
                         src={isDark ? '/assets/images/error/maintenence-dark.svg' : '/assets/images/error/maintenence-light.svg'}
-                        alt="maintenence"
+                        alt="maintenance"
                         className="mx-auto -mt-10 w-full max-w-xs object-cover md:-mt-20 md:max-w-lg"
                     />
+
                     <div className="-mt-8 font-semibold dark:text-white">
-                        <h2 className="mb-5 text-3xl font-bold text-primary md:text-5xl">Under Maintenance</h2>
+                        <h2 className="mb-5 text-3xl font-bold text-primary md:text-5xl">Payment Process Expired</h2>
                         <h4 className="mb-7 text-xl sm:text-2xl">Thank you for visiting us.</h4>
-                        <p className="text-base">
-                            We are currently working on making some improvements <br className="hidden sm:block" />
-                            to give you better user experience. <br />
-                            <br />
-                            Please visit us again shortly.
-                        </p>
+                        <p className="text-base">Please visit us again shortly.</p>
                     </div>
-                    <Link to="/" className="btn btn-gradient mx-auto !mt-7 w-max border-0 uppercase shadow-none">
-                        Home
-                    </Link>
+
+                    <button onClick={() => navigate(-1)} className="btn btn-gradient mx-auto !mt-7 w-max border-0 uppercase shadow-none">
+                        Back
+                    </button>
                 </div>
             </div>
         </div>

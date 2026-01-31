@@ -449,7 +449,7 @@ const dontCkeckRouts = [
         layout: 'blank',
     },
     {
-        path: '/join/razorpay/:userId',
+        path: 'razorpay/:userId',
         element: <Razorpay />,
         layout: 'blank',
     },
