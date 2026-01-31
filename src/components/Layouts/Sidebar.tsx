@@ -33,6 +33,8 @@ import IconNotes from '../Icon/IconNotes';
 import IconServer from '../Icon/IconServer';
 import IconCustomers from '../Icon/IconUserFriends';
 import IconPayments from '../Icon/IconMoney';
+import IconBell from '../Icon/IconBellBing';
+import IconImage from '../Icon/IconCamera';
 
 const getIcon = (name?: string) => {
     switch (name) {
@@ -78,6 +80,10 @@ const getIcon = (name?: string) => {
             return IconCustomers;
         case 'fe-payments':
             return IconPayments;
+        case 'fe-bell':
+            return IconBell;
+        case 'fe-image':
+            return IconImage;
         default:
             return IconMinus; // fallback
     }
@@ -194,9 +200,7 @@ const Sidebar = () => {
 
     return (
         <div className={semidark ? 'dark' : ''}>
-            <nav
-                className={`sidebar fixed min-h-screen h-full top-0 bottom-0 w-[260px]  z-50 transition-all duration-300 ${semidark ? 'text-white-dark' : ''}`}
-            >
+            <nav className={`sidebar fixed min-h-screen h-full top-0 bottom-0 w-[260px]  z-50 transition-all duration-300 ${semidark ? 'text-white-dark' : ''}`}>
                 <div className="bg-[#fff4e2] dark:bg-black h-full">
                     {/* logo */}
                     <div className="flex justify-between items-center px-4 py-3">
