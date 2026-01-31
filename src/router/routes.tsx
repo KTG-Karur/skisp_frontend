@@ -285,10 +285,6 @@ const routes = [
         path: '/join/notification-settings',
         element: <NotificationSettings />,
     },
-    {
-        path: '/join/razorpay',
-        element: <Razorpay />,
-    },
 
     {
         path: '/customers/invoices/:userId',
@@ -379,7 +375,7 @@ const routes = [
         layout: 'blank',
     },
     {
-        path: '/join/razorpay',
+        path: 'razorpay/:userId',
         element: <Razorpay />,
         layout: 'blank',
     },
@@ -445,6 +441,11 @@ const dontCkeckRouts = [
     {
         path: '/auth/boxed-signin',
         element: <LoginBoxed />,
+        layout: 'blank',
+    },
+    {
+        path: '/join/razorpay/:userId',
+        element: <Razorpay />,
         layout: 'blank',
     },
 ];
