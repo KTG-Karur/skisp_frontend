@@ -1681,7 +1681,7 @@ const LivePaymentTest = () => {
                                                     fontSize: isMobile ? '14px' : '16px',
                                                 }}
                                             >
-                                                ₹{userData.base_price || '0.00'}
+                                                ₹{userData.pre_tax_price || '0.00'}
                                             </span>
                                         </div>
                                         <div
