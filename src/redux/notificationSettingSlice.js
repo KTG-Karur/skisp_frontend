@@ -16,7 +16,7 @@ export const updateNotificationSetting = createAsyncThunk('notificationSetting/u
 const notificationSettingSlice = createSlice({
     name: 'notificationSetting',
     initialState: {
-        notificationSettingData: [],
+        notificationSettingData: null, 
         loading: false,
         error: null,
         getNotificationSettingSuccess: false,
@@ -68,8 +68,7 @@ const notificationSettingSlice = createSlice({
             })
             .addCase(createNotificationSetting.fulfilled, (state, action) => {
                 state.loading = false;
-                const newNotificationSetting = action.payload.data || action.payload;
-                state.notificationSettingData.push(newNotificationSetting);
+                state.notificationSettingData = action.payload.data || action.payload;
                 state.createNotificationSettingSuccess = true;
                 state.createNotificationSettingFailed = false;
             })
@@ -79,7 +78,7 @@ const notificationSettingSlice = createSlice({
                 state.createNotificationSettingSuccess = false;
                 state.createNotificationSettingFailed = true;
             })
-            // UPDATE
+            // UPDATE 
             .addCase(updateNotificationSetting.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -89,12 +88,7 @@ const notificationSettingSlice = createSlice({
             .addCase(updateNotificationSetting.fulfilled, (state, action) => {
                 state.loading = false;
                 const updatedNotificationSetting = action.payload.data || action.payload;
-                const index = state.notificationSettingData.findIndex(
-                    (notificationSetting) => notificationSetting.notificationSettingId === updatedNotificationSetting.notificationSettingId
-                );
-                if (index !== -1) {
-                    state.notificationSettingData[index] = updatedNotificationSetting;
-                }
+                state.notificationSettingData = updatedNotificationSetting;
                 state.updateNotificationSettingSuccess = true;
                 state.updateNotificationSettingFailed = false;
             })
