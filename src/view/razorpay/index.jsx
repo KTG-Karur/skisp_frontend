@@ -24,7 +24,7 @@ import IconUser from '../../components/Icon/IconUser';
 import IconMail from '../../components/Icon/IconMail';
 import IconCalendar from '../../components/Icon/IconCalendar';
 import IconDownload from '../../components/Icon/IconDownload';
-
+import SkispLogo from '../../../public/assets/images/skisp-new-logo copy.png';
 // Import ModelViewBox component
 import ModelViewBox from '../../util/ModelViewBox';
 
@@ -852,6 +852,7 @@ const LivePaymentTest = () => {
             <div style={styles.container}>
                 {/* Header */}
                 <div style={styles.header}>
+                        <img src={SkispLogo} alt="company logo" width="150px" />
                     <div style={styles.titleContainer}>
                         <h1 style={styles.secureTitle}>
                             Secure Payment Gateway
