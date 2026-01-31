@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { setPageTitle } from '../../redux/themeStore/themeConfigSlice';
 import { getPaymentInvoices, resetPaymentInvoicesStatus } from '../../redux/PaymentInvoicesSlice';
 import { getCustomerDetails } from '../../redux/customerSlice';
+import { getCompany } from '../../redux/companySlice'; // Import company API
 import IconSearch from '../../components/Icon/IconSearch';
 import IconRefresh from '../../components/Icon/IconRefresh';
 import IconCalendar from '../../components/Icon/IconCalendar';
@@ -35,6 +36,7 @@ const Index = () => {
     const invoiceId = searchParams.get('invoiceId');
     const paymentInvoicesState = useSelector((state) => state.PaymentInvoicesSlice || {});
     const customerState = useSelector((state) => state.CustomerSlice || {});
+    const companyState = useSelector((state) => state.CompanySlice || {}); // Get company state
 
     const {
         invoices = [],
@@ -46,6 +48,7 @@ const Index = () => {
     } = paymentInvoicesState;
 
     const { customerDetails = null, loading: customerLoading = false } = customerState;
+    const { companyData = null, loading: companyLoading = false } = companyState; // Get company data
 
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
@@ -64,6 +67,8 @@ const Index = () => {
             fetchInvoices();
             fetchCustomerDetails();
         }
+        // Fetch company details
+        dispatch(getCompany());
     }, [dispatch, userId]);
 
     useEffect(() => {
@@ -104,6 +109,36 @@ const Index = () => {
         if (userId) {
             dispatch(getCustomerDetails(userId));
         }
+    };
+
+    // Helper function to extract company details
+    const getCompanyDetails = () => {
+        if (!companyData || !companyData.data || !companyData.data[0]) {
+            return {
+                companyName: 'SRI KRISHNA INTERNET SERVICES PVT LTD',
+                companyAddressOne: 'No 391/1 SESHA TOWER, VAIYAPURI NAGAR 1ST CROSS, KARUR-639002',
+                companyAddressTwo: '',
+                companyMobile: '04324-232233',
+                companyGstNo: '33ABACS4497H1Z6',
+                companyAltMobile: '9965699903',
+                companyMail: 'info@skisp.in',
+                website: 'www.skisp.in',
+                companyLogo: '',
+            };
+        }
+
+        const company = companyData.data[0];
+        return {
+            companyName: company.companyName || 'SRI KRISHNA INTERNET SERVICES PVT LTD',
+            companyAddressOne: company.companyAddressOne || 'No 391/1 SESHA TOWER, VAIYAPURI NAGAR 1ST CROSS, KARUR-639002',
+            companyAddressTwo: company.companyAddressTwo || '',
+            companyMobile: company.companyMobile || '04324-232233',
+            companyGstNo: company.companyGstNo || '33ABACS4497H1Z6',
+            companyAltMobile: company.companyAltMobile || '9965699903',
+            companyMail: company.companyMail || 'info@skisp.in',
+            website: company.website || 'www.skisp.in',
+            companyLogo: company.companyLogo ? `${baseURL}${company.companyLogo}` : '',
+        };
     };
 
     // Helper function to extract invoice data from your API response structure
@@ -168,184 +203,379 @@ const Index = () => {
     };
 
     const handlePrintInvoice = (invoice) => {
+        const company = getCompanyDetails();
         const printWindow = window.open('', '_blank');
 
         printWindow.document.write(`
-        <html>
-            <head>
-                <title>Invoice ${invoice.invoice_id}</title>
-                <style>
-                    body { 
-                        font-family: Arial, sans-serif; 
-                        margin: 20px; 
-                        font-size: 14px; 
-                        color: #000;
+    <html>
+        <head>
+            <title>Invoice ${invoice.invoice_id}</title>
+            <style>
+                @page {
+                    size: A4;
+                    margin: 10mm;
+                }
+                * {
+                    box-sizing: border-box;
+                    margin: 0;
+                    padding: 0;
+                }
+                body { 
+                    font-family: 'Arial', sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    font-size: 10pt;
+                    color: #000;
+                    line-height: 1.3;
+                    width: 210mm;
+                    height: 297mm;
+                }
+                .invoice-container {
+                    width: 190mm;
+                    margin: 0 auto;
+                    padding: 8mm 10mm;
+                    background: #fff;
+                }
+                
+                /* Centered Header */
+                .header {
+                    text-align: center;
+                    margin-bottom: 10px;
+                    padding-bottom: 8px;
+                    border-bottom: 2px solid #2c3e50;
+                }
+                .logo {
+                    height: 60px;
+                    width: auto;
+                    margin: 0 auto 5px auto;
+                    display: block;
+                }
+                .company-content {
+                    text-align: center;
+                    margin-top: 5px;
+                }
+                .service-provided {
+                    font-size: 9pt;
+                    color: #666;
+                    margin-bottom: 8px;
+                    font-weight: normal;
+                }
+                .company-details {
+                    text-align: center;
+                    font-size: 9pt;
+                    line-height: 1.2;
+                }
+                .company-name {
+                    font-size: 14pt;
+                    font-weight: bold;
+                    color: #2c3e50;
+                    margin-bottom: 3px;
+                }
+                .company-address {
+                    margin-bottom: 2px;
+                }
+                .gst-details {
+                    font-weight: bold;
+                    font-size: 8pt;
+                    margin-top: 3px;
+                }
+                
+                /* Invoice Title */
+                .invoice-title-section {
+                    text-align: center;
+                    margin: 10px 0 15px;
+                    padding: 5px;
+                }
+                .invoice-title {
+                    font-size: 16pt;
+                    font-weight: bold;
+                    color: #2c3e50;
+                }
+                
+                /* Compact Invoice Info */
+                .invoice-info-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                    margin-bottom: 15px;
+                    font-size: 9pt;
+                }
+                .info-card {
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                    background: #f9f9f9;
+                }
+                .info-card-title {
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                    padding-bottom: 3px;
+                    border-bottom: 1px solid #ccc;
+                    font-size: 9pt;
+                }
+                .info-row {
+                    display: flex;
+                    margin-bottom: 3px;
+                    font-size: 8.5pt;
+                }
+                .info-label {
+                    font-weight: 600;
+                    min-width: 70px;
+                }
+                .info-value {
+                    flex: 1;
+                }
+                
+                /* Compact Items Table */
+                .items-section {
+                    margin: 15px 0;
+                }
+                .items-title {
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                    font-size: 10pt;
+                    padding-bottom: 3px;
+                    border-bottom: 1px solid #2c3e50;
+                }
+                .items-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 8.5pt;
+                }
+                .items-table thead {
+                    background: #ddd;
+                    color: white;
+                }
+                .items-table th {
+                    padding: 5px 4px;
+                    text-align: left;
+                    font-weight: 600;
+                    color: #333;
+                    border: 1px solid #dee2e6;
+                }
+                .items-table td {
+                    padding: 5px 4px;
+                    border: 1px solid #dee2e6;
+                    vertical-align: top;
+                }
+                .item-description {
+                    font-size: 8pt;
+                    color: #666;
+                    margin-top: 1px;
+                }
+                
+                /* Compact Amount Summary */
+                .amount-summary {
+                    margin: 15px 0;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    background: #f9f9f9;
+                }
+                .amount-rows {
+                    width: 250px;
+                    margin-left: auto;
+                    font-size: 9pt;
+                }
+                .amount-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 4px 0;
+                    border-bottom: 1px dashed #ccc;
+                }
+                .amount-row.total {
+                    border-bottom: 2px solid #2c3e50;
+                    font-weight: bold;
+                    padding-top: 6px;
+                    margin-top: 3px;
+                }
+                
+                /* Total in Words */
+                .total-in-words {
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                    margin: 10px 0;
+                    font-size: 9pt;
+                }
+                .total-label {
+                    font-weight: bold;
+                    margin-bottom: 3px;
+                }
+                
+                /* Compact Terms */
+                .terms-section {
+                    margin: 15px 0;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    background: #f9f9f9;
+                    font-size: 8pt;
+                    line-height: 1.3;
+                }
+                .terms-title {
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                    font-size: 9pt;
+                }
+                .terms-content div {
+                    margin-bottom: 3px;
+                }
+                
+                /* Updated Footer - Centered Company Details */
+                .footer {
+                    margin-top: 15px;
+                    padding-top: 10px;
+                    border-top: 1px solid #2c3e50;
+                    font-size: 8pt;
+                    text-align: center; /* Center everything in footer */
+                }
+                .footer-top {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin-bottom: 8px;
+                    flex-direction: column; /* Stack items vertically */
+                }
+                .footer-service {
+                    font-weight: normal;
+                    margin-bottom: 5px;
+                    font-size: 7.5pt;
+                    color: #666;
+                    text-align: left;      /* 👈 force left alignment */
+                    width: 100%;           /* 👈 take full width */
+                }
+                .footer-center {
+                    text-align: center;
+                    margin: 5px 0;
+                }
+                .footer-company-name {
+                    font-weight: bold;
+                    margin-bottom: 3px;
+                    font-size: 9pt;
+                }
+                .footer-address {
+                    line-height: 1.2;
+                    font-size: 8pt;
+                }
+                .footer-bottom {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding-top: 5px;
+                    border-top: 1px dashed #ccc;
+                    margin-top: 8px;
+                }
+                .footer-generated {
+                    font-style: italic;
+                }
+                .footer-eoe {
+                    font-weight: bold;
+                    font-style: italic;
+                }
+                
+                /* Print Optimization */
+                @media print {
+                    @page {
+                        margin: 10mm;
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        width: 210mm;
+                        height: 297mm;
                     }
                     .invoice-container {
-                        width: 800px;
-                        margin: 0 auto;
-                    }
-                    .logo {
-                        height: 60px;
-                        margin-bottom: 10px;
-                    }
-                    .header {
-                        text-align: center;
-                        margin-bottom: 20px;
-                    }
-                    .invoice-title {
-                        font-size: 24px;
-                        font-weight: bold;
-                        margin: 10px 0;
-                    }
-                    .invoice-info {
+                        padding: 5mm 8mm;
+                        margin: 0;
                         width: 100%;
-                        margin-bottom: 20px;
-                        border-collapse: collapse;
+                        height: auto;
+                        min-height: 277mm;
                     }
-                    .invoice-info td {
-                        padding: 5px;
-                        vertical-align: top;
-                    }
-                    .section {
-                        margin-bottom: 20px;
-                    }
-                    .section-title {
-                        font-weight: bold;
-                        margin-bottom: 5px;
-                        border-bottom: 1px solid #000;
-                        padding-bottom: 3px;
-                    }
-                    .invoice-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin: 15px 0;
-                    }
-                    .invoice-table th {
-                        background-color: #f2f2f2;
-                        border: 1px solid #000;
-                        padding: 8px;
-                        text-align: left;
-                        font-weight: bold;
-                    }
-                    .invoice-table td {
-                        border: 1px solid #000;
-                        padding: 8px;
-                    }
-                    .amount-section {
-                        width: 300px;
-                        margin-left: auto;
-                        margin-top: 20px;
-                    }
-                    .amount-row {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 5px;
-                        padding: 3px 0;
-                    }
-                    .total-row {
-                        border-top: 2px solid #000;
-                        padding-top: 10px;
-                        margin-top: 10px;
-                        font-weight: bold;
-                        font-size: 16px;
-                    }
-                    .bank-details {
-                        margin: 20px 0;
-                        padding: 10px;
-                        border: 1px dashed #000;
-                        background-color: #f9f9f9;
-                    }
-                    .terms {
-                        margin-top: 30px;
-                        font-size: 12px;
-                        line-height: 1.4;
-                    }
-                    .footer {
-                        text-align: center;
-                        margin-top: 30px;
-                        padding-top: 20px;
-                        border-top: 1px solid #000;
-                        font-size: 12px;
-                    }
-                    .no-print {
-                        display: none;
-                    }
-                    @media print {
-                        body {
-                            margin: 0;
-                            padding: 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="invoice-container">
+                <!-- Centered Header -->
+                <div class="header">
+                    <div>
+                        ${
+                            company.companyLogo
+                                ? `<img src="${company.companyLogo}" class="logo" alt="${company.companyName}" />`
+                                : `<img src="${window.location.origin}/assets/images/skisp-new-logo copy.png" class="logo" alt="${company.companyName}" />`
                         }
-                        .no-print {
-                            display: none !important;
-                        }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="invoice-container">
-                    <!-- Logo and Company Name -->
-                    <div class="header">
-                    <img 
-    src="${window.location.origin}/assets/images/skisp-new-logo copy.png"
-    class="logo"
-/>
-
-                        <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
-                            SRI KRISHNA INTERNET SERVICE PRIVATE LIMITED
+                    </div>
+                    <div class="company-header">
+                        <div class="company-name">${company.companyName}</div>
+                        <div class="company-address">${company.companyAddressOne}${company.companyAddressTwo ? ', ' + company.companyAddressTwo : ''}</div>
+                        <div class="company-address">Ph: ${company.companyMobile} , GSTIN: ${company.companyGstNo}</div>
+                        <div class="company-contact">
+                            CUSTOMER CARE NO: ${company.companyAltMobile}, ${company.companyMail}, ${company.website}
                         </div>
                     </div>
-                    
-                    <!-- Invoice Title -->
+                </div>
+                
+                <!-- Invoice Title -->
+                <div class="invoice-title-section">
                     <div class="invoice-title">INVOICE / RECEIPT</div>
-                    
-                    <!-- Invoice Info -->
-                    <table class="invoice-info">
-                        <tr>
-                            <td style="width: 50%;">
-                                <div><strong>Invoice No:</strong> ${invoice.invoice_id}</div>
-                                <div><strong>Invoice Date:</strong> ${new Date(invoice.bill_date).toLocaleDateString()}</div>
-                                <div><strong>Due Date:</strong> ${new Date(invoice.due_date).toLocaleDateString()}</div>
-                            </td>
-                            <td style="width: 50%; text-align: right;">
-                                <div><strong>Customer:</strong> ${userId}</div>
-                                ${
-                                    customerDetails?.data?.results?.find((r) => r.fid === 'first_name')?.value
-                                        ? `
-                                    <div><strong>Name:</strong> ${customerDetails.data.results.find((r) => r.fid === 'first_name').value} ${customerDetails.data.results.find((r) => r.fid === 'last_name')?.value || ''}</div>
-                                `
-                                        : ''
-                                }
-                                ${
-                                    customerDetails?.data?.results?.find((r) => r.fid === 'user_mobile')?.value
-                                        ? `
-                                    <div><strong>Mobile:</strong> ${customerDetails.data.results.find((r) => r.fid === 'user_mobile').value}</div>
-                                `
-                                        : ''
-                                }
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <!-- Bank Details -->
-                    <div class="bank-details">
-                        <div><strong>Amount to be paid by Online/Cheque/DD</strong></div>
-                        <div>SRI KRISHNA INTERNET SERVICE PRIVATE LIMITED</div>
-                        <div>KVB BANK (Current account)</div>
-                        <div>A/C: 1152135000012440</div>
-                        <div>KVB Ins branch</div>
-                        <div>IFSC: KVBLO001152 (used for RTGS and NEFT)</div>
+                </div>
+                
+                <!-- Invoice Information -->
+                <div class="invoice-info-grid">
+                    <!-- Customer Details -->
+                    <div class="info-card">
+                        <div class="info-card-title">CUSTOMER DETAILS</div>
+                        <div class="info-row">
+                            <div class="info-label">Customer ID:</div>
+                            <div class="info-value">${userId}</div>
+                        </div>
+                        ${
+                            customerDetails?.data?.results?.find((r) => r.fid === 'first_name')?.value
+                                ? `
+                            <div class="info-row">
+                                <div class="info-label">Name:</div>
+                                <div class="info-value">${customerDetails.data.results.find((r) => r.fid === 'first_name').value} ${customerDetails.data.results.find((r) => r.fid === 'last_name')?.value || ''}</div>
+                            </div>
+                            `
+                                : ''
+                        }
+                        ${
+                            customerDetails?.data?.results?.find((r) => r.fid === 'user_mobile')?.value
+                                ? `
+                            <div class="info-row">
+                                <div class="info-label">Mobile:</div>
+                                <div class="info-value">${customerDetails.data.results.find((r) => r.fid === 'user_mobile').value}</div>
+                            </div>
+                            `
+                                : ''
+                        }
                     </div>
-                    
-                    <!-- Invoice Items -->
-                    <table class="invoice-table">
+                    <!-- Invoice Details -->
+                    <div class="info-card">
+                        <div class="info-card-title">INVOICE DETAILS</div>
+                        <div class="info-row">
+                            <div class="info-label">Invoice No:</div>
+                            <div class="info-value">${invoice.invoice_id}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Date:</div>
+                            <div class="info-value">${new Date(invoice.bill_date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Due Date:</div>
+                            <div class="info-value">${new Date(invoice.due_date).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Invoice Items -->
+                <div class="items-section">
+                    <!-- <div class="items-title">INVOICE ITEMS</div> -->
+                    <table class="items-table">
                         <thead>
                             <tr>
-                                <th>Sl. No.</th>
-                                <th>Description</th>
-                                <th>HSN/SAC</th>
-                                <th>Quantity</th>
-                                <th>Amount (¥)</th>
+                                <th style="width: 5%;">Sl.No.</th>
+                                <th style="width: 45%;">Description</th>
+                                <th style="width: 15%;">HSN/SAC</th>
+                                <th style="width: 10%;">Qty</th>
+                                <th style="width: 25%; text-align: right;">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -356,28 +586,31 @@ const Index = () => {
                                               (item, index) => `
                                         <tr>
                                             <td>${index + 1}</td>
-                                            <td>${item.item_name || ''}<br><small>${item.item_description || ''}</small></td>
-                                            <td>${item.hsn_sac || 'N/A'}</td>
+                                            <td>
+                                                <div>${item.item_name || ''}</div>
+                                                <div class="item-description">${item.item_description || ''}</div>
+                                            </td>
+                                            <td>${item.hsn_sac || '998422'}</td>
                                             <td>${item.quantity || 1}</td>
-                                            <td>₹${parseFloat(item.amount || 0).toFixed(2)}</td>
+                                            <td style="text-align: right;">₹${parseFloat(item.amount || 0).toFixed(2)}</td>
                                         </tr>
                                     `,
                                           )
                                           .join('')
-                                    : `<tr><td colspan="5" style="text-align: center;">No items found</td></tr>`
+                                    : `<tr><td colspan="5" style="text-align: center;">No items</td></tr>`
                             }
                         </tbody>
                     </table>
-                    
-                    <!-- Amount Summary -->
-                    <div class="amount-section">
+                </div>
+                
+                <!-- Amount Summary -->
+                <div class="amount-summary">
+                    <div class="amount-rows">
                         ${
-                            invoice.items && invoice.items.some((item) => item.item_description?.includes('Broadband'))
+                            invoice.total_amount
                                 ? `
                             <div class="amount-row">
-                                <span>Broadband usage charges:</span>
-                                <span>${invoice.items.find((item) => item.item_description?.includes('Broadband'))?.hsn_sac || '998422'}</span>
-                                <span>${invoice.items.find((item) => item.item_description?.includes('Broadband'))?.quantity || 1}</span>
+                                <span>Sub Total:</span>
                                 <span>₹${parseFloat(invoice.total_amount || 0).toFixed(2)}</span>
                             </div>
                         `
@@ -388,21 +621,16 @@ const Index = () => {
                             invoice.tax_amount > 0
                                 ? `
                             <div class="amount-row">
-                                <span>CGST @ 9.00%:</span>
+                                <span>CGST @ 9%:</span>
                                 <span>₹${(parseFloat(invoice.tax_amount || 0) / 2).toFixed(2)}</span>
                             </div>
                             <div class="amount-row">
-                                <span>SGST @ 9.00%:</span>
+                                <span>SGST @ 9%:</span>
                                 <span>₹${(parseFloat(invoice.tax_amount || 0) / 2).toFixed(2)}</span>
                             </div>
                         `
                                 : ''
                         }
-                        
-                        <div class="amount-row">
-                            <span>Sub Total:</span>
-                            <span>₹${parseFloat(invoice.total_amount || 0).toFixed(2)}</span>
-                        </div>
                         
                         ${
                             invoice.discount_amount > 0
@@ -420,46 +648,64 @@ const Index = () => {
                             <span>₹${(parseFloat(invoice.payable_amount || 0) - Math.round(parseFloat(invoice.payable_amount || 0))).toFixed(2)}</span>
                         </div>
                         
-                        <div class="amount-row total-row">
-                            <span>Total:</span>
+                        <div class="amount-row total">
+                            <span>TOTAL:</span>
                             <span>₹${parseFloat(invoice.payable_amount || 0).toFixed(2)}</span>
                         </div>
                     </div>
-                    
-                    <!-- Total in Words -->
-                    <div style="margin-top: 10px; padding: 5px; background-color: #f5f5f5;">
-                        <strong>Total in words:</strong> Rupees ${numberToWords(parseFloat(invoice.payable_amount || 0))}
-                    </div>
-                    
-                    <!-- Terms & Conditions -->
-                    <div class="terms">
-                        <div><strong>Terms & Conditions:</strong></div>
+                </div>
+                
+                <!-- Total in Words -->
+                <div class="total-in-words">
+                    <div class="total-label">Total in words:</div>
+                    <div>Rupees ${numberToWords(parseFloat(invoice.payable_amount || 0))}</div>
+                </div>
+                
+                <!-- Terms -->
+                <div class="terms-section">
+                    <div class="terms-title">TERMS & CONDITIONS</div>
+                    <div class="terms-content">
                         <div>1. Amount to be paid by Online/Cheque/DD</div>
-                        <div>2. While using the Service you must comply with applicable laws at all times.</div>
-                        <div>3. You assume total responsibility and risk for your and your authorized users' use of the Service.</div>
-                        <div><strong>Declaration:</strong> We declare that this invoice shows the actual price of the subscription and that all particulars are true and correct.</div>
-                    </div>
-                    
-                    <!-- Footer -->
-                    <div class="footer">
-                        <div>Thank you for your business!</div>
-                        <div>Email: info@skisp.in</div>
-                        <div>Invoice generated on ${new Date().toLocaleDateString()}</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;SRI KRISHNA INTERNET SERVICE PRIVATE LIMITED</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;KVB BANK A/C: 1152135000012440</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;IFSC: KVBL0001152</div>
+                        <div>2. Comply with applicable laws at all times.</div>
+                        <div>3. User assumes responsibility for service use.</div>
+                        <div style="margin-top: 5px;"><strong>DECLARATION:</strong> All particulars are true and correct.</div>
                     </div>
                 </div>
                 
-                <script>
-                    // Auto print
-                    window.onload = function() {
-                        window.print();
-                        window.onafterprint = function() {
-                            window.close();
-                        };
+                <!-- Updated Footer with centered company details -->
+                <div class="footer">
+                    <!-- Service provided (smaller font) -->
+                    <div class="footer-service">Service provided by: SKISP BROADBAND</div>
+                    
+                    <!-- Centered Company details -->
+                    <div class="footer-center">
+                        <div class="footer-company-name">SRI KRISHNA INTERNET SERVICES PVT LTD</div>
+                        <div class="footer-address">No 391/1 SESHA TOWER, VAIYAPURI NAGAR 1ST CROSS, KARUR-639002, Ph: 04324-232233</div>
+                    </div>
+                    
+                    <!-- Bottom section -->
+                    <div class="footer-bottom">
+                        <div class="footer-generated">This is computer generated invoice.</div>
+                        <div class="footer-eoe">E&OE</div>
+                    </div>
+                </div>
+            </div>
+            
+            <script>
+                // Auto print
+                window.onload = function() {
+                    window.print();
+                    window.onafterprint = function() {
+                        window.close();
                     };
-                </script>
-            </body>
-        </html>
-    `);
+                };
+            </script>
+        </body>
+    </html>
+`);
 
         printWindow.document.close();
     };
@@ -517,7 +763,6 @@ const Index = () => {
 
         return words;
     };
-    // Helper function for number to words conversion (can be imported from a utility file)
 
     const handleGenerateInvoice = () => {
         showMessage('info', 'Invoice generation functionality will be implemented soon');
@@ -723,7 +968,8 @@ const Index = () => {
         console.log('Current invoices state:', invoices);
         console.log('Extracted invoice data:', getInvoiceData());
         console.log('Customer details:', customerDetails);
-    }, [invoices, customerDetails]);
+        console.log('Company details:', companyData);
+    }, [invoices, customerDetails, companyData]);
 
     return (
         <div>
@@ -846,8 +1092,7 @@ const Index = () => {
                                 <IconCalendar className="w-5 h-5 text-gray-400" />
                                 <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="form-select">
                                     <option value="all">All Time</option>
-                                    <option value="last30">Last 30 Days</option>
-                                    <option value="pending">Pending Only</option>
+                                    <option value="last30">Last 30 Days</option> <option value="pending">Pending Only</option>
                                     <option value="paid">Paid Only</option>
                                 </select>
                             </div>

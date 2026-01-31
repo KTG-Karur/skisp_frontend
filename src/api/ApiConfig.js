@@ -30,12 +30,22 @@ export function apiReturnCallBack(method, url, object = null, config = null) {
     };
 
     if (object) {
-        if (method === 'FORMPUT' || method === 'FORMPOST') {
+        if (method === 'FORMPOST') {
             // const formData = new FormData();
             // Object.keys(object).forEach((key) => {
             //   formData.append(key, object[key]);
             // });
             fetchConfig.method = 'POST';
+            fetchConfig.body = object;
+            delete fetchConfig.headers['Content-Type'];
+            // fetchConfig.headers['Content-Type'] = 'multipart/form-data';
+            // fetchConfig.headers['content-type'] = 'multipart/form-data';
+        } else if (method === 'FORMPUT') {
+            // const formData = new FormData();
+            // Object.keys(object).forEach((key) => {
+            //   formData.append(key, object[key]);
+            // });
+            fetchConfig.method = 'PUT';
             fetchConfig.body = object;
             delete fetchConfig.headers['Content-Type'];
             // fetchConfig.headers['Content-Type'] = 'multipart/form-data';

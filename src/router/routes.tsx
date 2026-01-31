@@ -12,6 +12,7 @@ import {
     CustomerInvoice,
     //new asf - ev
     Customer,
+    Banner,
     //new VMS
     Plan,
     Staff,
@@ -239,6 +240,10 @@ const routes = [
     {
         path: '/master/provider',
         element: <Provider />,
+    },
+    {
+        path: '/master/banner',
+        element: <Banner />,
     },
     {
         path: '/master/category',
