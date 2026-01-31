@@ -986,10 +986,6 @@ const Index = () => {
             <div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-xl shadow">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center space-x-4">
-                        <button onClick={() => navigate(-1)} className="btn btn-outline-secondary">
-                            <IconArrowLeft className="w-4 h-4 mr-2" />
-                            Back
-                        </button>
                         <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                                 <IconUser className="w-6 h-6 text-white" />
@@ -1004,11 +1000,16 @@ const Index = () => {
                             </div>
                         </div>
                     </div>
+                    
                     <div className="flex space-x-2">
-                        <button onClick={handleGenerateInvoice} className="btn btn-success" disabled={invoicesLoading}>
+                        <button onClick={() => navigate(-1)} className="btn btn-outline-secondary">
+                            <IconArrowLeft className="w-4 h-4 mr-2" />
+                            Back
+                        </button>
+                        {/* <button onClick={handleGenerateInvoice} className="btn btn-success" disabled={invoicesLoading}>
                             <IconPlus className="w-4 h-4 mr-2" />
                             Generate Invoice
-                        </button>
+                        </button> */}
                     </div>
                 </div>
             </div>
@@ -1096,10 +1097,10 @@ const Index = () => {
                                     <option value="paid">Paid Only</option>
                                 </select>
                             </div>
-                            <button onClick={fetchInvoices} className="btn btn-secondary" disabled={invoicesLoading}>
+                            {/* <button onClick={fetchInvoices} className="btn btn-secondary" disabled={invoicesLoading}>
                                 <IconRefresh className={`w-5 h-5 ${invoicesLoading ? 'animate-spin' : ''}`} />
                                 <span>Refresh</span>
-                            </button>
+                            </button> */}
                         </div>
                     </div>
                 </div>
@@ -1345,10 +1346,10 @@ const Index = () => {
                                     <IconPrinter className="w-4 h-4 mr-2" />
                                     Print
                                 </button>
-                                <button onClick={() => handleDownloadInvoice(selectedInvoice.invoice_id)} className="btn btn-primary">
+                                {/* <button onClick={() => handleDownloadInvoice(selectedInvoice.invoice_id)} className="btn btn-primary">
                                     <IconDownload className="w-4 h-4 mr-2" />
                                     Download PDF
-                                </button>
+                                </button> */}
                                 <button onClick={() => setViewInvoiceModal(false)} className="btn btn-outline-secondary">
                                     Close
                                 </button>
