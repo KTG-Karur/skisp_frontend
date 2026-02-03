@@ -63,7 +63,8 @@ const PublicInvoicePDF = () => {
                             { fid: 'email', value: customerRecord.email || '' },
                             { fid: 'gstin', value: customerRecord.gstin_no || '' },
                             { fid: 'address', value: customerRecord.address || '' },
-                            { fid: 'user_id', value: customerRecord.user_id || '' }
+                            { fid: 'user_id', value: customerRecord.user_id || '' },
+                            { fid: 'pri_bw_plan_name', value: customerRecord.pri_bw_plan_name || '' }
                         ]
                     }
                 };
@@ -340,6 +341,13 @@ const PublicInvoicePDF = () => {
                                 </div>
                             </div>
                             
+                            <div className="info-row">
+                                <div className="info-label">Plan:</div>
+                                <div className="info-value">
+                                    {getCustomerField('pri_bw_plan_name')}
+                                </div>
+                            </div>
+
                             <div className="info-row">
                                 <div className="info-label">Email:</div>
                                 <div className="info-value">
