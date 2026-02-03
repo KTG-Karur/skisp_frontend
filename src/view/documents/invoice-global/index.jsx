@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import moment from 'moment';
+import { baseURL } from '../../../api/ApiConfig';
 
 const PublicInvoicePDF = () => {
     const { invoiceId } = useParams();
@@ -23,7 +24,7 @@ const PublicInvoicePDF = () => {
         website: 'www.skisp.in',
         companyLogo: '/assets/images/skisp-new-logo copy1.png',
         stateCode: 'Tamil Nadu (33)',
-        stateName: 'Tamil Nadu'
+        stateName: 'Tamil Nadu',
     };
 
     useEffect(() => {
@@ -36,22 +37,22 @@ const PublicInvoicePDF = () => {
         try {
             setLoading(true);
             setError(null);
-            
-            const response = await fetch(`http://localhost:5043/payments/invoices-tacitine?invoiceId=${invoiceId}`);
-            
+
+            const response = await fetch(baseURL+`/payments/invoices-tacitine?invoiceId=${invoiceId}`);
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const data = await response.json();
-            
+
             if (data.success || data.error === false) {
                 const tacktineData = data.data?.tacktine_data || data.tacktine_data;
                 setInvoiceData(tacktineData);
-                
+
                 const customerRecord = tacktineData?.customerRecord || {};
                 const customerPlanExpire = tacktineData?.customerPlanExpire || [];
-                
+
                 // Create customer details object
                 const customerDetailsData = {
                     data: {
@@ -64,14 +65,13 @@ const PublicInvoicePDF = () => {
                             { fid: 'gstin', value: customerRecord.gstin_no || '' },
                             { fid: 'address', value: customerRecord.address || '' },
                             { fid: 'user_id', value: customerRecord.user_id || '' },
-                            { fid: 'pri_bw_plan_name', value: customerRecord.pri_bw_plan_name || '' }
-                        ]
-                    }
+                            { fid: 'pri_bw_plan_name', value: customerRecord.pri_bw_plan_name || '' },
+                        ],
+                    },
                 };
-                
+
                 setCustomerDetails(customerDetailsData);
                 setUserId(customerRecord.user_id || '');
-                
             } else {
                 throw new Error(data.message || 'Failed to load invoice');
             }
@@ -96,40 +96,42 @@ const PublicInvoicePDF = () => {
             }, 100);
             return null;
         }
-        
+
         const invoice = invoiceData.recent_invoice;
-        
+
         // Calculate amounts
         const totalAmount = parseFloat(invoice.total);
         const baseAmount = parseFloat(invoice.amount);
         const taxAmount = totalAmount - baseAmount;
         const discountAmount = 0;
-        
+
         // Create items array with the specified description
-        const items = [{
-            item_name: 'Broadband usage charges',
-            item_description: 'Validity Extension (31 Days)',
-            hsn_sac: '998422',
-            quantity: 1,
-            amount: baseAmount
-        }];
-        
+        const items = [
+            {
+                item_name: 'Broadband usage charges',
+                item_description: 'Validity Extension (31 Days)',
+                hsn_sac: '998422',
+                quantity: 1,
+                amount: baseAmount,
+            },
+        ];
+
         // Calculate payable amount with round off
         const rawPayable = totalAmount;
         const roundedPayable = Math.round(rawPayable);
         const roundOff = (roundedPayable - rawPayable).toFixed(2);
-        
+
         // Generate invoice number format if not available
         const invoiceNumber = invoice.invoice_num || `SKISP/1/ADP/0126/${invoiceId || '403'}`;
-        
+
         // Get invoice date or use current date
         const invoiceDate = invoice.invoice_date || new Date().toISOString();
-        
+
         // Calculate account validity (add 31 days to invoice date)
         const invoiceDateObj = new Date(invoiceDate);
         const accountValidityDate = new Date(invoiceDateObj);
         accountValidityDate.setDate(invoiceDateObj.getDate() + 31);
-        
+
         return {
             invoice_id: invoiceNumber,
             invoice_date: invoiceDate,
@@ -143,14 +145,14 @@ const PublicInvoicePDF = () => {
             round_off: parseFloat(roundOff),
             items: items,
             payment_method: invoice.payment_method || 'Advance Paid',
-            account_reference: invoice.account_reference || ''
+            account_reference: invoice.account_reference || '',
         };
     };
 
     // Helper function to get customer field value
     const getCustomerField = (fid) => {
         if (!customerDetails?.data?.results) return '';
-        const field = customerDetails.data.results.find(r => r.fid === fid);
+        const field = customerDetails.data.results.find((r) => r.fid === fid);
         return field?.value || '';
     };
 
@@ -224,22 +226,26 @@ const PublicInvoicePDF = () => {
 
     if (loading) {
         return (
-            <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                minHeight: '100vh',
-                backgroundColor: 'white'
-            }}>
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '100vh',
+                    backgroundColor: 'white',
+                }}
+            >
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{
-                        animation: 'spin 1s linear infinite',
-                        borderRadius: '50%',
-                        height: '48px',
-                        width: '48px',
-                        borderBottom: '2px solid #2563eb',
-                        margin: '0 auto'
-                    }}></div>
+                    <div
+                        style={{
+                            animation: 'spin 1s linear infinite',
+                            borderRadius: '50%',
+                            height: '48px',
+                            width: '48px',
+                            borderBottom: '2px solid #2563eb',
+                            margin: '0 auto',
+                        }}
+                    ></div>
                     <p style={{ marginTop: '16px', color: '#4b5563' }}>Loading invoice...</p>
                 </div>
             </div>
@@ -249,12 +255,14 @@ const PublicInvoicePDF = () => {
     const invoice = formatInvoiceData();
 
     return (
-        <div style={{ 
-            padding: '16px',
-            backgroundColor: 'white',
-            minHeight: '100vh',
-            fontFamily: 'Arial, sans-serif'
-        }}>
+        <div
+            style={{
+                padding: '16px',
+                backgroundColor: 'white',
+                minHeight: '100vh',
+                fontFamily: 'Arial, sans-serif',
+            }}
+        >
             <div
                 className="invoice-container"
                 style={{
@@ -262,7 +270,7 @@ const PublicInvoicePDF = () => {
                     minHeight: '297mm',
                     height: 'auto',
                     margin: '0 auto',
-                    backgroundColor: 'white'
+                    backgroundColor: 'white',
                 }}
             >
                 <div className="invoice-container">
@@ -270,29 +278,22 @@ const PublicInvoicePDF = () => {
                     <div className="header">
                         <div className="logo-container">
                             {companyInfo.companyLogo ? (
-                                <img 
-                                    src={companyInfo.companyLogo} 
-                                    className="logo" 
+                                <img
+                                    src={companyInfo.companyLogo}
+                                    className="logo"
                                     alt={companyInfo.companyName}
-                                    style={{ marginBottom: "25px" }}
+                                    style={{ marginBottom: '25px' }}
                                     onError={(e) => {
                                         e.target.src = '/assets/images/skisp-new-logo copy.png';
                                     }}
                                 />
                             ) : (
-                                <img 
-                                    src="/assets/images/skisp-new-logo copy.png" 
-                                    className="logo" 
-                                    alt={companyInfo.companyName}
-                                    style={{ marginBottom: "25px" }}
-                                />
+                                <img src="/assets/images/skisp-new-logo copy.png" className="logo" alt={companyInfo.companyName} style={{ marginBottom: '25px' }} />
                             )}
                         </div>
                         <div className="company-header">
                             <div className="company-name-large">{companyInfo.companyName}</div>
-                            <div className="company-address-small">
-                                {companyInfo.companyAddressOne}
-                            </div>
+                            <div className="company-address-small">{companyInfo.companyAddressOne}</div>
                             <div className="company-contact-small">
                                 Ph: {companyInfo.companyMobile} , GSTIN: {companyInfo.companyGstNo}
                             </div>
@@ -301,75 +302,61 @@ const PublicInvoicePDF = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* Invoice Title */}
                     <div className="invoice-title-section">
                         <div className="invoice-title">INVOICE / RECEIPT</div>
                     </div>
-                    
+
                     {/* Invoice Information - NO SPACE BETWEEN SECTIONS */}
                     <div className="invoice-info-grid-no-space">
                         {/* Customer Details */}
                         <div className="info-card-no-space">
                             {/* <div className="info-card-title">CUSTOMER DETAILS</div> */}
-                            
+
                             <div className="info-row">
                                 <div className="info-label">Name:</div>
                                 <div className="info-value">
                                     {getCustomerField('first_name')} {getCustomerField('last_name')}
                                 </div>
                             </div>
-                            
+
                             <div className="info-row">
                                 <div className="info-label">Address:</div>
-                                <div className="info-value">
-                                    {getCustomerField('address')}
-                                </div>
+                                <div className="info-value">{getCustomerField('address')}</div>
                             </div>
-                            
+
                             <div className="info-row">
                                 <div className="info-label">Mobile:</div>
-                                <div className="info-value">
-                                    {getCustomerField('user_mobile')}
-                                </div>
+                                <div className="info-value">{getCustomerField('user_mobile')}</div>
                             </div>
-                            
+
                             <div className="info-row">
                                 <div className="info-label">Phone:</div>
-                                <div className="info-value">
-                                    {getCustomerField('phone')}
-                                </div>
+                                <div className="info-value">{getCustomerField('phone')}</div>
                             </div>
-                            
+
                             <div className="info-row">
                                 <div className="info-label">Plan:</div>
-                                <div className="info-value">
-                                    {getCustomerField('pri_bw_plan_name')}
-                                </div>
+                                <div className="info-value">{getCustomerField('pri_bw_plan_name')}</div>
                             </div>
 
                             <div className="info-row">
                                 <div className="info-label">Email:</div>
-                                <div className="info-value">
-                                    {getCustomerField('email') || 'info@skisp.in'}
-                                </div>
+                                <div className="info-value">{getCustomerField('email') || 'info@skisp.in'}</div>
                             </div>
-                            
+
                             <div className="info-row">
                                 <div className="info-label">GSTIN:</div>
-                                <div className="info-value">
-                                    {getCustomerField('gstin')}
-                                </div>
+                                <div className="info-value">{getCustomerField('gstin')}</div>
                             </div>
-                            
+
                             <div className="info-row">
                                 <div className="info-label">State Code:</div>
-                                <div className="info-value">
-                                    {companyInfo.stateCode}
-                                </div>
+                                <div className="info-value">{companyInfo.stateCode}</div>
                             </div>
                         </div>
-                        
+
                         {/* Invoice Details */}
                         <div className="info-card-no-space">
                             {/* <div className="info-card-title">INVOICE DETAILS</div> */}
@@ -395,7 +382,7 @@ const PublicInvoicePDF = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* Invoice Items - NO SPACE AFTER */}
                     <div className="items-section-no-space">
                         <table className="items-table-compact">
@@ -421,9 +408,7 @@ const PublicInvoicePDF = () => {
                                             </td>
                                             <td>{item.hsn_sac || '998422'}</td>
                                             <td>{item.quantity || 1}</td>
-                                            <td style={{ textAlign: 'right' }}>
-                                                ₹{parseFloat(item.amount || 0).toFixed(2)}
-                                            </td>
+                                            <td style={{ textAlign: 'right' }}>₹{parseFloat(item.amount || 0).toFixed(2)}</td>
                                         </tr>
                                     ))
                                 ) : (
@@ -436,7 +421,7 @@ const PublicInvoicePDF = () => {
                             </tbody>
                         </table>
                     </div>
-                    
+
                     {/* Amount Summary - NO SPACE BEFORE/AFTER */}
                     <div className="amount-summary-no-space">
                         <div className="amount-rows">
@@ -452,36 +437,32 @@ const PublicInvoicePDF = () => {
                                     </div>
                                 </>
                             )}
-                            
+
                             {invoice?.total_amount && (
                                 <div className="amount-row-tight">
                                     <span>Sub Total:</span>
                                     <span>₹{(parseFloat(invoice?.total_amount || 0) + parseFloat(invoice?.tax_amount || 0)).toFixed(2)}</span>
                                 </div>
                             )}
-                            
-                            {invoice?.round_off !== 0 && (
-                                <div className="amount-row-tight">
-                                    <span>Round Off:</span>
-                                    <span>
-                                        ₹{parseFloat(invoice?.round_off || 0).toFixed(2)}
-                                    </span>
-                                </div>
-                            )}
-                            
+
+                            <div className="amount-row-tight">
+                                <span>Round Off:</span>
+                                <span>₹{parseFloat(invoice?.round_off || 0).toFixed(2)}</span>
+                            </div>
+
                             <div className="amount-row-tight total">
                                 <span>TOTAL:</span>
                                 <span>₹{parseFloat(invoice?.payable_amount || 0).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* Total in Words - NO SPACE BEFORE */}
                     <div className="total-in-words-no-space">
                         <div className="total-label">Total in words:</div>
                         <div>Rupees {numberToWords(parseFloat(invoice?.payable_amount || 0))}</div>
                     </div>
-                    
+
                     {/* Terms & Conditions - NO SPACE BEFORE */}
                     <div className="terms-section-no-space">
                         <div className="terms-title">TERMS & CONDITIONS:</div>
@@ -499,20 +480,18 @@ const PublicInvoicePDF = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* Updated Footer with centered company details - Keep as is */}
                     <div className="footer">
                         {/* Service provided (smaller font) */}
                         <div className="footer-service">Service provided by: SKISP BROADBAND</div>
-                        
+
                         {/* Centered Company details */}
                         <div className="footer-center">
                             <div className="footer-company-name">SRI KRISHNA INTERNET SERVICES PVT LTD</div>
-                            <div className="footer-address">
-                                No 391/1 SESHA TOWER, VAIYAPURI NAGAR 1ST CROSS, KARUR-639002, Ph: 04324-232233
-                            </div>
+                            <div className="footer-address">No 391/1 SESHA TOWER, VAIYAPURI NAGAR 1ST CROSS, KARUR-639002, Ph: 04324-232233</div>
                         </div>
-                        
+
                         {/* Bottom section */}
                         <div className="footer-bottom">
                             <div className="footer-generated">This is computer generated invoice.</div>
@@ -523,14 +502,17 @@ const PublicInvoicePDF = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="d-print-none" style={{ 
-                marginTop: '24px', 
-                display: 'flex', 
-                justifyContent: 'center', 
-                gap: '16px',
-                fontFamily: 'Arial, sans-serif'
-            }}>
-                <button 
+            <div
+                className="d-print-none"
+                style={{
+                    marginTop: '24px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '16px',
+                    fontFamily: 'Arial, sans-serif',
+                }}
+            >
+                <button
                     onClick={() => window.history.back()}
                     style={{
                         padding: '8px 24px',
@@ -541,14 +523,14 @@ const PublicInvoicePDF = () => {
                         cursor: 'pointer',
                         fontWeight: '500',
                         transition: 'background-color 0.2s',
-                        fontFamily: 'Arial, sans-serif'
+                        fontFamily: 'Arial, sans-serif',
                     }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#374151'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#4b5563'}
+                    onMouseOver={(e) => (e.target.style.backgroundColor = '#374151')}
+                    onMouseOut={(e) => (e.target.style.backgroundColor = '#4b5563')}
                 >
                     ← Go Back
                 </button>
-                <button 
+                <button
                     onClick={handlePrint}
                     style={{
                         padding: '8px 24px',
@@ -559,10 +541,10 @@ const PublicInvoicePDF = () => {
                         cursor: 'pointer',
                         fontWeight: '500',
                         transition: 'background-color 0.2s',
-                        fontFamily: 'Arial, sans-serif'
+                        fontFamily: 'Arial, sans-serif',
                     }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#1d4ed8'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#2563eb'}
+                    onMouseOver={(e) => (e.target.style.backgroundColor = '#1d4ed8')}
+                    onMouseOut={(e) => (e.target.style.backgroundColor = '#2563eb')}
                 >
                     🖨️ Print Invoice
                 </button>
@@ -579,7 +561,7 @@ const PublicInvoicePDF = () => {
                     margin: 0;
                     padding: 0;
                 }
-                body { 
+                body {
                     font-family: Arial, sans-serif !important;
                     margin: 0;
                     padding: 0;
@@ -597,7 +579,7 @@ const PublicInvoicePDF = () => {
                     background-color: white;
                     font-family: Arial, sans-serif !important;
                 }
-                
+
                 /* Centered Header with increased logo and spacing */
                 .header {
                     text-align: center;
@@ -634,7 +616,7 @@ const PublicInvoicePDF = () => {
                     line-height: 1.1;
                     margin-bottom: 2px;
                 }
-                
+
                 /* Invoice Title */
                 .invoice-title-section {
                     text-align: center;
@@ -648,7 +630,7 @@ const PublicInvoicePDF = () => {
                     font-weight: bold;
                     color: #2c3e50;
                 }
-                
+
                 /* Compact Invoice Info - NO SPACE BETWEEN */
                 .invoice-info-grid-no-space {
                     display: grid;
@@ -687,7 +669,7 @@ const PublicInvoicePDF = () => {
                     flex: 1;
                     font-family: Arial, sans-serif !important;
                 }
-                
+
                 /* Items Table - COMPACT with reduced inner spacing */
                 .items-section-no-space {
                     margin: 0;
@@ -729,7 +711,7 @@ const PublicInvoicePDF = () => {
                     color: #666;
                     margin-top: 0px;
                 }
-                
+
                 /* Amount Summary - NO SPACE BEFORE/AFTER */
                 .amount-summary-no-space {
                     margin: 0;
@@ -758,7 +740,7 @@ const PublicInvoicePDF = () => {
                     padding-top: 2px;
                     margin-top: 1px;
                 }
-                
+
                 /* Total in Words - NO SPACE BEFORE */
                 .total-in-words-no-space {
                     font-family: Arial, sans-serif !important;
@@ -774,7 +756,7 @@ const PublicInvoicePDF = () => {
                     font-weight: bold;
                     margin-bottom: 1px;
                 }
-                
+
                 /* Terms & Conditions - NO SPACE BEFORE */
                 .terms-section-no-space {
                     font-family: Arial, sans-serif !important;
@@ -795,7 +777,7 @@ const PublicInvoicePDF = () => {
                     font-family: Arial, sans-serif !important;
                     margin-bottom: 1px;
                 }
-                
+
                 /* Updated Footer - Centered Company Details - Keep as is */
                 .footer {
                     font-family: Arial, sans-serif !important;
@@ -849,7 +831,7 @@ const PublicInvoicePDF = () => {
                     font-weight: bold;
                     font-style: italic;
                 }
-                
+
                 /* Print Optimization */
                 @media print {
                     @page {
@@ -875,7 +857,7 @@ const PublicInvoicePDF = () => {
                     .d-print-none {
                         display: none !important;
                     }
-                    
+
                     /* Remove all background colors for print */
                     .info-card-no-space,
                     .amount-summary-no-space,
@@ -887,7 +869,7 @@ const PublicInvoicePDF = () => {
                     .items-table-compact td {
                         background-color: white !important;
                     }
-                    
+
                     /* Ensure borders are visible */
                     .info-card-no-space,
                     .amount-summary-no-space,
@@ -895,16 +877,20 @@ const PublicInvoicePDF = () => {
                     .terms-section-no-space {
                         border: 1px solid #ddd;
                     }
-                    
+
                     .items-table-compact th,
                     .items-table-compact td {
                         border: 1px solid #ddd;
                     }
                 }
-                
+
                 @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
+                    0% {
+                        transform: rotate(0deg);
+                    }
+                    100% {
+                        transform: rotate(360deg);
+                    }
                 }
             `}</style>
         </div>
