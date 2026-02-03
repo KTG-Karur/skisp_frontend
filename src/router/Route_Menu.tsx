@@ -125,6 +125,7 @@ export const Customer = lazy(() => import('../view/master/customer'));
 export const PendingReport = lazy(() => import('../view/report/pending'));
 export const TaskReport = lazy(() => import('../view/report/task'));
 export const CustomerInvoice = lazy(() => import('../view/documents/customer-invoice'));
+export const InvoiceGlobal = lazy(() => import('../view/documents/invoice-global'));
 export const PaymentHistory = lazy(() => import('../view/report/PaymentHistory'));
 export const Banner = lazy(() => import('../view/master/banner'));
 export const NotificationSettings = lazy(() => import('../view/notification-settings'));

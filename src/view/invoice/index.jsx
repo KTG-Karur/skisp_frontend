@@ -201,11 +201,12 @@ const Index = () => {
             showMessage('error', error.message || 'Failed to download invoice');
         }
     };
-
+    
     const handlePrintInvoice = (invoice) => {
         const company = getCompanyDetails();
         const printWindow = window.open('', '_blank');
-
+        console.log("invoice")
+        console.log(invoice)
         printWindow.document.write(`
     <html>
         <head>

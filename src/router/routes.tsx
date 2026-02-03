@@ -39,6 +39,7 @@ import {
     PlanReport,
     PlanReportpdf,
     PaymentHistory,
+    InvoiceGlobal,
 } from './Route_Menu';
 
 const loading = () => <div className=""></div>;
@@ -384,6 +385,11 @@ const routes = [
         element: <Razorpay />,
         layout: 'blank',
     },
+    {
+        path: 'invoice/:invoiceId',
+        element: <InvoiceGlobal />,
+        layout: 'blank',
+    },
 ];
 
 const dontCkeckRouts = [
@@ -451,6 +457,11 @@ const dontCkeckRouts = [
     {
         path: 'razorpay/:userId',
         element: <Razorpay />,
+        layout: 'blank',
+    },
+    {
+        path: 'invoice/:invoiceId',
+        element: <InvoiceGlobal />,
         layout: 'blank',
     },
 ];
