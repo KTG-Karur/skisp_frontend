@@ -13,6 +13,7 @@ import {
     //new asf - ev
     Customer,
     Banner,
+    PopupImage,
     //new VMS
     Plan,
     Staff,
@@ -241,6 +242,10 @@ const routes = [
     {
         path: '/master/provider',
         element: <Provider />,
+    },
+    {
+        path: '/master/popup-image',
+        element: <PopupImage />,
     },
     {
         path: '/master/banner',

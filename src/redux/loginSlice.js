@@ -1,10 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getLoginApi} from '../api/LoginApi';
+import { getLoginApi } from '../api/LoginApi';
 
-export const getLogin = createAsyncThunk('login/getLogin', async (request) => {
-    return await getLoginApi(request);
+export const getLogin = createAsyncThunk('login/getLogin', async (request, { rejectWithValue }) => {
+    try {
+        return await getLoginApi(request);
+    } catch (error) {
+        // Return error message for the component to handle
+        return rejectWithValue(error.message || 'Authentication failed');
+    }
 });
-
 
 const loginSlice = createSlice({
     name: 'login',
@@ -26,7 +30,6 @@ const loginSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // FETCH
             .addCase(getLogin.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -38,12 +41,14 @@ const loginSlice = createSlice({
                 state.loginData = action.payload;
                 state.getLoginSuccess = true;
                 state.getLoginFailed = false;
+                state.error = null;
             })
             .addCase(getLogin.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.error.message || 'Fetch failed';
                 state.getLoginSuccess = false;
                 state.getLoginFailed = true;
+                // Use the error message from rejectWithValue
+                state.error = action.payload || action.error.message || 'Authentication failed';
             })
     },
 });

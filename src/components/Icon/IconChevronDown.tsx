@@ -1,13 +1,13 @@
-// IconCheck.tsx
+// IconChevronDown.jsx
 import { FC } from 'react';
 
-interface IconCheckProps {
+interface IconChevronDownProps {
     className?: string;
     fill?: boolean;
     duotone?: boolean;
 }
 
-const IconCheck: FC<IconCheckProps> = ({ className, fill = false, duotone = true }) => {
+const IconChevronDown: FC<IconChevronDownProps> = ({ className, fill = false, duotone = true }) => {
     return (
         <svg 
             width="20" 
@@ -20,9 +20,9 @@ const IconCheck: FC<IconCheckProps> = ({ className, fill = false, duotone = true
             strokeLinejoin="round" 
             className={className}
         >
-            <polyline points="20 6 9 17 4 12"></polyline>
+            <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
     );
 };
 
-export default IconCheck;
+export default IconChevronDown;

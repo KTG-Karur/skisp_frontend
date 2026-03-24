@@ -106,7 +106,7 @@ const Table = ({ ...props }) => {
             pageCount: totalPages, // Total pages from server
             autoResetPage: false,
             // Add manual filters and sorting if needed
-            manualGlobalFilter: true,
+            manualGlobalFilter: false,
             manualSortBy: true,
         },
         isSearchable && useGlobalFilter,

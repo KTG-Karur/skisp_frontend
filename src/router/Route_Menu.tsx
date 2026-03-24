@@ -130,4 +130,5 @@ export const PaymentHistory = lazy(() => import('../view/report/PaymentHistory')
 export const Banner = lazy(() => import('../view/master/banner'));
 export const NotificationSettings = lazy(() => import('../view/notification-settings'));
 export const Razorpay = lazy(() => import('../view/razorpay'));
+export const PopupImage = lazy(() => import('../view/master/popup-image'));
 

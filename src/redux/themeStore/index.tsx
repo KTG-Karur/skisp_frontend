@@ -30,6 +30,7 @@ import PaymentInvoicesSlice from '../PaymentInvoicesSlice';
 import PaymentBillsSlice from '../PaymentBillsSlice';
 import BannerSlice from '../bannerSlice';
 import NotificationSettingSlice from '../notificationSettingSlice';
+import PopupImageSlice from '../popupImageSlice';
 
 const rootReducer = combineReducers({
     themeConfig: themeConfigSlice,
@@ -63,6 +64,7 @@ const rootReducer = combineReducers({
     BannerSlice,
     NotificationSettingSlice,
     PaymentReportSlice: paymentReportSlice,
+    PopupImageSlice,
 });
 
 const store = configureStore({

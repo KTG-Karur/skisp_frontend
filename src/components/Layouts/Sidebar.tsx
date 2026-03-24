@@ -35,6 +35,8 @@ import IconCustomers from '../Icon/IconUserFriends';
 import IconPayments from '../Icon/IconMoney';
 import IconBell from '../Icon/IconBellBing';
 import IconImage from '../Icon/IconCamera';
+import AnimateHeight from 'react-animate-height';
+import IconCaretDown from '../Icon/IconCaretDown';
 
 const getIcon = (name?: string) => {
     switch (name) {
@@ -133,6 +135,23 @@ const Sidebar = () => {
     };
 
     useEffect(() => {
+        //removing the - before the child icon style
+        const style = document.createElement('style');
+        style.innerHTML = `
+        .sidebar ul.sub-menu li button::before,
+        .sidebar ul.sub-menu li a::before {
+            display: none !important;
+            content: none !important;
+        }
+    `;
+        document.head.appendChild(style);
+
+        return () => {
+            document.head.removeChild(style);
+        };
+    }, []);
+
+    useEffect(() => {
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
         if (selector) {
             selector.classList.add('active');
@@ -164,39 +183,114 @@ const Sidebar = () => {
 
             // transform backend -> frontend sidebar items
             const mapped: SidebarItem[] = permissions.map((item: any) => {
-                if (item.isTitle) {
-                    return {
-                        type: 'title',
-                        label: item.label,
-                        icon: IconMinus,
-                    };
-                }
-
+                // Case 1: Item has children (should be dropdown) - even if it has isTitle: true
                 if (item.children && item.children.length > 0) {
+                    const parentIcon = getIcon(item.icon);
+
                     return {
                         type: 'dropdown',
                         label: item.label,
                         key: item.label,
-                        icon: getIcon(item.icon),
-                        items: item.children.map((child: any) => ({
-                            label: child.label,
-                            to: child.url,
-                            icon: getIcon(child.icon),
-                        })),
+                        icon: parentIcon,
+                        items: item.children.map((child: any) => {
+                            const childIcon = getIcon(child.icon);
+
+                            return {
+                                label: child.label,
+                                to: child.url,
+                                icon: childIcon,
+                            };
+                        }),
                     };
                 }
+
+                // Case 2: Item is a title (no children)
+                if (item.isTitle) {
+                    return {
+                        type: 'title',
+                        label: item.label,
+                        icon: IconMinus, // Titles will show IconMinus
+                    };
+                }
+
+                // Case 3: Regular list item
+                const listIcon = getIcon(item.icon);
 
                 return {
                     type: 'list',
                     label: item.label,
                     to: item.url,
-                    icon: getIcon(item.icon),
+                    icon: listIcon,
                 };
             });
 
             setSidebarItems(mapped);
         }
     }, []);
+
+    // Navigation component for dropdown items
+    const renderDropdown = (item: DropdownSidebarItem) => {
+        const Icon = item.icon;
+        const isOpen = currentMenu === item.key;
+
+        return (
+            <li className="menu nav-item" key={item.key}>
+                <button type="button" className={`${isOpen ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu(item.key!)}>
+                    <div className="flex items-center">
+                        {Icon && <Icon className="shrink-0 group-hover:!text-primary" />}
+                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{item.label}</span>
+                    </div>
+                    <div className={!isOpen ? 'rtl:rotate-90 -rotate-90' : ''}>
+                        <IconCaretDown />
+                    </div>
+                </button>
+
+                <AnimateHeight duration={300} height={isOpen ? 'auto' : 0}>
+                    <ul className="sub-menu text-gray-500">
+                        {item.items.map((subItem, idx) => {
+                            const SubIcon = subItem.icon;
+                            return (
+                                <li key={idx}>
+                                    <NavLink to={subItem.to} className="nav-link">
+                                        <div className="flex items-center">
+                                            {SubIcon && <SubIcon className="w-4 h-4 shrink-0" />}
+                                            <span className="ltr:pl-3 rtl:pr-3">{subItem.label}</span>
+                                        </div>
+                                    </NavLink>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </AnimateHeight>
+            </li>
+        );
+    };
+
+    // Navigation component for title items
+    const renderTitle = (item: TitleSidebarItem) => {
+        const Icon = item.icon;
+        return (
+            <h2 key={item.label} className="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
+                {Icon && <Icon className="w-4 h-5 flex-none" />}
+                <span className={Icon ? 'ltr:pl-2 rtl:pr-2' : ''}>{item.label}</span>
+            </h2>
+        );
+    };
+
+    // Navigation component for list items
+    const renderList = (item: ListSidebarItem) => {
+        const Icon = item.icon;
+        return (
+            <li className="nav-item" key={item.to}>
+                <NavLink to={item.to} className="group">
+                    <div className="flex items-center">
+                        {Icon && <Icon className="shrink-0 group-hover:!text-primary" />}
+                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{item.label}</span>
+                    </div>
+                </NavLink>
+            </li>
+        );
+    };
 
     return (
         <div className={semidark ? 'dark' : ''}>
@@ -221,28 +315,14 @@ const Sidebar = () => {
                     {/* sidebar menu */}
                     <PerfectScrollbar className="h-[calc(100vh-80px)] relative">
                         <ul className="relative font-semibold space-y-0.5 p-4 py-0">
-                            {sidebarItems.map((item, idx) => {
-                                const key = String(item.key ?? `nav-${idx}`);
-
+                            {sidebarItems.map((item) => {
                                 if (item.type === 'title') {
-                                    return <Navigation key={key} type="title" label={item.label} icon={item.icon} />;
+                                    return renderTitle(item);
                                 }
-
                                 if (item.type === 'dropdown') {
-                                    return (
-                                        <Navigation
-                                            key={key}
-                                            type="dropdown"
-                                            label={item.label}
-                                            icon={item.icon}
-                                            items={item.items}
-                                            isOpen={currentMenu === item.key}
-                                            onToggle={() => toggleMenu(item.key!)}
-                                        />
-                                    );
+                                    return renderDropdown(item);
                                 }
-
-                                return <Navigation key={key} type="list" label={item.label} icon={item.icon} to={'to' in item ? item.to : ''} />;
+                                return renderList(item);
                             })}
                         </ul>
                     </PerfectScrollbar>
